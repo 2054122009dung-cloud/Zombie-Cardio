@@ -1,967 +1,1510 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-<title>OUTBREAK // FIELD HUD</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<title>OUTBREAK WALK</title>
 <style>
-  :root{
-    --bg:#0a0d08;
-    --panel:#10140d;
-    --grid:#1f2b18;
-    --green:#4dff8a;
-    --green-dim:#1f5c33;
-    --red:#ff3b3b;
-    --amber:#ffb627;
-    --bone:#cfd8c5;
-    --bone-dim:#7c8a73;
-    --blood:#7a1414;
-  }
-  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none;}
-  html,body{
-    width:100%;height:100%;overflow:hidden;
-    background:var(--bg);
-    color:var(--bone);
-    font-family:'Share Tech Mono',monospace;
-    -webkit-font-smoothing:antialiased;
-  }
-  #app{
-    position:fixed;inset:0;
-    display:flex;flex-direction:column;
-    background:radial-gradient(ellipse at center, #0d130b 0%, #060805 100%);
-  }
+:root{
+  --rust:#b3552c;
+  --rust-dark:#7a3a1d;
+  --bone:#e8e1d0;
+  --blood:#8c1f1f;
+  --blood-bright:#e23b3b;
+  --night:#0c0e0b;
+  --moss:#3f4d3a;
+  --moss-bright:#7fae5e;
+  --warn:#e0b34a;
+  --steel:#9aa3a8;
+  --font-d:'Bebas Neue','Oswald',sans-serif;
+  --font-b:'Courier New',monospace;
+  --fog-color:10,12,8;
+  --amb-light:1;
+}
+@font-face{font-family:'Bebas Neue';src:local('Bebas Neue');}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;background:var(--night);font-family:var(--font-b);color:var(--bone);}
 
-  /* ---------- PERIMETER LIMB/HUD FRAME ---------- */
-  .frame-edge{
-    position:fixed;z-index:30;pointer-events:none;
-    transition:background .25s, box-shadow .25s, opacity .3s;
-  }
-  #edge-top{top:0;left:0;right:0;height:6px;background:var(--green-dim);box-shadow:0 0 8px var(--green-dim);}
-  #edge-left{top:0;bottom:0;left:0;width:6px;background:var(--green-dim);box-shadow:0 0 8px var(--green-dim);}
-  #edge-right{top:0;bottom:0;right:0;width:6px;background:var(--green-dim);box-shadow:0 0 8px var(--green-dim);}
-  #edge-bottom{bottom:0;left:0;right:0;height:6px;background:var(--green-dim);box-shadow:0 0 8px var(--green-dim);}
-  .edge-crit{
-    background:var(--red) !important;
-    box-shadow:0 0 18px var(--red), 0 0 40px rgba(255,59,59,.5) !important;
-    animation:edgepulse 1s infinite;
-  }
-  @keyframes edgepulse{0%,100%{opacity:1}50%{opacity:.35}}
-  .edge-warn{ background:var(--amber) !important; box-shadow:0 0 12px var(--amber) !important; }
+#app{position:fixed;inset:0;}
 
-  /* ---------- TOP STATUS BAR ---------- */
-  #topbar{
-    position:relative;z-index:20;
-    padding:14px 16px 8px;
-    display:flex;flex-direction:column;gap:6px;
-  }
-  .row{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:11px;letter-spacing:1px;color:var(--bone-dim);}
-  .title{
-    font-family:'Black Ops One',cursive;
-    font-size:15px;letter-spacing:3px;color:var(--green);
-    text-shadow:0 0 6px rgba(77,255,138,.5);
-  }
-  .barwrap{height:10px;border:1px solid var(--grid);background:#0d110a;position:relative;border-radius:2px;overflow:hidden;}
-  .barfill{height:100%;transition:width .3s;}
-  #staminaFill{background:linear-gradient(90deg,var(--green-dim),var(--green));}
-  #hordeFill{background:linear-gradient(90deg,var(--amber),var(--red));}
+/* ============ SCREENS ============ */
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:linear-gradient(180deg,#1a1c16,#0c0e0b 70%);text-align:center;padding:24px;z-index:50;overflow-y:auto;}
+.hidden{display:none!important;}
 
-  /* ---------- RADAR ---------- */
-  #radarwrap{
-    flex:1;position:relative;display:flex;align-items:center;justify-content:center;
-    min-height:0;
-  }
-  #radar{
-    width:min(78vw,78vh);height:min(78vw,78vh);
-    border-radius:50%;
-    background:
-      repeating-radial-gradient(circle, transparent 0 13%, var(--grid) 13% calc(13% + 1px), transparent calc(13% + 1px) 26%);
-    border:2px solid var(--green-dim);
-    position:relative;
-    box-shadow:0 0 40px rgba(77,255,138,.08), inset 0 0 60px rgba(0,0,0,.6);
-  }
-  #radar::before{ /* crosshair lines */
-    content:'';position:absolute;inset:0;
-    background:
-      linear-gradient(to right, transparent calc(50% - 1px), var(--grid) 50%, transparent calc(50% + 1px)),
-      linear-gradient(to bottom, transparent calc(50% - 1px), var(--grid) 50%, transparent calc(50% + 1px));
-  }
-  #sweep{
-    position:absolute;inset:0;border-radius:50%;
-    background:conic-gradient(from 0deg, rgba(77,255,138,.35), transparent 35%);
-    animation:spin 4s linear infinite;
-    mix-blend-mode:screen;
-    opacity:.55;
-  }
-  @keyframes spin{to{transform:rotate(360deg)}}
-  #player-dot{
-    position:absolute;left:50%;top:50%;width:10px;height:10px;margin:-5px;
-    background:var(--green);border-radius:50%;
-    box-shadow:0 0 10px var(--green), 0 0 20px rgba(77,255,138,.6);
-    z-index:5;
-  }
-  .blip{
-    position:absolute;width:9px;height:9px;border-radius:2px;transform:translate(-50%,-50%) rotate(45deg);
-    box-shadow:0 0 6px currentColor;
-  }
-  .blip.loot-common{background:#3ad0ff;color:#3ad0ff;}
-  .blip.loot-high{background:var(--red);color:var(--red);border-radius:50%;transform:translate(-50%,-50%);}
-  .blip.loot-weapon{background:var(--amber);color:var(--amber);}
-  #horde-blip{
-    position:absolute;width:16px;height:16px;border-radius:50%;
-    background:radial-gradient(circle, var(--red), rgba(122,20,20,.2));
-    transform:translate(-50%,-50%);
-    box-shadow:0 0 14px var(--red);
-    animation:hordepulse 1.1s infinite;
-  }
-  @keyframes hordepulse{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.35)}}
+.title-main{font-family:var(--font-d);letter-spacing:6px;font-size:54px;color:var(--bone);
+  text-shadow:0 0 12px var(--blood),3px 3px 0 var(--rust-dark);margin:0;}
+.title-sub{letter-spacing:3px;color:var(--rust);font-size:13px;margin-top:6px;text-transform:uppercase;}
+.scratch{position:absolute;inset:0;pointer-events:none;opacity:.06;
+  background:repeating-linear-gradient(115deg,#fff 0 1px,transparent 1px 40px);}
 
-  #encounter-flash{
-    position:absolute;inset:-8px;border-radius:50%;
-    border:3px solid var(--red);opacity:0;pointer-events:none;
-    animation:none;
-  }
-  .flash-on{ animation:flashring 1s infinite !important; opacity:1 !important; }
-  @keyframes flashring{0%,100%{box-shadow:0 0 0 0 rgba(255,59,59,.6)}50%{box-shadow:0 0 0 14px rgba(255,59,59,0)}}
+.btn{
+  font-family:var(--font-d);letter-spacing:3px;font-size:18px;padding:14px 36px;margin:10px;
+  background:linear-gradient(180deg,var(--rust),var(--rust-dark));border:2px solid var(--bone);
+  color:var(--bone);cursor:pointer;clip-path:polygon(0 0,100% 0,100% 70%,92% 100%,0 100%);
+  box-shadow:0 4px 0 #000;transition:transform .08s;
+}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #000;}
+.btn.secondary{background:#2b2e26;border-color:var(--moss);color:var(--moss);}
+.btn.big{font-size:24px;padding:18px 50px;}
+.btn:disabled{opacity:.35;filter:grayscale(1);}
 
-  #center-label{
-    position:absolute;left:50%;top:18px;transform:translateX(-50%);
-    font-size:10px;letter-spacing:2px;color:var(--bone-dim);text-align:center;
-  }
-  #toast{
-    position:absolute;left:50%;bottom:14px;transform:translateX(-50%);
-    font-size:11px;color:var(--amber);background:rgba(0,0,0,.5);
-    padding:6px 12px;border:1px solid var(--green-dim);border-radius:4px;
-    opacity:0;transition:opacity .4s;white-space:nowrap;max-width:90%;text-overflow:ellipsis;overflow:hidden;
-    pointer-events:none;
-  }
-  #toast.show{opacity:1;}
+.lore{max-width:480px;font-size:13px;line-height:1.7;color:#b9b3a3;margin:18px 0;}
+.lore b{color:var(--warn);}
 
-  /* ---------- HANDS / WEAPON HUD ---------- */
-  #handszone{
-    position:relative;z-index:25;display:flex;justify-content:space-between;
-    padding:0 6px;height:34vh;pointer-events:none;
-  }
-  .hand{
-    width:42vw;height:100%;position:relative;pointer-events:auto;
-    display:flex;align-items:flex-end;
-  }
-  .hand svg{width:100%;height:auto;display:block;}
-  .hand.limp svg{ filter:grayscale(1) brightness(.5); transform:translateY(10%) rotate(8deg); transition:transform .4s;}
-  #lefthand{justify-content:flex-start;}
-  #righthand{justify-content:flex-end;}
-  #lefthand svg{transform:translate(-8%,4%);}
-  #righthand svg{transform:translate(8%,4%) scaleX(-1);}
-  .durability-tag{
-    position:absolute;bottom:6px;font-size:10px;color:var(--bone-dim);
-    letter-spacing:1px;background:rgba(0,0,0,.4);padding:2px 6px;border-radius:3px;
-  }
-  #lefthand .durability-tag{left:10px;}
-  #righthand .durability-tag{right:10px;}
-  .hand-hit{ animation:hit .15s; }
-  @keyframes hit{0%{transform:scale(1) }50%{transform:scale(.92)}100%{transform:scale(1)}}
+/* ============ CLASS SELECT ============ */
+#class-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:520px;width:100%;margin:14px 0;}
+@media (max-width:480px){ #class-grid{grid-template-columns:1fr;} }
+.class-card{position:relative;background:linear-gradient(160deg,#22251d,#15170f);border:2px solid var(--rust-dark);
+  padding:14px 12px 12px;text-align:left;cursor:pointer;clip-path:polygon(0 0,100% 0,100% 92%,94% 100%,0 100%);
+  transition:border-color .15s, transform .1s;}
+.class-card:active{transform:scale(.98);}
+.class-card.selected{border-color:var(--warn);box-shadow:0 0 0 1px var(--warn), 0 0 18px rgba(224,179,74,.25);}
+.class-card .ci{font-family:var(--font-d);font-size:9px;letter-spacing:2px;color:var(--rust);position:absolute;top:10px;right:12px;}
+.class-icon{width:46px;height:46px;margin-bottom:6px;}
+.class-icon svg{width:100%;height:100%;}
+.class-name{font-family:var(--font-d);font-size:20px;letter-spacing:2px;color:var(--bone);}
+.class-tag{font-size:10px;color:var(--warn);letter-spacing:1px;margin-bottom:6px;}
+.class-desc{font-size:11px;line-height:1.5;color:#a8a294;margin-bottom:8px;min-height:48px;}
+.class-stats{display:flex;flex-direction:column;gap:3px;}
+.cstat{display:flex;align-items:center;gap:6px;font-size:9px;letter-spacing:1px;color:#8a8478;}
+.cstat .cbar{flex:1;height:5px;background:#000;border:1px solid #333;}
+.cstat .cfill{height:100%;background:var(--moss-bright);}
+.cstat .cfill.neg{background:var(--blood);}
+.cstat .cn{width:46px;}
 
-  /* ---------- BOTTOM CONTROL BAR ---------- */
-  #controls{
-    position:relative;z-index:25;display:flex;gap:8px;padding:8px 12px 14px;
-  }
-  button{
-    flex:1;font-family:'Share Tech Mono',monospace;
-    background:#10160d;border:1px solid var(--green-dim);color:var(--green);
-    padding:10px 6px;font-size:11px;letter-spacing:1px;border-radius:4px;
-    cursor:pointer;text-align:center;
-  }
-  button:active{background:var(--green-dim);color:#06140c;}
-  button.alert{border-color:var(--red);color:var(--red);}
-  button.amber{border-color:var(--amber);color:var(--amber);}
-  button:disabled{opacity:.35;}
+/* ============ HUD / GAME ============ */
+#game{position:absolute;inset:0;display:none;}
+#game.active{display:block;}
 
-  /* ---------- SIM SPEED SLIDER ---------- */
-  #simrow{display:flex;gap:6px;padding:0 12px 8px;align-items:center;font-size:10px;color:var(--bone-dim);letter-spacing:1px;}
-  #speedSlider{flex:1;accent-color:var(--green);}
+#world{position:absolute;inset:0;overflow:hidden;
+  background:linear-gradient(180deg,#5b6b53 0%,#3a4a3f 45%,#1c2419 70%,#0a0c08 100%);
+  filter:brightness(var(--amb-light));transition:filter 4s linear;}
+#sky{position:absolute;top:0;left:0;width:100%;height:50%;overflow:hidden;}
+#sun{position:absolute;width:160px;height:160px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,210,140,.55),transparent 70%);
+  top:6%;left:60%;filter:blur(2px);transition:opacity 4s linear, top 4s linear;}
+#clouds{position:absolute;inset:0;}
+.cloud{position:absolute;background:rgba(220,220,210,.18);border-radius:50%;filter:blur(6px);}
+#ground{position:absolute;bottom:0;left:0;width:100%;height:50%;background:linear-gradient(180deg,#2a3322,#0a0c08);}
+.fog{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 62%,transparent 22%,rgba(var(--fog-color),.88) 88%);pointer-events:none;z-index:18;}
+.vignette{position:absolute;inset:0;box-shadow:inset 0 0 140px 40px rgba(0,0,0,.65);pointer-events:none;z-index:19;}
 
-  /* ---------- MODALS ---------- */
-  .modal-bg{
-    position:fixed;inset:0;background:rgba(5,8,4,.85);z-index:100;
-    display:none;align-items:center;justify-content:center;backdrop-filter:blur(2px);
-  }
-  .modal-bg.show{display:flex;}
-  .modal{
-    width:min(440px,92vw);max-height:86vh;overflow:auto;
-    background:var(--panel);border:1px solid var(--green-dim);border-radius:6px;
-    padding:18px;box-shadow:0 0 40px rgba(0,0,0,.6);
-  }
-  .modal h2{
-    font-family:'Black Ops One',cursive;color:var(--green);font-size:16px;
-    letter-spacing:3px;margin-bottom:12px;border-bottom:1px solid var(--grid);padding-bottom:8px;
-  }
-  .modal p{font-size:12px;color:var(--bone-dim);line-height:1.6;margin-bottom:10px;}
-  .modal .closeBtn{margin-top:12px;}
-  .opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
-  .opt-grid button{font-size:10px;padding:10px 4px;}
-  .opt-grid button.selected{background:var(--green-dim);color:#06140c;}
-  .res-list{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;font-size:11px;margin-bottom:12px;}
-  .res-item{border:1px solid var(--grid);padding:6px 8px;border-radius:4px;display:flex;justify-content:space-between;}
-  .limb-list{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;}
-  .limb-row{display:flex;align-items:center;gap:8px;font-size:11px;}
-  .limb-row .barwrap{flex:1;height:8px;}
-  .limb-fill{height:100%;}
+/* rain */
+#rain{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 1.5s;z-index:17;mix-blend-mode:screen;}
+#rain.on{opacity:.5;}
+.rain-drop{position:absolute;width:1px;height:60px;background:linear-gradient(180deg,transparent,rgba(180,200,220,.5));
+  animation:fall linear infinite;}
+@keyframes fall{0%{transform:translateY(-10%)}100%{transform:translateY(110vh)}}
 
-  /* ---------- START SCREEN ---------- */
-  #start{
-    position:fixed;inset:0;z-index:200;background:var(--bg);
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    text-align:center;padding:24px;gap:14px;
-  }
-  #start h1{font-family:'Black Ops One',cursive;font-size:32px;color:var(--green);letter-spacing:6px;text-shadow:0 0 14px rgba(77,255,138,.5);}
-  #start .sub{font-size:11px;color:var(--bone-dim);letter-spacing:2px;max-width:320px;line-height:1.7;}
-  #start button{width:220px;padding:14px;font-size:13px;}
+/* screen shake */
+@keyframes shake{
+  0%,100%{transform:translate(0,0)}
+  20%{transform:translate(-6px,3px) rotate(-0.4deg)}
+  40%{transform:translate(5px,-4px) rotate(0.4deg)}
+  60%{transform:translate(-4px,2px)}
+  80%{transform:translate(3px,-2px)}
+}
+.shake{animation:shake .3s ease-out;}
+
+#viewport{position:absolute;inset:0;}
+.world-layer{position:absolute;inset:0;will-change:transform;}
+#layer-far{z-index:5;}
+#layer-mid{z-index:8;}
+#layer-near{z-index:12;}
+
+/* zombies & objects rendered as DOM sprites positioned via transform */
+.sprite{position:absolute;bottom:14%;transform-origin:bottom center;pointer-events:none;z-index:14;}
+.zombie{width:80px;height:160px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.6));
+  transition:left 2.2s linear, transform .15s;}
+.zombie svg{width:100%;height:100%;display:block;}
+.zombie.dead{opacity:0;transform:translateY(20px) rotate(12deg) scale(.9);transition:opacity .4s, transform .4s;}
+.zombie.lunge{transition:left .25s cubic-bezier(.3,0,.7,1), transform .15s;}
+.zombie.windup .z-body{animation:windup .55s ease-in-out;}
+.zombie.hit .z-body{animation:zhit .15s;}
+@keyframes windup{0%,100%{transform:translateX(0) rotate(0)}50%{transform:translateX(-6px) rotate(-4deg)}}
+@keyframes zhit{0%{filter:brightness(2.4) saturate(0)}100%{filter:brightness(1)}}
+.z-tag{position:absolute;top:-22px;left:50%;transform:translateX(-50%);font-family:var(--font-d);
+  font-size:9px;letter-spacing:1px;white-space:nowrap;padding:1px 6px;border-radius:2px;
+  background:rgba(10,12,8,.7);}
+.z-tag.runner{color:var(--blood-bright);border:1px solid var(--blood);}
+.z-tag.brute{color:var(--warn);border:1px solid var(--warn);}
+.z-tag.shambler{color:var(--steel);border:1px solid var(--steel);}
+.z-hp{position:absolute;top:-12px;left:8%;width:84%;height:4px;background:#000;border:1px solid #000;}
+.z-hp-fill{height:100%;background:var(--blood-bright);transition:width .15s;}
+.telegraph{position:absolute;inset:-8px;border:2px solid var(--warn);border-radius:50%;opacity:0;
+  animation:teleg .55s ease-in-out;pointer-events:none;}
+@keyframes teleg{0%{opacity:0;transform:scale(.7)}50%{opacity:.9;transform:scale(1.08)}100%{opacity:0;transform:scale(1.25)}}
+
+.loot{width:46px;height:46px;filter:drop-shadow(0 0 8px rgba(224,179,74,.6));animation:bob 1.6s ease-in-out infinite;}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+
+/* ============ HANDS ============ */
+#hands{position:absolute;inset:0;pointer-events:none;z-index:22;}
+.hand{position:absolute;bottom:-30px;width:170px;height:260px;transition:transform .12s ease-out, filter .2s;}
+.hand.left{left:-30px;transform:rotate(-8deg);}
+.hand.right{right:-30px;transform:rotate(8deg) scaleX(-1);}
+.hand svg{width:100%;height:100%;}
+.hand.swing-l{animation:swingL .3s ease-out;}
+.hand.swing-r{animation:swingR .3s ease-out;}
+.hand.swing-l.heavy{animation:swingLHeavy .55s ease-out;}
+.hand.swing-r.heavy{animation:swingRHeavy .55s ease-out;}
+.hand.block{animation:blockPose .25s ease-out forwards;}
+@keyframes swingL{0%{transform:rotate(-8deg) translate(0,0)}40%{transform:rotate(-78deg) translate(46px,-66px)}100%{transform:rotate(-8deg) translate(0,0)}}
+@keyframes swingR{0%{transform:rotate(8deg) scaleX(-1) translate(0,0)}40%{transform:rotate(78deg) scaleX(-1) translate(46px,-66px)}100%{transform:rotate(8deg) scaleX(-1) translate(0,0)}}
+@keyframes swingLHeavy{0%{transform:rotate(-8deg) translate(0,0)}15%{transform:rotate(20deg) translate(-10px,10px)}55%{transform:rotate(-100deg) translate(60px,-90px)}100%{transform:rotate(-8deg) translate(0,0)}}
+@keyframes swingRHeavy{0%{transform:rotate(8deg) scaleX(-1) translate(0,0)}15%{transform:rotate(-20deg) scaleX(-1) translate(-10px,10px)}55%{transform:rotate(100deg) scaleX(-1) translate(60px,-90px)}100%{transform:rotate(8deg) scaleX(-1) translate(0,0)}}
+@keyframes blockPose{to{transform:translateY(-60px) scale(1.08);}}
+.hand.left.block{transform:translateY(-60px) rotate(-8deg) scale(1.08);}
+.hand.right.block{transform:translateY(-60px) rotate(8deg) scaleX(-1) scale(1.08);}
+.hand.dim{filter:brightness(.4) saturate(.3);}
+
+/* combo counter */
+#combo{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(.6);
+  font-family:var(--font-d);font-size:46px;letter-spacing:4px;color:var(--warn);
+  text-shadow:0 0 14px rgba(224,179,74,.7),0 2px 0 #000;opacity:0;z-index:35;pointer-events:none;
+  transition:opacity .15s, transform .15s;}
+#combo.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
+#combo span{font-size:14px;display:block;letter-spacing:6px;color:var(--bone);}
+
+/* blood flash on hit */
+#hitflash{position:absolute;inset:0;background:radial-gradient(ellipse,rgba(140,20,20,.65),transparent 70%);
+  opacity:0;pointer-events:none;z-index:60;transition:opacity .15s;}
+#hitflash.show{opacity:1;}
+#hitflash.crit{background:radial-gradient(ellipse,rgba(220,30,30,.85),transparent 60%);}
+
+/* dodge flash */
+#dodgeflash{position:absolute;inset:0;background:rgba(180,210,255,.18);opacity:0;pointer-events:none;z-index:59;transition:opacity .12s;}
+#dodgeflash.show{opacity:1;}
+
+/* low-stamina pulse on attack buttons */
+.exhausted{animation:exhaustPulse 1s infinite;}
+@keyframes exhaustPulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ============ TOP HUD ============ */
+#hud-top{position:absolute;top:0;left:0;right:0;padding:10px 12px;z-index:30;
+  display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none;}
+.stat-block{background:rgba(10,12,8,.6);border:1px solid var(--rust-dark);padding:6px 10px;border-radius:3px;min-width:128px;
+  backdrop-filter:blur(2px);}
+.stat-row{display:flex;align-items:center;gap:6px;margin:2px 0;font-size:11px;}
+.bar{flex:1;height:8px;background:#222;border:1px solid #000;position:relative;overflow:hidden;}
+.bar-fill{height:100%;transition:width .25s;}
+.bar-fill.hp{background:linear-gradient(90deg,#8c1f1f,#e04a4a);}
+.bar-fill.stam{background:linear-gradient(90deg,#3f4d3a,#7fae5e);}
+.bar-fill.stam.low{background:linear-gradient(90deg,#7a5a1d,var(--warn));}
+.bar-fill.hunger{background:linear-gradient(90deg,#7a5a1d,var(--warn));}
+.label{width:38px;font-size:9px;letter-spacing:1px;color:#b9b3a3;}
+
+.classname-tag{font-size:9px;letter-spacing:2px;color:var(--warn);margin-bottom:3px;text-transform:uppercase;}
+
+#limb-status{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap;}
+.limb{font-size:9px;padding:2px 5px;border:1px solid var(--moss);color:var(--moss);border-radius:2px;}
+.limb.injured{border-color:var(--blood);color:var(--blood-bright);background:rgba(140,30,30,.15);}
+
+#distance-panel{background:rgba(10,12,8,.6);border:1px solid var(--rust-dark);padding:6px 12px;border-radius:3px;text-align:right;
+  backdrop-filter:blur(2px);}
+#dist-val{font-family:var(--font-d);font-size:22px;color:var(--warn);line-height:1;}
+#dist-label{font-size:9px;letter-spacing:2px;color:#b9b3a3;}
+#speed-val{font-size:10px;color:var(--moss);margin-top:2px;}
+#time-val{font-size:10px;color:#8a8478;margin-top:1px;}
+
+/* ============ COMPASS ============ */
+#compass{position:absolute;top:84px;left:50%;transform:translateX(-50%);z-index:30;
+  background:rgba(10,12,8,.6);border:1px solid var(--rust-dark);border-radius:3px;
+  padding:4px 14px;font-size:11px;letter-spacing:2px;color:var(--warn);pointer-events:none;text-align:center;
+  backdrop-filter:blur(2px); transition:border-color .2s, color .2s;}
+#compass.alert{border-color:var(--blood);color:var(--blood-bright);animation:alertPulse 1s infinite;}
+@keyframes alertPulse{0%,100%{box-shadow:0 0 0 rgba(140,30,30,0)}50%{box-shadow:0 0 14px rgba(220,40,40,.6)}}
+#compass small{display:block;color:#b9b3a3;font-size:9px;letter-spacing:1px;margin-top:2px;}
+
+/* ============ BOTTOM HUD ============ */
+#hud-bottom{position:absolute;bottom:0;left:0;right:0;z-index:30;padding:12px;display:flex;
+  justify-content:space-between;align-items:flex-end;pointer-events:none;}
+#weapon-info{background:rgba(10,12,8,.6);border:1px solid var(--rust-dark);padding:8px 12px;border-radius:3px;pointer-events:auto;
+  backdrop-filter:blur(2px);}
+#weapon-name{font-family:var(--font-d);font-size:16px;color:var(--bone);letter-spacing:1px;}
+#weapon-dur{font-size:10px;color:var(--moss);}
+#weapon-dur.low{color:var(--blood-bright);}
+#weapon-mode{font-size:9px;color:#8a8478;letter-spacing:1px;margin-top:2px;}
+
+#action-zone{display:flex;flex-direction:column;align-items:flex-end;gap:6px;pointer-events:auto;}
+.action-row{display:flex;gap:8px;}
+.action-btn{font-family:var(--font-d);font-size:13px;letter-spacing:1px;padding:12px 16px;
+  background:rgba(60,40,30,.75);border:1px solid var(--rust);color:var(--bone);
+  clip-path:polygon(8% 0,100% 0,100% 100%,0 100%,0 30%);transition:transform .08s, background .1s;}
+.action-btn:active{background:var(--rust);transform:scale(.96);}
+.action-btn.danger{border-color:var(--blood);color:#ff8a8a;}
+.action-btn.block-btn{border-color:var(--steel);color:var(--steel);}
+.action-btn.block-btn.active{background:var(--steel);color:#0c0e0b;}
+.action-btn:disabled{opacity:.3;}
+
+/* tap zones for melee swings - invisible, cover lower-left/right */
+#swing-l,#swing-r{position:absolute;bottom:0;width:38%;height:58%;z-index:25;}
+#swing-l{left:0;}
+#swing-r{right:0;}
+#dodge-zone{position:absolute;bottom:0;left:38%;width:24%;height:30%;z-index:25;}
+
+/* ============ MESSAGES / TOASTS ============ */
+#toasts{position:absolute;top:138px;left:50%;transform:translateX(-50%);z-index:40;
+  display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:90%;}
+.toast{background:rgba(10,12,8,.85);border-left:3px solid var(--warn);padding:8px 14px;
+  font-size:12px;letter-spacing:1px;animation:toastIn .3s,toastOut .4s 2.6s forwards;max-width:340px;text-align:center;
+  backdrop-filter:blur(2px);}
+.toast.danger{border-left-color:var(--blood);color:#ff9a9a;}
+.toast.good{border-left-color:var(--moss);color:#aef0a0;}
+.toast.warnt{border-left-color:var(--warn);color:#ffe2a0;}
+@keyframes toastIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes toastOut{to{opacity:0;}}
+
+/* damage numbers */
+.dmgnum{position:absolute;font-family:var(--font-d);font-size:22px;color:var(--bone);
+  text-shadow:0 0 6px rgba(0,0,0,.8);pointer-events:none;z-index:36;animation:dmgFloat .7s ease-out forwards;}
+.dmgnum.crit{color:var(--warn);font-size:30px;}
+.dmgnum.player{color:var(--blood-bright);}
+@keyframes dmgFloat{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-60px) scale(1.3)}}
+
+/* ============ ENCOUNTER MODAL (loot/threat) ============ */
+#modal-overlay{position:absolute;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:45;}
+#modal-overlay.hidden{display:none;}
+.modal-box{background:#1a1c16;border:2px solid var(--rust);padding:22px;max-width:340px;width:88%;text-align:center;
+  clip-path:polygon(0 0,100% 0,100% 90%,94% 100%,0 100%);}
+.modal-box h3{font-family:var(--font-d);letter-spacing:2px;color:var(--warn);margin:0 0 8px;font-size:20px;}
+.modal-box p{font-size:12px;line-height:1.6;color:#cfc8b8;}
+
+/* ============ INVENTORY ============ */
+#inv-toggle{position:absolute;top:10px;right:12px;z-index:31;}
+#inventory{position:absolute;inset:0;background:rgba(10,12,8,.95);z-index:55;display:flex;flex-direction:column;
+  padding:20px;overflow-y:auto;}
+#inventory.hidden{display:none;}
+#inventory h2{font-family:var(--font-d);letter-spacing:3px;color:var(--bone);border-bottom:2px solid var(--rust);padding-bottom:8px;}
+.inv-section{margin:14px 0;}
+.inv-section h4{color:var(--warn);font-size:11px;letter-spacing:2px;margin:6px 0;}
+.inv-item{display:flex;justify-content:space-between;align-items:center;background:rgba(60,40,30,.4);
+  border:1px solid var(--rust-dark);padding:8px 10px;margin:5px 0;border-radius:3px;font-size:12px;gap:8px;}
+.inv-item button{font-family:var(--font-d);font-size:11px;background:var(--moss);border:none;color:#0c0e0b;padding:5px 10px;border-radius:2px;white-space:nowrap;}
+.inv-item button:disabled{background:#444;color:#888;}
+.inv-empty{font-size:11px;color:#777;text-align:center;padding:10px;}
+.class-banner{font-size:11px;color:var(--warn);letter-spacing:1px;margin-top:-4px;margin-bottom:6px;}
+
+#perm-warning{font-size:11px;color:#b9b3a3;max-width:420px;line-height:1.6;}
 </style>
 </head>
 <body>
 <div id="app">
 
-  <!-- perimeter limb/stamina frame -->
-  <div class="frame-edge" id="edge-top"></div>
-  <div class="frame-edge" id="edge-left"></div>
-  <div class="frame-edge" id="edge-right"></div>
-  <div class="frame-edge" id="edge-bottom"></div>
+  <!-- ===================== TITLE SCREEN ===================== -->
+  <div id="screen-title" class="screen">
+    <div class="scratch"></div>
+    <h1 class="title-main">OUTBREAK WALK</h1>
+    <div class="title-sub">A Real-World Survival Loop</div>
+    <p class="lore">
+      The signal's dead. Your phone is the only thing standing between you and them.
+      <b>Walk to scavenge.</b> <b>Run to escape.</b> <b>Fight only when cornered.</b>
+      Every step in the real world moves you through the wasteland. Every meter matters.
+    </p>
+    <button class="btn big" id="btn-start">ENTER THE DEAD ZONE</button>
+    <button class="btn secondary" id="btn-howto">HOW TO SURVIVE</button>
+  </div>
 
-  <!-- top status -->
-  <div id="topbar">
-    <div class="row">
-      <span class="title">OUTBREAK</span>
-      <span id="modeLabel">SIM MODE · WALKING</span>
+  <!-- ===================== HOW TO ===================== -->
+  <div id="screen-howto" class="screen hidden">
+    <h1 class="title-main" style="font-size:34px;">FIELD MANUAL</h1>
+    <p class="lore" style="text-align:left;max-width:420px;">
+      <b>① MOVEMENT</b><br>Your GPS speed drives the game. Walk slowly to scavenge safely. Jog/run to flee a horde — but running burns Stamina fast.<br><br>
+      <b>② HANDS & COMBOS</b><br>Tap lower-left / lower-right zones to swing with that hand. Alternating L-R-L-R builds a COMBO multiplier for bonus damage. A held swing (tap & hold ~0.4s) is a HEAVY attack — more damage, more durability loss, more stamina.<br><br>
+      <b>③ BLOCK & DODGE</b><br>Hold the center BLOCK button to raise your weapon/shield and reduce incoming damage. Tap the small middle-bottom zone to DODGE (sidestep) — perfectly timed against a telegraphed lunge, you take zero damage.<br><br>
+      <b>④ TELEGRAPHS</b><br>Zombies flash a warning ring before they lunge. React: block, dodge, or counter-swing during the window.<br><br>
+      <b>⑤ SCAVENGING</b><br>As you walk, the world generates nearby supply markers from your real GPS movement. Reach the marker's distance to loot — food, water, melee weapons, gun ammo, bandages.<br><br>
+      <b>⑥ HORDE TYPES</b><br>Shamblers are slow & weak. Runners close distance fast and attack quickly. Brutes hit hard and shrug off light weapons.<br><br>
+      <b>⑦ INJURY</b><br>Pressing an attack instead of disengaging raises your "Emotion" meter — high heat = high limb-injury risk. A hurt arm disables that hand's weapon. A hurt leg permanently caps speed & stamina regen for the run.<br><br>
+      <b>⑧ GUNS</b><br>Limited ammo, emergency only — best against Brutes or when surrounded.
+    </p>
+    <button class="btn" id="btn-back-title">BACK</button>
+  </div>
+
+  <!-- ===================== CLASS SELECT ===================== -->
+  <div id="screen-class" class="screen hidden">
+    <h1 class="title-main" style="font-size:34px;">CHOOSE YOUR SURVIVOR</h1>
+    <p class="lore" style="margin-top:4px;">Each background shapes your starting stats, loadout, and how the dead react to you.</p>
+    <div id="class-grid"></div>
+    <button class="btn big" id="btn-class-confirm" disabled>CONFIRM SURVIVOR</button>
+  </div>
+
+  <!-- ===================== PERMISSION SCREEN ===================== -->
+  <div id="screen-perm" class="screen hidden">
+    <h1 class="title-main" style="font-size:34px;">GEAR CHECK</h1>
+    <p id="perm-warning">
+      OUTBREAK WALK needs <b>Location</b> access to track your real walking/running speed,
+      and (on supported phones) <b>Motion/Orientation</b> for the first-person look-around.
+      Go outside, hold your phone naturally, and keep the screen on.<br><br>
+      <span style="color:var(--warn)">If permissions are denied or unavailable (e.g. desktop), a simulated walk/run mode will be used instead so you can still test the game.</span>
+    </p>
+    <button class="btn big" id="btn-grant">GRANT & DROP IN</button>
+    <button class="btn secondary" id="btn-sim">SKIP — SIMULATE MOVEMENT</button>
+  </div>
+
+  <!-- ===================== GAME ===================== -->
+  <div id="game">
+    <div id="world">
+      <div id="sky">
+        <div id="sun"></div>
+        <div id="clouds"></div>
+      </div>
+      <div id="ground"></div>
+      <div id="viewport">
+        <div class="world-layer" id="layer-far"></div>
+        <div class="world-layer" id="layer-mid"></div>
+        <div class="world-layer" id="layer-near"></div>
+      </div>
+      <div id="rain"></div>
+      <div class="fog"></div>
+      <div class="vignette"></div>
     </div>
-    <div class="row"><span>STAMINA</span><span id="staminaVal">100</span></div>
-    <div class="barwrap"><div class="barfill" id="staminaFill" style="width:100%"></div></div>
-    <div class="row"><span>HORDE PROXIMITY</span><span id="hordeVal">120m</span></div>
-    <div class="barwrap"><div class="barfill" id="hordeFill" style="width:0%"></div></div>
-  </div>
 
-  <!-- radar -->
-  <div id="radarwrap">
-    <div id="radar">
-      <div id="sweep"></div>
-      <div id="encounter-flash"></div>
-      <div id="player-dot"></div>
-      <div id="horde-blip" style="display:none;"></div>
-      <div id="lootlayer"></div>
-      <div id="center-label">RANGE 250m</div>
-      <div id="toast"></div>
+    <div id="hitflash"></div>
+    <div id="dodgeflash"></div>
+    <div id="combo"></div>
+
+    <!-- HANDS -->
+    <div id="hands">
+      <div class="hand left" id="hand-l"></div>
+      <div class="hand right" id="hand-r"></div>
+    </div>
+
+    <!-- swing / dodge tap zones -->
+    <div id="swing-l"></div>
+    <div id="swing-r"></div>
+    <div id="dodge-zone"></div>
+
+    <!-- TOP HUD -->
+    <div id="hud-top">
+      <div class="stat-block">
+        <div class="classname-tag" id="class-tag">Survivor</div>
+        <div class="stat-row"><span class="label">HP</span><div class="bar"><div class="bar-fill hp" id="bar-hp" style="width:100%"></div></div></div>
+        <div class="stat-row"><span class="label">STAM</span><div class="bar"><div class="bar-fill stam" id="bar-stam" style="width:100%"></div></div></div>
+        <div class="stat-row"><span class="label">FOOD</span><div class="bar"><div class="bar-fill hunger" id="bar-food" style="width:100%"></div></div></div>
+        <div class="stat-row"><span class="label">WATER</span><div class="bar"><div class="bar-fill hunger" id="bar-water" style="width:100%"></div></div></div>
+        <div id="limb-status">
+          <span class="limb" id="limb-arml">L-ARM</span>
+          <span class="limb" id="limb-armr">R-ARM</span>
+          <span class="limb" id="limb-legl">L-LEG</span>
+          <span class="limb" id="limb-legr">R-LEG</span>
+        </div>
+      </div>
+      <div id="distance-panel">
+        <div id="dist-val">0</div>
+        <div id="dist-label">METERS WALKED</div>
+        <div id="speed-val">idle</div>
+        <div id="time-val">06:00</div>
+      </div>
+    </div>
+
+    <div id="compass">— WASTELAND —<small id="compass-sub">Scavenging mode</small></div>
+
+    <div id="toasts"></div>
+
+    <!-- BOTTOM HUD -->
+    <div id="hud-bottom">
+      <div id="weapon-info">
+        <div id="weapon-name">Bare Hands</div>
+        <div id="weapon-dur" id="weapon-dur">—</div>
+        <div id="weapon-mode">Tap = light · Hold = heavy</div>
+      </div>
+      <div id="action-zone">
+        <div class="action-row">
+          <button class="action-btn block-btn" id="btn-block">BLOCK</button>
+          <button class="action-btn danger" id="btn-gun" disabled>FIRE GUN</button>
+        </div>
+        <button class="action-btn" id="btn-pickup" disabled>LOOT</button>
+      </div>
+    </div>
+
+    <!-- INVENTORY -->
+    <button class="action-btn" id="inv-toggle">PACK</button>
+    <div id="inventory" class="hidden">
+      <h2>SURVIVOR PACK</h2>
+      <div class="class-banner" id="inv-class-banner">—</div>
+      <div class="inv-section">
+        <h4>EQUIPPED — LEFT HAND</h4>
+        <div id="inv-left" class="inv-empty">Bare hand</div>
+      </div>
+      <div class="inv-section">
+        <h4>EQUIPPED — RIGHT HAND</h4>
+        <div id="inv-right" class="inv-empty">Bare hand</div>
+      </div>
+      <div class="inv-section">
+        <h4>MELEE WEAPONS CARRIED</h4>
+        <div id="inv-melee" class="inv-empty">None</div>
+      </div>
+      <div class="inv-section">
+        <h4>FIREARM</h4>
+        <div id="inv-gun" class="inv-empty">None</div>
+      </div>
+      <div class="inv-section">
+        <h4>SUPPLIES</h4>
+        <div id="inv-supplies" class="inv-empty">Empty</div>
+      </div>
+      <button class="btn secondary" id="inv-close">CLOSE</button>
+    </div>
+
+    <!-- ENCOUNTER MODAL -->
+    <div id="modal-overlay" class="hidden">
+      <div class="modal-box">
+        <h3 id="modal-title">???</h3>
+        <p id="modal-text">...</p>
+        <div id="modal-actions" style="margin-top:14px;"></div>
+      </div>
     </div>
   </div>
 
-  <!-- hands -->
-  <div id="handszone">
-    <div class="hand" id="lefthand"><span class="durability-tag" id="leftDur"></span></div>
-    <div class="hand" id="righthand"><span class="durability-tag" id="rightDur"></span></div>
-  </div>
-
-  <!-- sim speed -->
-  <div id="simrow">
-    <span>PACE</span>
-    <input type="range" id="speedSlider" min="0" max="3" step="1" value="1">
-    <span id="paceLabel">WALK</span>
-  </div>
-
-  <!-- controls -->
-  <div id="controls">
-    <button id="btnInventory">LOADOUT</button>
-    <button id="btnBase" class="amber">SET BASE</button>
-    <button id="btnReturn" class="amber" disabled>RETURN HOME</button>
-    <button id="btnLog">LOG</button>
-  </div>
-
-</div>
-
-<!-- START SCREEN -->
-<div id="start">
-  <h1>OUTBREAK</h1>
-  <div class="sub">
-    A field HUD overlay for an AR survival run.<br><br>
-    Walk in real life to scout the radar, sprint to escape the horde,
-    and tap your left / right hands to fight when it closes in.
-    Use the GPS toggle if you're outdoors, or the pace slider to test indoors.
-  </div>
-  <button id="btnStartGPS">ENABLE GPS &amp; START</button>
-  <button id="btnStartSim">START IN SIMULATION MODE</button>
-</div>
-
-<!-- INVENTORY MODAL -->
-<div class="modal-bg" id="modal-inventory">
-  <div class="modal">
-    <h2>LOADOUT</h2>
-    <p>Select a left-hand / right-hand combo from gear you've recovered. Broken weapons revert that hand to a fist.</p>
-    <div class="opt-grid" id="loadoutOptions"></div>
-    <p id="invHint" style="color:var(--bone-dim);"></p>
-    <div class="res-list" id="resourceList"></div>
-    <button class="closeBtn" onclick="closeModal('modal-inventory')">CLOSE</button>
-  </div>
-</div>
-
-<!-- BASE MODAL -->
-<div class="modal-bg" id="modal-base">
-  <div class="modal">
-    <h2>SAFE ZONE</h2>
-    <p id="baseIntro">You're home. Manage injuries, eat, drink, and repair gear before heading out again.</p>
-    <div class="limb-list" id="limbList"></div>
-    <div class="opt-grid">
-      <button id="actEat">EAT (-1 FOOD)</button>
-      <button id="actDrink">DRINK (-1 WATER)</button>
-      <button id="actRepair">REPAIR GEAR (-1 SCRAP)</button>
-      <button id="actAmputate" class="alert">AMPUTATE / SPLINT (-1 ANTIBIOTIC)</button>
-    </div>
-    <div class="res-list" id="resourceListBase"></div>
-    <button class="closeBtn" onclick="closeModal('modal-base')">HEAD OUT</button>
-  </div>
-</div>
-
-<!-- LOG MODAL -->
-<div class="modal-bg" id="modal-log">
-  <div class="modal">
-    <h2>RUN LOG</h2>
-    <div id="logEntries" style="font-size:11px;color:var(--bone-dim);line-height:1.8;max-height:50vh;overflow:auto;"></div>
-    <button class="closeBtn" onclick="closeModal('modal-log')">CLOSE</button>
-  </div>
 </div>
 
 <script>
-/* ============================================================
-   OUTBREAK — Field HUD prototype
-   ============================================================ */
-
-const WEAPONS = {
-  fist:        { name:"Fists",         hand:"either", dmg:5,  maxDur:Infinity },
-  riotShield:  { name:"Riot Shield",   hand:"left",   dmg:3,  maxDur:80,  block:0.5 },
-  machete:     { name:"Machete",       hand:"right",  dmg:22, maxDur:40 },
-  shortsword:  { name:"Short Sword",   hand:"either", dmg:14, maxDur:50 },
-  spear:       { name:"Spear (2H)",    hand:"both",   dmg:38, maxDur:35 },
-  spikedFists: { name:"Spiked Fists",  hand:"left",   dmg:9,  maxDur:60 },
-  combatKnife: { name:"Combat Knife",  hand:"right",  dmg:13, maxDur:55 },
-  pistol:      { name:"Pistol",        hand:"right",  dmg:55, maxDur:Infinity, ammo:true, noise:true },
-  shotgun:     { name:"Shotgun",       hand:"right",  dmg:999,maxDur:Infinity, ammo:true, noise:true, clear:true },
-};
-
-const LOADOUTS = [
-  { left:"fist",        right:"fist",        label:"Bare Hands" },
-  { left:"riotShield",  right:"machete",     label:"Shield + Machete" },
-  { left:"shortsword",  right:"shortsword",  label:"Dual Short Swords" },
-  { left:"spear",       right:"spear",       label:"Spear (2-Handed)" },
-  { left:"spikedFists", right:"combatKnife", label:"Knuckles + Knife" },
-  { left:"riotShield",  right:"pistol",      label:"Shield + Pistol" },
-  { left:"fist",        right:"shotgun",     label:"Fist + Shotgun" },
-];
-
-const PACE = ["IDLE","WALK","JOG","SPRINT"];
-const PACE_SPEED = [0, 1.2, 2.6, 4.2]; // m/s reference
-
-let state = {
-  mode: "sim", // "sim" or "gps"
-  pace: 1,
-  stamina: 100,
-  limbs: { leftArm:100, rightArm:100, legs:100, torso:100 },
-  durability: { left: WEAPONS.fist.maxDur, right: WEAPONS.fist.maxDur },
-  equipped: { left:"fist", right:"fist" },
-  owned: { fist:true },
-  resources: { food:2, water:2, scrap:1, antibiotics:0, ammo:2 },
-  horde: { distance: 120, health: 100, maxHealth:100, active:false },
-  loot: [],
-  home: null, // {lat,lon} or sim distance marker
-  simDistFromHome: 0,
-  gpsLastPos: null,
-  log: [],
-};
+/* ======================================================================
+   OUTBREAK WALK — single-file prototype v2
+   GPS-driven walking/running => movement & encounters
+   Class system + first-person dual-hand melee combat w/ combos,
+   block, dodge, telegraphs, varied zombie types, day/night & weather.
+   ====================================================================== */
 
 const $ = id => document.getElementById(id);
 
-/* ---------------- LOG / TOAST ---------------- */
-function addLog(msg){
-  const t = new Date().toLocaleTimeString();
-  state.log.unshift(`[${t}] ${msg}`);
-  if(state.log.length>50) state.log.pop();
-  renderLog();
-}
-function renderLog(){
-  $("logEntries").innerHTML = state.log.map(l=>`<div>${l}</div>`).join("") || "<div>No events yet.</div>";
-}
-let toastTimer=null;
-function toast(msg){
-  const t = $("toast");
+// ---------------------------------------------------------------------
+// CLASS DEFINITIONS
+// ---------------------------------------------------------------------
+const CLASSES = {
+  scavenger: {
+    id:'scavenger', name:'The Scavenger', tag:'Light feet, sharp eyes',
+    icon:`<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><circle cx="30" cy="30" r="26" fill="#2b3322" stroke="#7fae5e" stroke-width="2"/><path d="M18,38 L30,16 L42,38 Z" fill="#7fae5e"/><circle cx="30" cy="30" r="4" fill="#0c0e0b"/></svg>`,
+    desc:'Built for distance. Finds supplies faster, runs longer before tiring, but hits soft and breaks weapons quicker.',
+    stats:{hp:90, stamina:120, staminaRegen:1.25, dmgMult:0.85, durMult:0.8, lootBonus:1.3, noise:0.85},
+    bars:[['HP',-1],['STAMINA',1],['DAMAGE',-1],['DURABILITY',-0.5],['LOOT LUCK',1]],
+    startKit:{melee:'knife', supplies:{food:1,water:1,bandage:0}},
+  },
+  brawler: {
+    id:'brawler', name:'The Brawler', tag:'Hits first, hits hardest',
+    icon:`<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><circle cx="30" cy="30" r="26" fill="#3a2118" stroke="#e23b3b" stroke-width="2"/><rect x="14" y="24" width="32" height="14" rx="3" fill="#e8e1d0"/><rect x="14" y="24" width="32" height="14" rx="3" fill="none" stroke="#0c0e0b" stroke-width="2"/></svg>`,
+    desc:'Heavy hands, heavy heart. Bonus melee damage and HP, but burns stamina fast and runs out of breath sooner — bad combos with running.',
+    stats:{hp:120, stamina:85, staminaRegen:0.85, dmgMult:1.3, durMult:1.0, lootBonus:0.95, noise:1.15},
+    bars:[['HP',1],['STAMINA',-1],['DAMAGE',1],['DURABILITY',0],['LOOT LUCK',0]],
+    startKit:{melee:'knuckles', supplies:{food:0,water:1,bandage:1}},
+  },
+  medic: {
+    id:'medic', name:'The Medic', tag:'Patches up, plans ahead',
+    icon:`<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><circle cx="30" cy="30" r="26" fill="#1a2a2a" stroke="#e0b34a" stroke-width="2"/><rect x="26" y="14" width="8" height="32" fill="#e0b34a"/><rect x="14" y="26" width="32" height="8" fill="#e0b34a"/></svg>`,
+    desc:'Bandages heal more and supplies stretch further. Slightly fragile and average in a fight — survival favors avoidance.',
+    stats:{hp:100, stamina:100, staminaRegen:1.0, dmgMult:0.95, durMult:1.0, lootBonus:1.0, noise:1.0, healMult:1.6, hungerMult:0.75},
+    bars:[['HP',0],['STAMINA',0],['DAMAGE',0],['HEALING',1],['SUPPLY USE',1]],
+    startKit:{melee:'machete', supplies:{food:1,water:1,bandage:2}},
+  },
+  veteran: {
+    id:'veteran', name:'The Veteran', tag:'Cold blood, steady hands',
+    icon:`<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><circle cx="30" cy="30" r="26" fill="#2a2a2a" stroke="#9aa3a8" stroke-width="2"/><rect x="20" y="20" width="20" height="20" fill="#9aa3a8" transform="rotate(45 30 30)"/></svg>`,
+    desc:'Knows guns. Starts with a sidearm and extra ammo, and presses the attack without losing composure as quickly — but carries less food and water.',
+    stats:{hp:105, stamina:100, staminaRegen:1.0, dmgMult:1.05, durMult:1.1, lootBonus:1.0, noise:1.0, emotionMult:0.7},
+    bars:[['HP',0],['COMPOSURE',1],['DAMAGE',0],['DURABILITY',0],['RATIONS',-1]],
+    startKit:{melee:'shortsword', gun:'pistol', supplies:{food:0,water:0,bandage:1}},
+  },
+};
+
+// ---------------------------------------------------------------------
+// GAME STATE
+// ---------------------------------------------------------------------
+const state = {
+  hp: 100, maxHp:100, stamina: 100, food: 100, water: 100,
+  distance: 0, speed: 0, mode: 'explore',
+  limbs: { armL:true, armR:true, legL:true, legR:true },
+  hands: { left:null, right:null },
+  meleeBag: [],
+  gun: null,
+  supplies: { food:0, water:0, bandage:0 },
+  nearbyLoot: null, lootProgress: 0, threatTimer: 0,
+  twoHanded: false,
+  lastGPS: null, usingSim:false, simSpeedTarget:0,
+  emotionHeat: 0,
+  cls: null,                  // chosen class object
+  comboCount: 0, comboTimer:0, lastHand:null,
+  blocking:false,
+  gameTime: 6*60,              // minutes, 0-1440, start at 6:00am
+  weather:'clear',
+  weatherTimer: rnd ? 0 : 0,
+};
+
+// weapon library
+const MELEE_WEAPONS = [
+  { id:'knife', name:'Kitchen Knife', dur:30, dmg:8, hands:1 },
+  { id:'machete', name:'Machete', dur:45, dmg:18, hands:1 },
+  { id:'knuckles', name:'Brass Knuckles', dur:60, dmg:6, hands:1 },
+  { id:'shortsword', name:'Shortsword', dur:40, dmg:16, hands:1 },
+  { id:'sword', name:'Longsword', dur:35, dmg:22, hands:2 },
+  { id:'spear', name:'Pipe Spear', dur:38, dmg:20, hands:2, reach:true },
+  { id:'shield', name:'Riot Shield', dur:70, dmg:4, hands:1, block:true },
+  { id:'doublesword', name:'Twin Blades', dur:32, dmg:14, hands:2, dual:true },
+];
+const GUNS = [
+  { id:'pistol', name:'Service Pistol', maxAmmo:7, dmg:35 },
+  { id:'revolver', name:'Snub Revolver', maxAmmo:5, dmg:40 },
+];
+const FOOD_ITEMS = ['Canned Beans','Energy Bar','Jerky Strips','Stale Bread'];
+const WATER_ITEMS = ['Water Bottle','Juice Box','Canteen'];
+
+// zombie type library
+const ZTYPES = {
+  shambler:{ name:'Shambler', hpMin:24, hpMax:38, dmgMin:5, dmgMax:11, atkSpeed:2600, lungeSpeed:1.1, color:'#5a6e4e', tagClass:'shambler' },
+  runner:  { name:'Runner',   hpMin:18, hpMax:28, dmgMin:6, dmgMax:13, atkSpeed:1500, lungeSpeed:1.9, color:'#6e5a4e', tagClass:'runner' },
+  brute:   { name:'Brute',    hpMin:55, hpMax:75, dmgMin:12,dmgMax:22, atkSpeed:3200, lungeSpeed:0.9, color:'#4e5a3a', tagClass:'brute', durDmgMult:1.6 },
+};
+
+// ---------------------------------------------------------------------
+// UTIL
+// ---------------------------------------------------------------------
+function toast(msg, type=''){
+  const t = document.createElement('div');
+  t.className = 'toast' + (type?' '+type:'');
   t.textContent = msg;
-  t.classList.add("show");
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(()=>t.classList.remove("show"), 2600);
-  addLog(msg);
+  $('toasts').appendChild(t);
+  setTimeout(()=>t.remove(), 3100);
+}
+function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+function rnd(a,b){ return a + Math.random()*(b-a); }
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function shakeScreen(intensity='normal'){
+  const w = $('world');
+  w.classList.remove('shake'); void w.offsetWidth; w.classList.add('shake');
+  setTimeout(()=>w.classList.remove('shake'), 320);
+}
+function dmgNumber(text, x, y, opts={}){
+  const el = document.createElement('div');
+  el.className = 'dmgnum' + (opts.crit?' crit':'') + (opts.player?' player':'');
+  el.textContent = text;
+  el.style.left = x+'px'; el.style.top = y+'px';
+  $('viewport').appendChild(el);
+  setTimeout(()=>el.remove(), 700);
 }
 
-/* ---------------- AUDIO (synthesized) ---------------- */
-let actx=null;
-function audioCtx(){ if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)(); return actx; }
-function playGroan(){
-  try{
-    const ctx = audioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type="sawtooth";
-    osc.frequency.setValueAtTime(70 + Math.random()*30, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime+0.8);
-    gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime+0.1);
-    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+0.9);
-    osc.connect(gain); gain.connect(ctx.destination);
-    osc.start(); osc.stop(ctx.currentTime+0.9);
-  }catch(e){}
-}
-function playHit(){
-  try{
-    const ctx = audioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type="square";
-    osc.frequency.setValueAtTime(220, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(60, ctx.currentTime+0.15);
-    gain.gain.setValueAtTime(0.2, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+0.15);
-    osc.connect(gain); gain.connect(ctx.destination);
-    osc.start(); osc.stop(ctx.currentTime+0.15);
-  }catch(e){}
-}
-function playGunshot(){
-  try{
-    const ctx = audioCtx();
-    const bufferSize = ctx.sampleRate*0.2;
-    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for(let i=0;i<bufferSize;i++) data[i] = (Math.random()*2-1) * (1-i/bufferSize);
-    const noise = ctx.createBufferSource();
-    noise.buffer = buffer;
-    const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.4, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+0.2);
-    noise.connect(gain); gain.connect(ctx.destination);
-    noise.start();
-  }catch(e){}
-}
+// ---------------------------------------------------------------------
+// SCREEN NAV
+// ---------------------------------------------------------------------
+$('btn-start').onclick = () => { $('screen-title').classList.add('hidden'); buildClassSelect(); $('screen-class').classList.remove('hidden'); };
+$('btn-howto').onclick = () => { $('screen-title').classList.add('hidden'); $('screen-howto').classList.remove('hidden'); };
+$('btn-back-title').onclick = () => { $('screen-howto').classList.add('hidden'); $('screen-title').classList.remove('hidden'); };
 
-/* ---------------- WEAPON / HAND RENDERING ---------------- */
-function fistSVG(weapon){
-  // returns inner SVG markup for a hand based on weapon
-  switch(weapon){
-    case "machete":
-      return `<svg viewBox="0 0 200 200"><g>
-        <ellipse cx="60" cy="160" rx="55" ry="40" fill="#3a4634"/>
-        <rect x="55" y="10" width="22" height="120" rx="4" fill="#9aa6a0" transform="rotate(-18 66 70)"/>
-        <rect x="55" y="100" width="26" height="40" rx="4" fill="#5b4632" transform="rotate(-18 66 70)"/>
-      </g></svg>`;
-    case "riotShield":
-      return `<svg viewBox="0 0 200 200"><g>
-        <ellipse cx="60" cy="170" rx="60" ry="40" fill="#3a4634"/>
-        <rect x="10" y="10" width="120" height="150" rx="14" fill="#2b3d4a" stroke="#6fa8c8" stroke-width="4"/>
-        <rect x="30" y="30" width="80" height="110" rx="8" fill="#1d2b34"/>
-      </g></svg>`;
-    case "shortsword":
-      return `<svg viewBox="0 0 200 200"><g>
-        <ellipse cx="60" cy="165" rx="55" ry="38" fill="#3a4634"/>
-        <rect x="60" y="20" width="16" height="100" rx="3" fill="#c4cbc6" transform="rotate(-14 68 70)"/>
-        <rect x="56" y="105" width="24" height="35" rx="4" fill="#5b4632" transform="rotate(-14 68 70)"/>
-      </g></svg>`;
-    case "spear":
-      return `<svg viewBox="0 0 200 200"><g>
-        <ellipse cx="80" cy="175" rx="70" ry="35" fill="#3a4634"/>
-        <rect x="70" y="-10" width="12" height="220" fill="#7a5a3a" transform="rotate(-10 76 100)"/>
-        <polygon points="64,-10 88,-10 76,-50" fill="#c4cbc6" transform="rotate(-10 76 100)"/>
-      </g></svg>`;
-    case "spikedFists":
-      return `<svg viewBox="0 0 200 200"><g>
-        <ellipse cx="60" cy="160" rx="58" ry="42" fill="#3a4634"/>
-        <polygon points="30,120 40,90 50,120" fill="#c4cbc6"/>
-        <polygon points="55,115 65,85 75,115" fill="#c4cbc6"/>
-        <polygon points="80,120 90,90 100,120" fill="#c4cbc6"/>
-      </g></svg>`;
-    case "combatKnife":
-      return `<svg viewBox="0 0 200 200"><g>
-        <ellipse cx="60" cy="165" rx="55" ry="38" fill="#3a4634"/>
-        <rect x="65" y="40" width="14" height="70" rx="3" fill="#c4cbc6" transform="rotate(-10 72 75)"/>
-        <rect x="60" y="100" width="22" height="30" rx="4" fill="#222" transform="rotate(-10 72 75)"/>
-      </g></svg>`;
-    case "pistol":
-      return `<svg viewBox="0 0 200 200"><g>
-        <ellipse cx="60" cy="165" rx="55" ry="38" fill="#3a4634"/>
-        <rect x="40" y="90" width="70" height="22" rx="4" fill="#222"/>
-        <rect x="50" y="110" width="20" height="40" rx="3" fill="#222"/>
-      </g></svg>`;
-    case "shotgun":
-      return `<svg viewBox="0 0 200 200"><g>
-        <ellipse cx="70" cy="170" rx="65" ry="36" fill="#3a4634"/>
-        <rect x="30" y="70" width="140" height="20" rx="4" fill="#3a2c1e"/>
-        <rect x="30" y="92" width="140" height="14" rx="4" fill="#222"/>
-      </g></svg>`;
-    default: // fist
-      return `<svg viewBox="0 0 200 200"><g>
-        <ellipse cx="60" cy="155" rx="58" ry="46" fill="#3a4634"/>
-        <circle cx="55" cy="105" r="42" fill="#5e6b53"/>
-      </g></svg>`;
-  }
-}
-
-function renderHands(){
-  const leftW = state.durability.left<=0 ? "fist" : state.equipped.left;
-  const rightW = state.durability.right<=0 ? "fist" : state.equipped.right;
-  $("lefthand").innerHTML = fistSVG(leftW) + `<span class="durability-tag" id="leftDur"></span>`;
-  $("righthand").innerHTML = fistSVG(rightW) + `<span class="durability-tag" id="rightDur"></span>`;
-
-  $("lefthand").classList.toggle("limp", state.limbs.leftArm<=0);
-  $("righthand").classList.toggle("limp", state.limbs.rightArm<=0);
-
-  const ld = WEAPONS[leftW].maxDur===Infinity ? "—" : `${Math.max(0,Math.round(state.durability.left))}%`;
-  const rd = WEAPONS[rightW].maxDur===Infinity ? "—" : `${Math.max(0,Math.round(state.durability.right))}%`;
-  $("leftDur").textContent = `${WEAPONS[leftW].name} ${ld}`;
-  $("rightDur").textContent = `${WEAPONS[rightW].name} ${rd}`;
-}
-
-/* ---------------- LOADOUT / EQUIP ---------------- */
-function equip(left,right){
-  // unequip whatever, set durability fresh if switching to an owned item not currently equipped at full
-  state.equipped.left = left;
-  state.equipped.right = right;
-  if(state.durability.leftKey !== left) state.durability.left = WEAPONS[left].maxDur===Infinity?Infinity:WEAPONS[left].maxDur;
-  if(state.durability.rightKey !== right) state.durability.right = WEAPONS[right].maxDur===Infinity?Infinity:WEAPONS[right].maxDur;
-  state.durability.leftKey = left;
-  state.durability.rightKey = right;
-  renderHands();
-}
-equip("fist","fist");
-
-function renderLoadoutOptions(){
-  const wrap = $("loadoutOptions");
-  wrap.innerHTML = "";
-  LOADOUTS.forEach(combo=>{
-    const ownedAll = (combo.left==="fist"||state.owned[combo.left]) && (combo.right==="fist"||state.owned[combo.right]);
-    const btn = document.createElement("button");
-    btn.textContent = combo.label;
-    if(!ownedAll){ btn.disabled = true; btn.title="Not found yet"; }
-    if(state.equipped.left===combo.left && state.equipped.right===combo.right) btn.classList.add("selected");
-    btn.onclick = ()=>{ equip(combo.left, combo.right); toast(`Equipped: ${combo.label}`); renderLoadoutOptions(); };
-    wrap.appendChild(btn);
-  });
-  $("invHint").textContent = "Combos grey out until you scavenge the matching gear from loot nodes.";
-  renderResourceList("resourceList");
-}
-
-function renderResourceList(targetId){
-  const r = state.resources;
-  $(targetId).innerHTML = `
-    <div class="res-item"><span>Food</span><span>${r.food}</span></div>
-    <div class="res-item"><span>Water</span><span>${r.water}</span></div>
-    <div class="res-item"><span>Scrap</span><span>${r.scrap}</span></div>
-    <div class="res-item"><span>Antibiotics</span><span>${r.antibiotics}</span></div>
-    <div class="res-item"><span>Ammo</span><span>${r.ammo}</span></div>
-  `;
-}
-
-/* ---------------- RADAR / LOOT ---------------- */
-const RADAR_RANGE = 250; // meters represented edge-to-edge radius
-function radarRadiusPx(){ return $("radar").clientWidth/2; }
-
-function spawnLoot(){
-  if(state.loot.length>=4) return;
-  const types = [
-    {type:"loot-common", weight:6, name:"Supply Cache"},
-    {type:"loot-high", weight:1, name:"Gun Shop"},
-    {type:"loot-weapon", weight:2, name:"Weapon Drop"},
-  ];
-  const total = types.reduce((s,t)=>s+t.weight,0);
-  let r = Math.random()*total, pick;
-  for(const t of types){ if(r<t.weight){pick=t;break;} r-=t.weight; }
-  state.loot.push({
-    id: Math.random().toString(36).slice(2),
-    type: pick.type,
-    name: pick.name,
-    bearing: Math.random()*360,
-    distance: 60 + Math.random()*180,
+// ---------------------------------------------------------------------
+// CLASS SELECT
+// ---------------------------------------------------------------------
+function buildClassSelect(){
+  const grid = $('class-grid');
+  grid.innerHTML = '';
+  Object.values(CLASSES).forEach(cls=>{
+    const card = document.createElement('div');
+    card.className = 'class-card';
+    card.dataset.id = cls.id;
+    const barsHTML = cls.bars.map(([label,val])=>{
+      const pct = 50 + val*35;
+      const cls2 = val<0 ? 'neg' : '';
+      return `<div class="cstat"><span class="cn">${label}</span><div class="cbar"><div class="cfill ${cls2}" style="width:${pct}%"></div></div></div>`;
+    }).join('');
+    card.innerHTML = `
+      <div class="ci">${cls.tag.toUpperCase()}</div>
+      <div class="class-icon">${cls.icon}</div>
+      <div class="class-name">${cls.name}</div>
+      <div class="class-tag">${cls.tag}</div>
+      <div class="class-desc">${cls.desc}</div>
+      <div class="class-stats">${barsHTML}</div>
+    `;
+    card.onclick = ()=>{
+      grid.querySelectorAll('.class-card').forEach(c=>c.classList.remove('selected'));
+      card.classList.add('selected');
+      state.cls = cls;
+      $('btn-class-confirm').disabled = false;
+    };
+    grid.appendChild(card);
   });
 }
+$('btn-class-confirm').onclick = ()=>{
+  if (!state.cls) return;
+  applyClass(state.cls);
+  $('screen-class').classList.add('hidden');
+  $('screen-perm').classList.remove('hidden');
+};
 
-function renderLoot(){
-  const layer = $("lootlayer");
-  layer.innerHTML = "";
-  const R = radarRadiusPx();
-  state.loot.forEach(l=>{
-    const frac = Math.min(l.distance/RADAR_RANGE, 0.96);
-    const rad = frac*R;
-    const ang = (l.bearing-90) * Math.PI/180;
-    const x = R + Math.cos(ang)*rad;
-    const y = R + Math.sin(ang)*rad;
-    const div = document.createElement("div");
-    div.className = "blip "+l.type;
-    div.style.left = x+"px";
-    div.style.top = y+"px";
-    div.title = `${l.name} — ${Math.round(l.distance)}m`;
-    layer.appendChild(div);
-  });
-}
-
-function renderHorde(){
-  const blip = $("horde-blip");
-  if(state.horde.distance > RADAR_RANGE*1.3){
-    blip.style.display="none";
-    return;
+function applyClass(cls){
+  const s = cls.stats;
+  state.maxHp = s.hp; state.hp = s.hp;
+  state.stamina = s.stamina; state.maxStamina = s.stamina;
+  $('class-tag').textContent = cls.name;
+  // starting kit
+  if (cls.startKit.melee){
+    const w = {...MELEE_WEAPONS.find(m=>m.id===cls.startKit.melee)};
+    w.dur = Math.round(w.dur * (s.durMult||1));
+    state.meleeBag.push(w);
+    autoEquip(w);
   }
-  blip.style.display="block";
-  const R = radarRadiusPx();
-  const frac = Math.min(state.horde.distance/RADAR_RANGE, 0.98);
-  const rad = frac*R;
-  // fixed bearing for the horde, behind player (south-ish), recompute occasionally
-  if(state._hordeBearing===undefined) state._hordeBearing = 150 + Math.random()*60;
-  const ang = (state._hordeBearing-90) * Math.PI/180;
-  blip.style.left = (R + Math.cos(ang)*rad)+"px";
-  blip.style.top = (R + Math.sin(ang)*rad)+"px";
-}
-
-/* ---------------- LIMB / EDGE UI ---------------- */
-function updateEdges(){
-  const map = {
-    "edge-left": state.limbs.leftArm,
-    "edge-right": state.limbs.rightArm,
-    "edge-bottom": state.limbs.legs,
-    "edge-top": state.stamina,
-  };
-  for(const [id,val] of Object.entries(map)){
-    const el = $(id);
-    el.classList.remove("edge-crit","edge-warn");
-    if(val<=0) el.classList.add("edge-crit");
-    else if(val<35) el.classList.add("edge-warn");
+  if (cls.startKit.gun){
+    const g = {...GUNS.find(g=>g.id===cls.startKit.gun)};
+    g.ammo = g.maxAmmo;
+    state.gun = g;
   }
+  const sk = cls.startKit.supplies||{};
+  state.supplies.food += sk.food||0;
+  state.supplies.water += sk.water||0;
+  state.supplies.bandage += sk.bandage||0;
 }
 
-function updateTopbar(){
-  $("staminaVal").textContent = Math.round(state.stamina);
-  $("staminaFill").style.width = Math.max(0,state.stamina)+"%";
-  const hv = Math.max(0, Math.round(state.horde.distance));
-  $("hordeVal").textContent = hv+"m";
-  const pct = 100 - Math.min(100, (hv/120)*100);
-  $("hordeFill").style.width = Math.max(0,pct)+"%";
-  $("modeLabel").textContent = (state.mode==="gps"?"GPS MODE · ":"SIM MODE · ") + PACE[state.pace];
-  $("paceLabel").textContent = PACE[state.pace];
-}
-
-/* ---------------- LIMB DAMAGE ---------------- */
-function damageLimb(){
-  const limbsAvail = [];
-  if(state.limbs.leftArm>0) limbsAvail.push("leftArm");
-  if(state.limbs.rightArm>0) limbsAvail.push("rightArm");
-  limbsAvail.push("legs","torso");
-  const limb = limbsAvail[Math.floor(Math.random()*limbsAvail.length)];
-  state.limbs[limb] = Math.max(0, state.limbs[limb] - (15+Math.random()*20));
-  toast(`HIT — ${labelLimb(limb)} took damage (${Math.round(state.limbs[limb])}%)`);
-  if(state.limbs[limb]<=0){
-    if(limb==="leftArm"||limb==="rightArm"){
-      toast(`${labelLimb(limb)} is CRIPPLED — that hand is unusable until treated.`);
-    } else if(limb==="legs"){
-      toast(`LEGS CRIPPLED — your movement is slowed. Outrunning the horde now costs more stamina.`);
-    } else {
-      toast(`TORSO badly hurt — stamina regen impaired.`);
-    }
+// ---------------------------------------------------------------------
+// PERMISSIONS / START
+// ---------------------------------------------------------------------
+$('btn-grant').onclick = async () => {
+  let gotGPS = false;
+  if ('geolocation' in navigator) {
+    try {
+      await new Promise((res,rej)=>{
+        navigator.geolocation.getCurrentPosition(p=>{gotGPS=true;res(p);}, rej, {enableHighAccuracy:true, timeout:6000});
+      });
+    } catch(e){ gotGPS=false; }
   }
-  updateEdges();
-  renderHands();
-}
-function labelLimb(l){
-  return {leftArm:"Left arm",rightArm:"Right arm",legs:"Legs",torso:"Torso"}[l];
-}
-
-/* ---------------- ENCOUNTER / COMBAT ---------------- */
-function setEncounter(active){
-  state.horde.active = active;
-  $("encounter-flash").classList.toggle("flash-on", active);
-  if(active && !state._groanInterval){
-    playGroan();
-    state._groanInterval = setInterval(playGroan, 2600);
+  if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+    try { await DeviceOrientationEvent.requestPermission(); } catch(e){}
   }
-  if(!active && state._groanInterval){
-    clearInterval(state._groanInterval);
-    state._groanInterval = null;
-  }
-}
+  startGame(gotGPS);
+};
+$('btn-sim').onclick = () => startGame(false);
 
-function attack(side){
-  if(!state.horde.active) return;
-  const limbKey = side==="left"?"leftArm":"rightArm";
-  if(state.limbs[limbKey]<=0){ toast(`${labelLimb(limbKey)} is crippled — can't attack with that hand.`); return; }
-
-  const weaponKey = state.durability[side]<=0 ? "fist" : state.equipped[side];
-  const weapon = WEAPONS[weaponKey];
-
-  if(weapon.ammo){
-    if(state.resources.ammo<=0){ toast("Out of ammo — switch to melee."); return; }
-    state.resources.ammo--;
-    playGunshot();
-    if(weapon.clear){
-      state.horde.health = 0;
-      toast("SHOTGUN BLAST — horde scattered! (noise will draw more soon)");
-    } else {
-      state.horde.health -= weapon.dmg;
-      toast(`Pistol shot — ${weapon.dmg} dmg.`);
-    }
-    if(weapon.noise){
-      state.horde.distance = Math.max(10, state.horde.distance - 5); // shot draws them in faster next time too
-      state._noiseFlag = true;
-    }
-  } else {
-    playHit();
-    state.horde.health -= weapon.dmg;
-    if(weapon.maxDur!==Infinity){
-      state.durability[side] -= 1;
-      if(state.durability[side]<=0){
-        toast(`Your ${weapon.name} broke! That hand is now bare.`);
-      }
-    }
-  }
-
-  document.getElementById(side+"hand").classList.add("hand-hit");
-  setTimeout(()=>document.getElementById(side+"hand").classList.remove("hand-hit"), 150);
-
-  if(state.horde.health<=0){
-    toast("Horde cleared! You find scraps among the bodies.");
-    state.resources.scrap += 1;
-    if(Math.random()<0.3) state.resources.ammo += 2;
-    state.horde.health = state.horde.maxHealth = Math.min(220, state.horde.maxHealth+15);
-    state.horde.distance = 90 + Math.random()*80;
-    state._hordeBearing = undefined;
-    setEncounter(false);
-  }
-  renderHands();
+function startGame(useGPS){
+  $('screen-perm').classList.add('hidden');
+  $('game').classList.add('active');
+  state.usingSim = !useGPS;
+  if (useGPS) initGPS(); else initSimMovement();
+  initOrientation();
+  buildWorld();
+  buildClouds();
+  spawnLoot();
+  $('btn-gun').disabled = !(state.gun && state.gun.ammo>0);
+  if (state.gun) renderInventory();
+  toast(useGPS ? "GPS LOCK ACQUIRED. Move slowly to scavenge." : "SIMULATION MODE: WALK/RUN buttons enabled bottom-left.", 'good');
+  if (!useGPS) buildSimControls();
+  renderHands(); updateWeaponInfo(); updateLimbUI();
+  requestAnimationFrame(loop);
 }
 
-document.getElementById("lefthand").addEventListener("click", ()=>attack("left"));
-document.getElementById("righthand").addEventListener("click", ()=>attack("right"));
-
-/* ---------------- HOME / BASE ---------------- */
-function distanceToHomeMeters(){
-  if(state.mode==="gps"){
-    if(!state.home || !state.gpsLastPos) return Infinity;
-    return haversine(state.home.lat, state.home.lon, state.gpsLastPos.lat, state.gpsLastPos.lon);
-  } else {
-    return state.simDistFromHome;
-  }
-}
+// ---------------------------------------------------------------------
+// GPS MOVEMENT TRACKING
+// ---------------------------------------------------------------------
 function haversine(lat1,lon1,lat2,lon2){
-  const R=6371000, toRad = d=>d*Math.PI/180;
-  const dLat = toRad(lat2-lat1), dLon = toRad(lon2-lon1);
-  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
-  return 2*R*Math.asin(Math.sqrt(a));
+  const R=6371000, toRad=d=>d*Math.PI/180;
+  const dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1);
+  const a=Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
-
-$("btnBase").onclick = ()=>{
-  if(state.mode==="gps" && state.gpsLastPos){
-    state.home = {lat:state.gpsLastPos.lat, lon:state.gpsLastPos.lon};
-    toast("Base tagged at your current GPS location.");
-  } else {
-    state.home = "sim";
-    state.simDistFromHome = 0;
-    toast("Base tagged here (simulation).");
-  }
-  $("btnReturn").disabled = false;
-};
-
-$("btnReturn").onclick = ()=>{
-  const d = distanceToHomeMeters();
-  if(d>20){ toast(`Still ${Math.round(d)}m from base — keep moving toward it.`); return; }
-  openModal("modal-base");
-};
-
-function renderLimbList(){
-  const order = ["leftArm","rightArm","legs","torso"];
-  $("limbList").innerHTML = order.map(l=>{
-    const v = state.limbs[l];
-    const color = v<=0?"var(--red)":v<35?"var(--amber)":"var(--green)";
-    return `<div class="limb-row">
-      <span style="width:80px;">${labelLimb(l)}</span>
-      <div class="barwrap"><div class="limb-fill" style="width:${v}%;background:${color}"></div></div>
-      <span style="width:34px;text-align:right;">${Math.round(v)}%</span>
-    </div>`;
-  }).join("");
-  renderResourceList("resourceListBase");
-}
-
-$("actEat").onclick = ()=>{
-  if(state.resources.food<=0){ toast("No food left."); return; }
-  state.resources.food--;
-  state.stamina = 100;
-  const lowest = Object.keys(state.limbs).reduce((a,b)=>state.limbs[a]<state.limbs[b]?a:b);
-  state.limbs[lowest] = Math.min(100, state.limbs[lowest]+15);
-  toast("Ate rations — stamina restored, minor healing.");
-  renderLimbList(); updateEdges(); updateTopbar(); renderHands();
-};
-$("actDrink").onclick = ()=>{
-  if(state.resources.water<=0){ toast("No water left."); return; }
-  state.resources.water--;
-  state.torsoBoost = true;
-  state.limbs.torso = Math.min(100, state.limbs.torso+15);
-  toast("Drank water — torso condition improved, regen boosted for the next run.");
-  renderLimbList(); updateEdges();
-};
-$("actRepair").onclick = ()=>{
-  if(state.resources.scrap<=0){ toast("No scrap left."); return; }
-  state.resources.scrap--;
-  ["left","right"].forEach(side=>{
-    const w = state.equipped[side];
-    if(WEAPONS[w].maxDur!==Infinity) state.durability[side]=WEAPONS[w].maxDur;
-  });
-  toast("Repaired equipped weapons to full durability.");
-  renderHands(); renderLimbList();
-};
-$("actAmputate").onclick = ()=>{
-  const crippled = Object.keys(state.limbs).filter(l=>state.limbs[l]<=0);
-  if(crippled.length===0){ toast("No crippled limbs to treat."); return; }
-  if(state.resources.antibiotics<=0){ toast("No antibiotics left."); return; }
-  state.resources.antibiotics--;
-  const limb = crippled[0];
-  state.limbs[limb] = 50;
-  toast(`${labelLimb(limb)} splinted / prosthetic crafted — restored to 50%.`);
-  renderLimbList(); updateEdges(); renderHands();
-};
-
-/* ---------------- MODALS ---------------- */
-function openModal(id){ $(id).classList.add("show"); if(id==="modal-inventory") renderLoadoutOptions(); if(id==="modal-base") renderLimbList(); if(id==="modal-log") renderLog(); }
-function closeModal(id){ $(id).classList.remove("show"); }
-$("btnInventory").onclick = ()=>openModal("modal-inventory");
-$("btnLog").onclick = ()=>openModal("modal-log");
-
-/* ---------------- GPS ---------------- */
-function startGPS(){
-  if(!navigator.geolocation){ toast("Geolocation not available — falling back to simulation."); return; }
+function initGPS(){
   navigator.geolocation.watchPosition(pos=>{
     const {latitude, longitude, speed} = pos.coords;
-    const now = Date.now();
-    let mps = speed;
-    if(mps==null || isNaN(mps)){
-      if(state.gpsLastPos){
-        const d = haversine(state.gpsLastPos.lat,state.gpsLastPos.lon,latitude,longitude);
-        const dt = (now-state.gpsLastPos.t)/1000;
-        mps = dt>0 ? d/dt : 0;
-      } else mps = 0;
+    if (state.lastGPS){
+      const d = haversine(state.lastGPS.lat, state.lastGPS.lon, latitude, longitude);
+      if (d < 50 && d > 0.3){ addDistance(d); }
     }
-    state.gpsLastPos = {lat:latitude, lon:longitude, t:now};
-    state._gpsSpeed = mps;
-    // map to pace bucket
-    if(mps<0.4) state.pace=0;
-    else if(mps<1.8) state.pace=1;
-    else if(mps<3.2) state.pace=2;
-    else state.pace=3;
-  }, err=>{
-    toast("GPS error: "+err.message+" — using simulation pace.");
-  }, {enableHighAccuracy:true, maximumAge:2000, timeout:8000});
+    state.speed = (speed!=null && speed>=0) ? speed : state.speed;
+    state.lastGPS = {lat:latitude, lon:longitude};
+  }, err=>{ toast('GPS signal lost — switching to simulation.', 'danger'); initSimMovement(); buildSimControls(); state.usingSim=true; }, {enableHighAccuracy:true, maximumAge:1000, timeout:8000});
+}
+function initSimMovement(){ state.usingSim = true; }
+function buildSimControls(){
+  if ($('sim-controls')) return;
+  const div = document.createElement('div');
+  div.id='sim-controls';
+  div.style.position='absolute'; div.style.left='10px'; div.style.bottom='80px'; div.style.zIndex='32';
+  div.style.display='flex'; div.style.gap='6px';
+  div.innerHTML = `
+    <button class="action-btn" id="sim-idle">IDLE</button>
+    <button class="action-btn" id="sim-walk">WALK</button>
+    <button class="action-btn danger" id="sim-run">RUN</button>`;
+  $('game').appendChild(div);
+  $('sim-idle').onclick=()=>state.simSpeedTarget=0;
+  $('sim-walk').onclick=()=>state.simSpeedTarget=1.3;
+  $('sim-run').onclick=()=>state.simSpeedTarget=3.5;
 }
 
-/* ---------------- SIM SPEED ---------------- */
-$("speedSlider").addEventListener("input", e=>{
-  if(state.mode==="gps") return;
-  state.pace = parseInt(e.target.value,10);
+let lastFrameTime = performance.now();
+function addDistance(meters){
+  const cls = state.cls.stats;
+  const legPenalty = (state.limbs.legL && state.limbs.legR) ? 1 : 0.55;
+  state.distance += meters;
+  $('dist-val').textContent = Math.floor(state.distance);
+  scrollWorld(meters);
+  state.lootProgress += meters;
+  checkLootArrival();
+  const noise = cls.noise||1;
+  if (state.speed > 2.5) state.threatTimer += meters * 1.8 * noise;
+  else state.threatTimer += meters * 0.6 * noise;
+  checkThreatTrigger();
+  if (state.speed > 2.2){
+    const drain = meters * (1.2/legPenalty) / (cls.staminaRegen||1) * 0.8;
+    state.stamina = clamp(state.stamina - drain, 0, state.maxStamina);
+  }
+  const hungerMult = cls.hungerMult||1;
+  state.food = clamp(state.food - meters*0.02*hungerMult, 0, 100);
+  state.water = clamp(state.water - meters*0.03*hungerMult, 0, 100);
+  // in-game clock: ~1 real meter = ~2 in-game minutes
+  state.gameTime = (state.gameTime + meters*2) % 1440;
+}
+
+// ---------------------------------------------------------------------
+// ORIENTATION -> world pan (first person look)
+// ---------------------------------------------------------------------
+let heading = 0;
+function initOrientation(){
+  window.addEventListener('deviceorientation', e=>{ if (e.alpha != null) heading = e.alpha; });
+}
+function scrollWorld(meters){
+  const farShift = (state.distance * 3) % 2000;
+  const midShift = (state.distance * 6) % 2000;
+  const nearShift = (state.distance * 11) % 2000;
+  $('layer-far').style.transform = `translateX(${-farShift}px)`;
+  $('layer-mid').style.transform = `translateX(${-midShift}px)`;
+  $('layer-near').style.transform = `translateX(${-nearShift}px)`;
+}
+
+// ---------------------------------------------------------------------
+// WORLD BUILDING (decorative parallax sprites + sky)
+// ---------------------------------------------------------------------
+function buildWorld(){
+  // far: distant skyline / dead trees
+  const farHTML = [];
+  for(let i=0;i<14;i++){
+    const h = rnd(60,150);
+    farHTML.push(`<div style="position:absolute;bottom:42%;left:${i*180}px;width:${rnd(40,70)}px;height:${h}px;
+      background:linear-gradient(180deg,#2c3424,#1a200f);opacity:.65;
+      clip-path:polygon(0 100%,15% 0,45% 25%,55% 5%,85% 30%,100% 100%);"></div>`);
+    // duplicate set for seamless loop
+    farHTML.push(`<div style="position:absolute;bottom:42%;left:${(i+14)*180}px;width:${rnd(40,70)}px;height:${h}px;
+      background:linear-gradient(180deg,#2c3424,#1a200f);opacity:.65;
+      clip-path:polygon(0 100%,15% 0,45% 25%,55% 5%,85% 30%,100% 100%);"></div>`);
+  }
+  $('layer-far').innerHTML = farHTML.join('');
+
+  // mid: wrecked cars, road signs, debris
+  const midHTML = [];
+  const midPieces = [
+    h=>`<div style="position:absolute;bottom:22%;left:${h}px;width:90px;height:38px;background:#7a3a1d;border-radius:6px 10px 4px 4px;box-shadow:inset 0 -8px 0 rgba(0,0,0,.3);"><div style="position:absolute;top:-14px;left:14px;width:50px;height:16px;background:#5a2a14;border-radius:6px 6px 0 0;"></div></div>`,
+    h=>`<div style="position:absolute;bottom:24%;left:${h}px;width:6px;height:60px;background:#444;"><div style="position:absolute;top:-4px;left:-12px;width:30px;height:18px;background:var(--rust);border:2px solid #222;"></div></div>`,
+    h=>`<div style="position:absolute;bottom:22%;left:${h}px;width:50px;height:24px;background:#2a2a2a;border-radius:3px;"></div>`,
+  ];
+  for(let i=0;i<12;i++){
+    const x = i*320 + rnd(0,80);
+    midHTML.push(pick(midPieces)(x));
+    midHTML.push(pick(midPieces)(x+12*320));
+  }
+  $('layer-mid').innerHTML = midHTML.join('');
+
+  // near: foreground silhouettes (fences, dead bushes)
+  const nearHTML = [];
+  for(let i=0;i<10;i++){
+    nearHTML.push(`<div style="position:absolute;bottom:16%;left:${i*240+60}px;width:30px;height:${rnd(80,180)}px;background:#1a1f15;border-radius:2px 2px 0 0;"></div>`);
+    nearHTML.push(`<div style="position:absolute;bottom:16%;left:${(i+10)*240+60}px;width:30px;height:${rnd(80,180)}px;background:#1a1f15;border-radius:2px 2px 0 0;"></div>`);
+  }
+  $('layer-near').innerHTML = nearHTML.join('');
+}
+function buildClouds(){
+  const c = $('clouds');
+  let html='';
+  for(let i=0;i<6;i++){
+    const w = rnd(120,260), h=w*0.35;
+    html += `<div class="cloud" style="width:${w}px;height:${h}px;top:${rnd(0,40)}%;left:${rnd(-10,110)}%;"></div>`;
+  }
+  c.innerHTML = html;
+}
+// rain particle build (once, toggled via CSS opacity)
+function buildRain(){
+  const r = $('rain');
+  if (r.dataset.built) return;
+  let html='';
+  for(let i=0;i<60;i++){
+    const left = rnd(0,100), dur = rnd(0.5,1.1), delay = rnd(0,1);
+    html += `<div class="rain-drop" style="left:${left}%;animation-duration:${dur}s;animation-delay:${delay}s;"></div>`;
+  }
+  r.innerHTML = html;
+  r.dataset.built='1';
+}
+
+// ---------------------------------------------------------------------
+// DAY/NIGHT + WEATHER
+// ---------------------------------------------------------------------
+function updateDayNight(){
+  const t = state.gameTime; // 0-1440
+  // ambient brightness curve: dark at night, bright midday
+  let amb;
+  if (t<300 || t>=1260) amb = 0.35;          // deep night
+  else if (t<420) amb = 0.35 + (t-300)/120*0.5;   // dawn
+  else if (t<1080) amb = 0.85 + Math.sin((t-420)/660*Math.PI)*0.15; // day
+  else amb = 0.85 - (t-1080)/180*0.5;          // dusk
+  document.documentElement.style.setProperty('--amb-light', amb.toFixed(2));
+
+  // fog color shifts: warm dusk/dawn tint, cool deep night, neutral day
+  let fog;
+  if (t<300 || t>=1320) fog='6,8,14';
+  else if (t<480) fog='40,24,18';
+  else if (t<1080) fog='10,12,8';
+  else fog='34,18,16';
+  document.documentElement.style.setProperty('--fog-color', fog);
+
+  // sun position/visibility
+  const sunEl = $('sun');
+  if (t>=360 && t<1140){
+    const prog = (t-360)/(1140-360);
+    sunEl.style.opacity = (Math.sin(prog*Math.PI)).toFixed(2);
+    sunEl.style.left = (20 + prog*60)+'%';
+    sunEl.style.top = (30 - Math.sin(prog*Math.PI)*22)+'%';
+  } else {
+    sunEl.style.opacity = '0';
+  }
+
+  // time label
+  const hh = Math.floor(t/60).toString().padStart(2,'0');
+  const mm = Math.floor(t%60).toString().padStart(2,'0');
+  $('time-val').textContent = `${hh}:${mm}`;
+}
+function updateWeather(dt){
+  state.weatherTimer -= dt;
+  if (state.weatherTimer <= 0){
+    state.weatherTimer = rnd(60,180);
+    if (state.weather==='clear' && Math.random()<0.3){
+      state.weather='rain';
+      $('rain').classList.add('on');
+      buildRain();
+      toast('Rain starts falling — visibility drops, footsteps muffled.', 'warnt');
+    } else if (state.weather==='rain'){
+      state.weather='clear';
+      $('rain').classList.remove('on');
+      toast('The rain clears up.', '');
+    }
+  }
+}
+
+// ---------------------------------------------------------------------
+// HANDS / WEAPON RENDERING
+// ---------------------------------------------------------------------
+function handSVG(weapon){
+  const skin = '#caa07a';
+  let weaponSVG = '';
+  if (weapon){
+    switch(weapon.id){
+      case 'knife': weaponSVG = `<rect x="60" y="10" width="10" height="60" fill="#ccc"/><rect x="58" y="60" width="14" height="30" fill="#5a3a20"/>`; break;
+      case 'machete': weaponSVG = `<polygon points="50,0 75,0 70,90 55,90" fill="#bbb"/><rect x="55" y="85" width="20" height="35" fill="#3a2a18"/>`; break;
+      case 'knuckles': weaponSVG = `<rect x="40" y="60" width="60" height="22" fill="#ddd" rx="4"/>`; break;
+      case 'shortsword': weaponSVG = `<polygon points="55,0 75,0 72,100 58,100" fill="#d8d8d8"/><rect x="56" y="95" width="18" height="30" fill="#4a3522"/>`; break;
+      case 'sword': weaponSVG = `<polygon points="50,-30 80,-30 75,110 55,110" fill="#e0e0e0"/><rect x="55" y="105" width="20" height="40" fill="#3a2a18"/>`; break;
+      case 'spear': weaponSVG = `<rect x="60" y="-60" width="8" height="220" fill="#6a4a2a"/><polygon points="55,-60 73,-60 64,-100" fill="#ccc"/>`; break;
+      case 'shield': weaponSVG = `<rect x="20" y="-10" width="90" height="130" rx="14" fill="#5a4a30" stroke="#222" stroke-width="4"/>`; break;
+      case 'doublesword': weaponSVG = `<polygon points="40,-20 60,-20 56,100 44,100" fill="#e0e0e0"/><polygon points="70,-20 90,-20 86,100 74,100" fill="#e0e0e0"/>`; break;
+      default: break;
+    }
+  }
+  return `<svg viewBox="-40 -60 220 320" xmlns="http://www.w3.org/2000/svg">
+    ${weaponSVG}
+    <path d="M60,90 Q40,180 70,260 L120,260 Q110,170 130,90 Z" fill="${skin}" stroke="#7a5a3a" stroke-width="3"/>
+    <ellipse cx="95" cy="80" rx="38" ry="22" fill="${skin}"/>
+  </svg>`;
+}
+function renderHands(){
+  $('hand-l').innerHTML = handSVG(state.hands.left);
+  $('hand-r').innerHTML = handSVG(state.hands.right);
+  $('hand-l').classList.toggle('dim', !state.limbs.armL);
+  $('hand-r').classList.toggle('dim', !state.limbs.armR);
+}
+
+// ---------------------------------------------------------------------
+// LOOT SPAWNING
+// ---------------------------------------------------------------------
+function spawnLoot(){
+  const roll = Math.random();
+  let type, dist;
+  if (roll < 0.45){ type='supply'; dist=rnd(15,60); }
+  else if (roll < 0.8){ type='melee'; dist=rnd(40,120); }
+  else { type='gun'; dist=rnd(150,400); }
+  dist = dist / (state.cls.stats.lootBonus||1);
+  state.nearbyLoot = { type, distAway: dist };
+  state.lootProgress = 0;
+  const icon = type==='supply' ? '🥫' : type==='melee' ? '🔪' : '🔫';
+  $('compass-sub').textContent = `${icon} Supply marker ~${Math.round(dist)}m away`;
+}
+function checkLootArrival(){
+  if (!state.nearbyLoot) return;
+  if (state.lootProgress >= state.nearbyLoot.distAway){
+    $('btn-pickup').disabled = false;
+    $('compass-sub').textContent = `📍 You're at the marker — tap LOOT`;
+  }
+}
+$('btn-pickup').onclick = () => {
+  if (!state.nearbyLoot || $('btn-pickup').disabled) return;
+  resolveLoot(state.nearbyLoot.type);
+  $('btn-pickup').disabled = true;
+  spawnLoot();
+};
+function resolveLoot(type){
+  const cls = state.cls.stats;
+  if (type === 'supply'){
+    if (Math.random() < 0.55){
+      const item = pick(FOOD_ITEMS);
+      state.supplies.food++;
+      state.food = clamp(state.food + rnd(15,30),0,100);
+      toast(`Found ${item}. Food +`, 'good');
+    } else if (Math.random() < 0.7){
+      const item = pick(WATER_ITEMS);
+      state.supplies.water++;
+      state.water = clamp(state.water + rnd(15,30),0,100);
+      toast(`Found ${item}. Water +`, 'good');
+    } else {
+      state.supplies.bandage++;
+      toast('Found a Bandage.', 'good');
+    }
+  } else if (type === 'melee'){
+    const w = {...pick(MELEE_WEAPONS)};
+    w.dur = Math.round(w.dur * (cls.durMult||1));
+    state.meleeBag.push(w);
+    toast(`SCAVENGED: ${w.name} (${w.hands===2?'2-handed':'1-handed'})`, 'good');
+    autoEquip(w);
+  } else if (type === 'gun'){
+    if (state.gun){
+      toast('Already carrying a firearm. Found extra ammo instead.', 'good');
+      state.gun.ammo = clamp(state.gun.ammo + 3, 0, state.gun.maxAmmo+3);
+    } else {
+      const g = {...pick(GUNS)};
+      g.ammo = g.maxAmmo;
+      state.gun = g;
+      toast(`FIREARM FOUND: ${g.name} (${g.ammo} rounds) — emergency use only!`, 'danger');
+      $('btn-gun').disabled = false;
+    }
+  }
+  renderInventory();
+}
+function autoEquip(weapon){
+  if (weapon.hands === 2){
+    if (!state.hands.left && !state.hands.right){
+      state.hands.left = weapon; state.hands.right = weapon; state.twoHanded = true;
+      toast(`Equipped ${weapon.name} (two-handed)`);
+    }
+  } else {
+    if (!state.hands.left){ state.hands.left = weapon; toast(`Equipped ${weapon.name} in left hand`); }
+    else if (!state.hands.right){ state.hands.right = weapon; toast(`Equipped ${weapon.name} in right hand`); }
+  }
+  renderHands(); updateWeaponInfo();
+}
+
+// ---------------------------------------------------------------------
+// THREAT / HORDE SYSTEM
+// ---------------------------------------------------------------------
+function checkThreatTrigger(){
+  if (state.mode !== 'explore') return;
+  if (state.threatTimer > rnd(80,180)){
+    triggerHorde();
+    state.threatTimer = 0;
+  }
+}
+
+let activeZombies = []; // {el, type, hp, maxHp, atkTimer, lunging}
+function triggerHorde(){
+  const count = Math.floor(rnd(2,5));
+  activeZombies = [];
+  // weight zombie types — night & higher distance => tougher mixes
+  const isNight = state.gameTime<360 || state.gameTime>=1260;
+  let pool = ['shambler','shambler','runner'];
+  if (state.distance>300) pool.push('runner','brute');
+  if (isNight) pool.push('runner','brute');
+
+  toast(`⚠ HORDE DETECTED — ${count} closing in! Hit & run, or RUN to break contact!`, 'danger');
+  $('compass').classList.add('alert');
+  $('compass-sub').textContent = `🧟 ${count} HOSTILES — combat zone active`;
+  $('btn-gun').disabled = !state.gun || state.gun.ammo<=0;
+
+  for(let i=0;i<count;i++){
+    const typeKey = pick(pool);
+    const t = ZTYPES[typeKey];
+    const maxHp = Math.floor(rnd(t.hpMin,t.hpMax));
+    const z = document.createElement('div');
+    z.className = 'sprite zombie';
+    z.style.left = `${14 + i*22 + rnd(-4,4)}%`;
+    z.innerHTML = `<div class="z-tag ${t.tagClass}">${t.name}</div>
+      <div class="z-hp"><div class="z-hp-fill" style="width:100%"></div></div>
+      <div class="z-body">${zombieSVG(t.color)}</div>`;
+    $('viewport').appendChild(z);
+    const zombie = {
+      el:z, typeKey, type:t, hp:maxHp, maxHp,
+      attackCooldown: rnd(800,1600),
+      lunging:false, telegraphing:false,
+    };
+    activeZombies.push(zombie);
+  }
+  state.mode = 'combat';
+  scheduleZombieAttacks();
+}
+
+function zombieSVG(color){
+  return `<svg viewBox="0 0 60 120" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="30" cy="18" rx="14" ry="16" fill="${lighten(color,20)}"/>
+    <rect x="14" y="30" width="32" height="50" fill="${color}"/>
+    <rect x="4" y="32" width="12" height="44" fill="${color}"/>
+    <rect x="44" y="32" width="12" height="44" fill="${color}"/>
+    <rect x="14" y="78" width="12" height="36" fill="${darken(color,15)}"/>
+    <rect x="34" y="78" width="12" height="36" fill="${darken(color,15)}"/>
+    <circle cx="24" cy="14" r="2.5" fill="#8c1f1f"/>
+    <circle cx="36" cy="14" r="2.5" fill="#8c1f1f"/>
+    <path d="M20,24 Q30,30 40,24" stroke="#3a1010" stroke-width="2" fill="none"/>
+  </svg>`;
+}
+function lighten(hex, amt){ return shadeColor(hex, amt); }
+function darken(hex, amt){ return shadeColor(hex, -amt); }
+function shadeColor(hex, percent){
+  const f = parseInt(hex.slice(1),16), t = percent<0?0:255, p = Math.abs(percent)/100;
+  const R = f>>16, G=(f>>8)&0x00FF, B=f&0x0000FF;
+  const nr = Math.round((t-R)*p)+R, ng=Math.round((t-G)*p)+G, nb=Math.round((t-B)*p)+B;
+  return `#${(0x1000000+nr*0x10000+ng*0x100+nb).toString(16).slice(1)}`;
+}
+
+// ---------------------------------------------------------------------
+// ZOMBIE ATTACK SCHEDULING (telegraph -> lunge -> resolve)
+// ---------------------------------------------------------------------
+let zombieAttackTimers = [];
+function scheduleZombieAttacks(){
+  clearZombieTimers();
+  activeZombies.forEach((z,i)=>{
+    const timer = setTimeout(()=>telegraphAttack(z), z.attackCooldown / Math.max(1,(i*0.3+1)));
+    zombieAttackTimers.push(timer);
+  });
+}
+function clearZombieTimers(){
+  zombieAttackTimers.forEach(t=>clearTimeout(t));
+  zombieAttackTimers=[];
+}
+function telegraphAttack(z){
+  if (state.mode!=='combat' || !activeZombies.includes(z)) return;
+  z.telegraphing = true;
+  z.el.classList.add('windup');
+  const ring = document.createElement('div');
+  ring.className='telegraph';
+  z.el.appendChild(ring);
+  setTimeout(()=>ring.remove(), 600);
+  const t = setTimeout(()=>resolveZombieLunge(z), 550);
+  zombieAttackTimers.push(t);
+}
+function resolveZombieLunge(z){
+  z.el.classList.remove('windup');
+  z.telegraphing = false;
+  if (state.mode!=='combat' || !activeZombies.includes(z)) return;
+
+  let dmg = rnd(z.type.dmgMin, z.type.dmgMax);
+  let outcome = 'hit';
+
+  if (state.dodging){
+    outcome='dodge';
+  } else if (state.blocking){
+    const hasShieldOrTwoHand = (state.hands.left && state.hands.left.block) || (state.hands.right && state.hands.right.block) || state.twoHanded;
+    const reduction = hasShieldOrTwoHand ? 0.75 : 0.45;
+    dmg *= (1-reduction);
+    outcome='block';
+    // chip durability on block
+    const w = state.hands.left || state.hands.right;
+    if (w){ w.dur -= 1; if(w.dur<=0) breakWeapon(w); updateWeaponInfo(); }
+  }
+
+  if (outcome==='dodge'){
+    $('dodgeflash').classList.add('show');
+    setTimeout(()=>$('dodgeflash').classList.remove('show'), 150);
+    toast(`Dodged the ${z.type.name}'s lunge!`, 'good');
+  } else {
+    flashHit(dmg > state.maxHp*0.15);
+    shakeScreen();
+    state.hp = clamp(state.hp - dmg, 0, state.maxHp);
+    dmgNumber('-'+Math.round(dmg), rnd(40,60)+'%', rnd(40,55)+'%', {player:true});
+    if (outcome==='block') toast(`Blocked! Reduced hit from the ${z.type.name}. -${Math.round(dmg)} HP`, 'warnt');
+    else toast(`${z.type.name} hits you! -${Math.round(dmg)} HP`, 'danger');
+
+    // limb injury chance scales with emotionHeat & raw dmg
+    const limbRisk = clamp((state.emotionHeat-20)*0.01 + (outcome==='hit'?0.04:0), 0, 0.4);
+    if (Math.random() < limbRisk) injureRandomLimb();
+    if (state.hp <= 0) return gameOver();
+  }
+
+  // schedule this zombie's next attack
+  if (activeZombies.includes(z)){
+    z.attackCooldown = z.type.atkSpeed * rnd(0.8,1.2);
+    const t = setTimeout(()=>telegraphAttack(z), z.attackCooldown);
+    zombieAttackTimers.push(t);
+  }
+}
+
+// ---------------------------------------------------------------------
+// PLAYER COMBAT — swing, combo, heavy, block, dodge
+// ---------------------------------------------------------------------
+const HOLD_THRESHOLD = 380; // ms to register as heavy attack
+let holdTimers = {left:null, right:null};
+let holdStart = {left:0, right:0};
+
+function startHold(side){
+  if (state.mode!=='combat') return;
+  holdStart[side] = performance.now();
+}
+function endHold(side){
+  if (state.mode!=='combat') return;
+  const held = performance.now() - holdStart[side];
+  resolveSwing(side, held >= HOLD_THRESHOLD);
+}
+
+function resolveSwing(side, heavy){
+  if (state.mode !== 'combat') return;
+  const armOk = state.limbs[side==='left'?'armL':'armR'];
+  if (!armOk){ toast('Your arm is too injured to swing!', 'danger'); return; }
+
+  const hand = side==='left' ? state.hands.left : state.hands.right;
+  const cls = state.cls.stats;
+
+  // stamina cost
+  const stamCost = (heavy?14:6);
+  if (state.stamina < stamCost){
+    toast('Too exhausted to swing!', 'danger');
+    return;
+  }
+  state.stamina = clamp(state.stamina - stamCost, 0, state.maxStamina);
+
+  // animate
+  const elId = 'hand-'+(side==='left'?'l':'r');
+  const animClass = (side==='left'?'swing-l':'swing-r') + (heavy?' heavy':'');
+  $(elId).classList.remove('swing-l','swing-r','swing-l heavy','swing-r heavy');
+  void $(elId).offsetWidth;
+  $(elId).classList.add(...animClass.split(' '));
+  setTimeout(()=> $(elId).classList.remove(...animClass.split(' ')), heavy?560:320);
+
+  if (activeZombies.length===0) return;
+
+  // combo tracking: alternating hands within window increases multiplier
+  const now = performance.now();
+  if (state.lastHand && state.lastHand!==side && now-state.comboTimer < 900){
+    state.comboCount = Math.min(state.comboCount+1, 9);
+  } else if (now-state.comboTimer >= 900) {
+    state.comboCount = 0;
+  }
+  state.lastHand = side;
+  state.comboTimer = now;
+  const comboMult = 1 + state.comboCount*0.12;
+
+  // target: pick zombie that's mid-telegraph if any (counter window), else nearest (first)
+  let target = activeZombies.find(z=>z.telegraphing) || activeZombies[0];
+
+  let dmg = (hand ? hand.dmg : 4) * (cls.dmgMult||1) * comboMult * (heavy?1.6:1);
+  const isCrit = Math.random() < (0.06 + state.comboCount*0.03);
+  if (isCrit) dmg *= 1.8;
+
+  // counter-hit bonus: swinging during a zombie's telegraph interrupts/staggers it
+  if (target.telegraphing){
+    dmg *= 1.4;
+    target.telegraphing = false;
+    target.el.classList.remove('windup');
+    toast('Counter-hit! Staggered the attacker.', 'good');
+  }
+
+  target.hp -= dmg;
+  target.el.classList.remove('hit'); void target.el.offsetWidth; target.el.classList.add('hit');
+  const fillPct = clamp(target.hp/target.maxHp*100,0,100);
+  target.el.querySelector('.z-hp-fill').style.width = fillPct+'%';
+  dmgNumber(Math.round(dmg)+(isCrit?'!':''), rnd(35,65)+'%', rnd(30,50)+'%', {crit:isCrit});
+  if (isCrit) shakeScreen();
+
+  // combo UI
+  if (state.comboCount>0){
+    const c = $('combo');
+    c.innerHTML = `x${state.comboCount+1}<span>COMBO</span>`;
+    c.classList.add('show');
+    clearTimeout(c._t);
+    c._t = setTimeout(()=>c.classList.remove('show'), 700);
+  }
+
+  // durability loss
+  if (hand){
+    const durLoss = (heavy?2:1) * (target.type.durDmgMult||1);
+    hand.dur -= durLoss;
+    if (hand.dur <= 0) breakWeapon(hand);
+    updateWeaponInfo();
+  }
+
+  state.emotionHeat += (heavy?9:5) * (cls.emotionMult||1);
+
+  if (target.hp <= 0){
+    target.el.classList.add('dead');
+    setTimeout(()=>target.el.remove(),400);
+    activeZombies = activeZombies.filter(z=>z!==target);
+    toast(`${target.type.name} down!`, 'good');
+    if (activeZombies.length===0) endCombat(true);
+  }
+}
+
+function breakWeapon(hand){
+  toast(`${hand.name} broke!`, 'danger');
+  if (state.twoHanded){ state.hands.left=null; state.hands.right=null; state.twoHanded=false; }
+  else if (state.hands.left===hand) state.hands.left=null;
+  else if (state.hands.right===hand) state.hands.right=null;
+  renderHands();
+}
+
+function injureRandomLimb(){
+  const healthy = Object.entries(state.limbs).filter(([k,v])=>v).map(([k])=>k);
+  if (healthy.length===0) return;
+  const limb = pick(healthy);
+  state.limbs[limb] = false;
+  const names = {armL:'LEFT ARM', armR:'RIGHT ARM', legL:'LEFT LEG', legR:'RIGHT LEG'};
+  toast(`⚠ ${names[limb]} INJURED — lasting penalty!`, 'danger');
+  if (limb==='armL' && state.hands.left){ if(state.twoHanded){state.hands.left=null;state.hands.right=null;state.twoHanded=false;} else state.hands.left=null; }
+  if (limb==='armR' && state.hands.right){ if(state.twoHanded){state.hands.left=null;state.hands.right=null;state.twoHanded=false;} else state.hands.right=null; }
+  if (limb==='legL' || limb==='legR'){
+    toast('Your gait is compromised — speed cap & stamina regen reduced.', 'danger');
+  }
+  renderHands(); updateLimbUI(); updateWeaponInfo();
+}
+
+function flashHit(crit){
+  const fl = $('hitflash');
+  fl.classList.toggle('crit', !!crit);
+  fl.classList.add('show');
+  setTimeout(()=> fl.classList.remove('show'), 150);
+}
+
+function endCombat(survived){
+  state.mode = 'explore';
+  state.emotionHeat = Math.max(0, state.emotionHeat - 30);
+  state.comboCount = 0;
+  $('combo').classList.remove('show');
+  $('btn-gun').disabled = true;
+  $('compass').classList.remove('alert');
+  $('compass-sub').textContent = 'Area clear. Scavenging mode.';
+  clearZombieTimers();
+  if (survived) toast('Horde cleared. Keep moving — more may be near.', 'good');
+}
+
+function tryBreakContact(meters){
+  if (state.mode==='combat' && state.speed > 2.0){
+    state.emotionHeat = Math.max(0, state.emotionHeat - meters*2);
+    if (Math.random() < meters*0.02){
+      activeZombies.forEach(z=>z.el.remove());
+      activeZombies = [];
+      endCombat(true);
+      toast('You broke contact and escaped the horde!', 'good');
+    }
+  }
+}
+
+// ---------------------------------------------------------------------
+// BLOCK / DODGE INPUT
+// ---------------------------------------------------------------------
+const btnBlock = $('btn-block');
+function setBlocking(on){
+  state.blocking = on;
+  btnBlock.classList.toggle('active', on);
+  $('hand-l').classList.toggle('block', on);
+  $('hand-r').classList.toggle('block', on);
+}
+btnBlock.addEventListener('touchstart', e=>{e.preventDefault(); setBlocking(true);});
+btnBlock.addEventListener('touchend', e=>{e.preventDefault(); setBlocking(false);});
+btnBlock.addEventListener('mousedown', ()=>setBlocking(true));
+btnBlock.addEventListener('mouseup', ()=>setBlocking(false));
+btnBlock.addEventListener('mouseleave', ()=>setBlocking(false));
+
+const dodgeZone = $('dodge-zone');
+function doDodge(){
+  if (state.mode!=='combat') return;
+  if (state.stamina < 8){ toast('Too exhausted to dodge!','danger'); return; }
+  state.stamina = clamp(state.stamina-8,0,state.maxStamina);
+  state.dodging = true;
+  $('viewport').style.transform = `translateX(${rnd(-1,1)>0?30:-30}px)`;
+  setTimeout(()=>{ $('viewport').style.transform=''; state.dodging=false; }, 260);
+}
+dodgeZone.addEventListener('touchstart', e=>{e.preventDefault(); doDodge();});
+dodgeZone.addEventListener('mousedown', ()=>doDodge());
+
+// ---------------------------------------------------------------------
+// GUN
+// ---------------------------------------------------------------------
+$('btn-gun').onclick = () => {
+  if (!state.gun || state.gun.ammo<=0 || state.mode!=='combat') return;
+  state.gun.ammo--;
+  if (activeZombies.length>0){
+    const target = activeZombies.find(z=>z.telegraphing) || activeZombies[0];
+    target.hp -= state.gun.dmg;
+    target.el.classList.add('hit'); setTimeout(()=>target.el.classList.remove('hit'),150);
+    const fillPct = clamp(target.hp/target.maxHp*100,0,100);
+    target.el.querySelector('.z-hp-fill').style.width = fillPct+'%';
+    dmgNumber(state.gun.dmg, rnd(35,65)+'%', rnd(30,50)+'%', {crit:true});
+    shakeScreen();
+    toast(`BANG! ${state.gun.name} fired. ${state.gun.ammo} rounds left.`, 'danger');
+    if (target.hp<=0){
+      target.el.classList.add('dead'); setTimeout(()=>target.el.remove(),400);
+      activeZombies = activeZombies.filter(z=>z!==target);
+      if (activeZombies.length===0) endCombat(true);
+    }
+  }
+  if (state.gun.ammo<=0) $('btn-gun').disabled = true;
+  renderInventory();
+};
+
+// ---------------------------------------------------------------------
+// SWING ZONE INPUT (tap = light, hold = heavy)
+// ---------------------------------------------------------------------
+['touchstart','mousedown'].forEach(ev=>{
+  $('swing-l').addEventListener(ev, e=>{ if(ev==='touchstart') e.preventDefault(); startHold('left'); });
+  $('swing-r').addEventListener(ev, e=>{ if(ev==='touchstart') e.preventDefault(); startHold('right'); });
+});
+['touchend','mouseup'].forEach(ev=>{
+  $('swing-l').addEventListener(ev, e=>{ if(ev==='touchend') e.preventDefault(); endHold('left'); });
+  $('swing-r').addEventListener(ev, e=>{ if(ev==='touchend') e.preventDefault(); endHold('right'); });
 });
 
-/* ---------------- GAME LOOP ---------------- */
-function tick(){
-  const speed = PACE_SPEED[state.pace];
-  const legsCrippled = state.limbs.legs<=0;
-  const effSpeed = legsCrippled ? speed*0.5 : speed;
+// ---------------------------------------------------------------------
+// INVENTORY UI
+// ---------------------------------------------------------------------
+$('inv-toggle').onclick = ()=>{ renderInventory(); $('inventory').classList.remove('hidden'); };
+$('inv-close').onclick = ()=> $('inventory').classList.add('hidden');
 
-  // stamina
-  if(state.pace===3) state.stamina -= legsCrippled?4:2.2;
-  else if(state.pace===2) state.stamina -= legsCrippled?1.6:0.6;
-  else if(state.pace===1) state.stamina -= legsCrippled?0.4:0;
-  else state.stamina += state.limbs.torso>0?1.2:0.6;
-  state.stamina = Math.max(0, Math.min(100, state.stamina));
-  if(state.stamina<=0 && state.pace===3){
-    toast("Exhausted — can't sustain a sprint. Slow down before you collapse.");
-    state.pace = 2;
-    $("speedSlider").value = 2;
+function renderInventory(){
+  $('inv-class-banner').textContent = state.cls ? `${state.cls.name} — ${state.cls.tag}` : '';
+  $('inv-left').innerHTML = state.hands.left ? itemRow(state.hands.left,'left') : `<div class="inv-empty">Bare hand</div>`;
+  $('inv-right').innerHTML = state.hands.right ? itemRow(state.hands.right,'right') : `<div class="inv-empty">Bare hand</div>`;
+
+  if (state.meleeBag.length===0){ $('inv-melee').innerHTML = `<div class="inv-empty">None carried</div>`; }
+  else {
+    $('inv-melee').innerHTML = state.meleeBag.map((w,i)=>`
+      <div class="inv-item"><span>${w.name} (dur ${w.dur})</span>
+      <button onclick="equipFromBag(${i})">EQUIP</button></div>`).join('');
   }
 
-  // horde distance dynamics
-  if(!state.horde.active){
-    if(effSpeed<1.2) state.horde.distance -= (2.5 + Math.random()*2.5);
-    else if(effSpeed<3) state.horde.distance += (0.5 + Math.random());
-    else state.horde.distance += (2 + Math.random()*2);
-    if(state._noiseFlag){ state.horde.distance -= 8; state._noiseFlag=false; }
-  }
+  $('inv-gun').innerHTML = state.gun ? `<div class="inv-item"><span>${state.gun.name}</span><span>${state.gun.ammo}/${state.gun.maxAmmo} rounds</span></div>` : `<div class="inv-empty">None found yet</div>`;
 
-  if(state.horde.distance<=30 && !state.horde.active){
-    setEncounter(true);
-    toast("They're on you — fight or sprint!");
+  const s = state.supplies;
+  if (s.food+s.water+s.bandage===0){ $('inv-supplies').innerHTML = `<div class="inv-empty">Empty</div>`; }
+  else {
+    $('inv-supplies').innerHTML = `
+      <div class="inv-item"><span>Food rations</span><span>${s.food} — <button onclick="useFood()" ${s.food<=0?'disabled':''}>EAT</button></span></div>
+      <div class="inv-item"><span>Water</span><span>${s.water} — <button onclick="useWater()" ${s.water<=0?'disabled':''}>DRINK</button></span></div>
+      <div class="inv-item"><span>Bandages</span><span>${s.bandage} — <button onclick="useBandage()" ${s.bandage<=0?'disabled':''}>USE</button></span></div>`;
   }
-  if(state.horde.distance>60 && state.horde.active){
-    setEncounter(false);
-    toast("The horde lost your scent... for now.");
+}
+function itemRow(w, side){
+  return `<div class="inv-item"><span>${w.name} (dur ${w.dur})</span><button onclick="unequip('${side}')">UNEQUIP</button></div>`;
+}
+window.unequip = (side)=>{
+  const w = state.hands[side];
+  if (!w) return;
+  if (state.twoHanded){ state.hands.left=null; state.hands.right=null; state.twoHanded=false; }
+  else state.hands[side]=null;
+  if (!state.meleeBag.includes(w)) state.meleeBag.push(w);
+  renderHands(); updateWeaponInfo(); renderInventory();
+};
+window.equipFromBag = (i)=>{
+  const w = state.meleeBag[i];
+  if (w.hands===2){
+    if (state.hands.left || state.hands.right){ toast('Free both hands first.', 'danger'); return; }
+    state.hands.left=w; state.hands.right=w; state.twoHanded=true;
+  } else {
+    if (!state.limbs.armL && !state.limbs.armR){ toast('Both arms injured — cannot wield weapons.','danger'); return; }
+    if (!state.hands.left && state.limbs.armL) state.hands.left=w;
+    else if (!state.hands.right && state.limbs.armR) state.hands.right=w;
+    else { toast('Both hands full.', 'danger'); return; }
   }
-  if(state.horde.distance<=0){
-    state.horde.distance = 0;
-    if(Math.random()<0.6) damageLimb();
-    state.horde.distance = 70 + Math.random()*70;
-    state._hordeBearing = undefined;
-    setEncounter(false);
-  }
-  state.horde.distance = Math.max(0, state.horde.distance);
+  state.meleeBag.splice(i,1);
+  renderHands(); updateWeaponInfo(); renderInventory();
+};
+window.useFood = ()=>{ const h=20*(state.cls.stats.healMult||1); state.supplies.food--; state.food=clamp(state.food+25,0,100); renderInventory(); toast('Ate rations. Food restored.','good'); };
+window.useWater = ()=>{ state.supplies.water--; state.water=clamp(state.water+25,0,100); renderInventory(); toast('Drank water. Hydration restored.','good'); };
+window.useBandage = ()=>{ const h=30*(state.cls.stats.healMult||1); state.supplies.bandage--; state.hp=clamp(state.hp+h,0,state.maxHp); renderInventory(); toast(`Bandaged wounds. HP +${Math.round(h)}.`,'good'); };
 
-  // loot approach (abstracted)
-  state.loot.forEach(l=> l.distance -= effSpeed*0.8);
-  const collected = state.loot.filter(l=>l.distance<=5);
-  collected.forEach(l=>{
-    if(l.type==="loot-common"){
-      const give = Math.random()<0.5?"food":"water";
-      state.resources[give]++;
-      toast(`Found a ${l.name} — +1 ${give}.`);
-    } else if(l.type==="loot-high"){
-      state.resources.ammo += 2;
-      if(Math.random()<0.4) state.resources.antibiotics++;
-      toast(`${l.name} cleared — +2 ammo${Math.random()<0.4?', +1 antibiotics':''}.`);
-    } else {
-      const pool = ["riotShield","machete","shortsword","spear","spikedFists","combatKnife"];
-      const w = pool[Math.floor(Math.random()*pool.length)];
-      state.owned[w]=true;
-      state.resources.scrap++;
-      toast(`Weapon drop: ${WEAPONS[w].name} added to your gear.`);
-    }
-  });
-  state.loot = state.loot.filter(l=>l.distance>5);
-  if(Math.random()<0.35) spawnLoot();
-
-  // home distance (sim)
-  if(state.mode==="sim" && state.home){
-    if(state.pace>0) state.simDistFromHome += effSpeed * (Math.random()<0.5?1:-1) * 1.2;
-    state.simDistFromHome = Math.max(0,state.simDistFromHome);
+// ---------------------------------------------------------------------
+// HUD UPDATES
+// ---------------------------------------------------------------------
+function updateWeaponInfo(){
+  const l = state.hands.left, r = state.hands.right;
+  let name, dur, mode;
+  if (state.twoHanded && l){ name = l.name + ' (2H)'; dur = l.dur; mode='Two-handed · Tap=light · Hold=heavy'; }
+  else if (l && r){ name = `${l.name} / ${r.name}`; dur = Math.min(l.dur,r.dur); mode='Tap L/R = light · Hold = heavy'; }
+  else if (l){ name = l.name + ' (L)'; dur = l.dur; mode='Tap=light · Hold=heavy'; }
+  else if (r){ name = r.name + ' (R)'; dur = r.dur; mode='Tap=light · Hold=heavy'; }
+  else { name = 'Bare Hands'; dur = null; mode='Tap=light · Hold=heavy'; }
+  $('weapon-name').textContent = name;
+  const durEl = $('weapon-dur');
+  if (dur!=null){
+    durEl.textContent = `Durability: ${dur}`;
+    durEl.classList.toggle('low', dur < 10);
+  } else {
+    durEl.textContent = '—';
+    durEl.classList.remove('low');
   }
-  $("btnReturn").disabled = !(state.home!=null && distanceToHomeMeters()<=20);
-
-  updateTopbar();
-  updateEdges();
-  renderLoot();
-  renderHorde();
+  $('weapon-mode').textContent = mode;
+}
+function updateLimbUI(){
+  $('limb-arml').classList.toggle('injured', !state.limbs.armL);
+  $('limb-armr').classList.toggle('injured', !state.limbs.armR);
+  $('limb-legl').classList.toggle('injured', !state.limbs.legL);
+  $('limb-legr').classList.toggle('injured', !state.limbs.legR);
 }
 
-/* ---------------- START ---------------- */
-$("btnStartGPS").onclick = ()=>{
-  state.mode="gps";
-  startGPS();
-  $("start").style.display="none";
-  audioCtx();
-  toast("GPS engaged. Move around to populate the radar.");
-};
-$("btnStartSim").onclick = ()=>{
-  state.mode="sim";
-  $("start").style.display="none";
-  audioCtx();
-  toast("Simulation mode. Use the PACE slider to move.");
-};
+// ---------------------------------------------------------------------
+// GAME OVER
+// ---------------------------------------------------------------------
+function gameOver(){
+  state.mode='dead';
+  clearZombieTimers();
+  $('modal-overlay').classList.remove('hidden');
+  $('modal-title').textContent = 'YOU DIED';
+  $('modal-text').textContent = `As ${state.cls.name}, you walked ${Math.floor(state.distance)}m through the dead zone before the horde caught up. Get up, survivor.`;
+  $('modal-actions').innerHTML = `<button class="btn big" onclick="location.reload()">RESTART</button>`;
+}
 
-spawnLoot(); spawnLoot();
-renderHands();
-updateTopbar();
-updateEdges();
-setInterval(tick, 1000);
-tick();
+// ---------------------------------------------------------------------
+// MAIN LOOP
+// ---------------------------------------------------------------------
+function loop(ts){
+  const dt = (ts - lastFrameTime)/1000;
+  lastFrameTime = ts;
+
+  if (state.usingSim){
+    state.speed += (state.simSpeedTarget - state.speed) * 0.05;
+    const meters = state.speed * dt;
+    if (meters > 0.001) addDistance(meters);
+  }
+
+  const legPenalty = (state.limbs.legL && state.limbs.legR) ? 1 : 0.4;
+  if (state.speed < 1.5 && state.mode!=='dead'){
+    state.stamina = clamp(state.stamina + dt*4*legPenalty*(state.cls.stats.staminaRegen||1), 0, state.maxStamina);
+  }
+
+  if (state.food<=0 || state.water<=0){
+    state.hp = clamp(state.hp - dt*1.5, 0, state.maxHp);
+    if (state.hp<=0 && state.mode!=='dead') gameOver();
+  }
+
+  if (state.mode!=='combat') state.emotionHeat = Math.max(0, state.emotionHeat - dt*2);
+
+  tryBreakContact(state.speed*dt);
+  updateDayNight();
+  updateWeather(dt);
+
+  const speedKmh = state.speed*3.6;
+  let speedLabel = 'idle';
+  if (speedKmh>1 && speedKmh<6.5) speedLabel = `walking ${speedKmh.toFixed(1)} km/h`;
+  else if (speedKmh>=6.5) speedLabel = `RUNNING ${speedKmh.toFixed(1)} km/h`;
+  $('speed-val').textContent = speedLabel;
+  $('speed-val').style.color = speedKmh>=6.5 ? 'var(--blood-bright)' : 'var(--moss)';
+
+  $('bar-hp').style.width = (state.hp/state.maxHp*100)+'%';
+  const stamPct = state.stamina/state.maxStamina*100;
+  const stamFill = $('bar-stam');
+  stamFill.style.width = stamPct+'%';
+  stamFill.classList.toggle('low', stamPct<25);
+  $('bar-food').style.width = state.food+'%';
+  $('bar-water').style.width = state.water+'%';
+
+  // exhausted pulse on attack zones
+  const exhausted = state.stamina < 8;
+  $('swing-l').classList.toggle('exhausted', exhausted);
+  $('swing-r').classList.toggle('exhausted', exhausted);
+
+  if (state.mode!=='dead') requestAnimationFrame(loop);
+}
 </script>
 </body>
 </html>
