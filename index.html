@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+<title>OUTBREAK // FIELD HUD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0d08;
+    --panel:#10140d;
+    --grid:#1f2b18;
+    --green:#4dff8a;
+    --green-dim:#1f5c33;
+    --red:#ff3b3b;
+    --amber:#ffb627;
+    --bone:#cfd8c5;
+    --bone-dim:#7c8a73;
+    --blood:#7a1414;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none;}
+  html,body{
+    width:100%;height:100%;overflow:hidden;
+    background:var(--bg);
+    color:var(--bone);
+    font-family:'Share Tech Mono',monospace;
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{
+    position:fixed;inset:0;
+    display:flex;flex-direction:column;
+    background:radial-gradient(ellipse at center, #0d130b 0%, #060805 100%);
+  }
+
+  /* ---------- PERIMETER LIMB/HUD FRAME ---------- */
+  .frame-edge{
+    position:fixed;z-index:30;pointer-events:none;
+    transition:background .25s, box-shadow .25s, opacity .3s;
+  }
+  #edge-top{top:0;left:0;right:0;height:6px;background:var(--green-dim);box-shadow:0 0 8px var(--green-dim);}
+  #edge-left{top:0;bottom:0;left:0;width:6px;background:var(--green-dim);box-shadow:0 0 8px var(--green-dim);}
+  #edge-right{top:0;bottom:0;right:0;width:6px;background:var(--green-dim);box-shadow:0 0 8px var(--green-dim);}
+  #edge-bottom{bottom:0;left:0;right:0;height:6px;background:var(--green-dim);box-shadow:0 0 8px var(--green-dim);}
+  .edge-crit{
+    background:var(--red) !important;
+    box-shadow:0 0 18px var(--red), 0 0 40px rgba(255,59,59,.5) !important;
+    animation:edgepulse 1s infinite;
+  }
+  @keyframes edgepulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .edge-warn{ background:var(--amber) !important; box-shadow:0 0 12px var(--amber) !important; }
+
+  /* ---------- TOP STATUS BAR ---------- */
+  #topbar{
+    position:relative;z-index:20;
+    padding:14px 16px 8px;
+    display:flex;flex-direction:column;gap:6px;
+  }
+  .row{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:11px;letter-spacing:1px;color:var(--bone-dim);}
+  .title{
+    font-family:'Black Ops One',cursive;
+    font-size:15px;letter-spacing:3px;color:var(--green);
+    text-shadow:0 0 6px rgba(77,255,138,.5);
+  }
+  .barwrap{height:10px;border:1px solid var(--grid);background:#0d110a;position:relative;border-radius:2px;overflow:hidden;}
+  .barfill{height:100%;transition:width .3s;}
+  #staminaFill{background:linear-gradient(90deg,var(--green-dim),var(--green));}
+  #hordeFill{background:linear-gradient(90deg,var(--amber),var(--red));}
+
+  /* ---------- RADAR ---------- */
+  #radarwrap{
+    flex:1;position:relative;display:flex;align-items:center;justify-content:center;
+    min-height:0;
+  }
+  #radar{
+    width:min(78vw,78vh);height:min(78vw,78vh);
+    border-radius:50%;
+    background:
+      repeating-radial-gradient(circle, transparent 0 13%, var(--grid) 13% calc(13% + 1px), transparent calc(13% + 1px) 26%);
+    border:2px solid var(--green-dim);
+    position:relative;
+    box-shadow:0 0 40px rgba(77,255,138,.08), inset 0 0 60px rgba(0,0,0,.6);
+  }
+  #radar::before{ /* crosshair lines */
+    content:'';position:absolute;inset:0;
+    background:
+      linear-gradient(to right, transparent calc(50% - 1px), var(--grid) 50%, transparent calc(50% + 1px)),
+      linear-gradient(to bottom, transparent calc(50% - 1px), var(--grid) 50%, transparent calc(50% + 1px));
+  }
+  #sweep{
+    position:absolute;inset:0;border-radius:50%;
+    background:conic-gradient(from 0deg, rgba(77,255,138,.35), transparent 35%);
+    animation:spin 4s linear infinite;
+    mix-blend-mode:screen;
+    opacity:.55;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+  #player-dot{
+    position:absolute;left:50%;top:50%;width:10px;height:10px;margin:-5px;
+    background:var(--green);border-radius:50%;
+    box-shadow:0 0 10px var(--green), 0 0 20px rgba(77,255,138,.6);
+    z-index:5;
+  }
+  .blip{
+    position:absolute;width:9px;height:9px;border-radius:2px;transform:translate(-50%,-50%) rotate(45deg);
+    box-shadow:0 0 6px currentColor;
+  }
+  .blip.loot-common{background:#3ad0ff;color:#3ad0ff;}
+  .blip.loot-high{background:var(--red);color:var(--red);border-radius:50%;transform:translate(-50%,-50%);}
+  .blip.loot-weapon{background:var(--amber);color:var(--amber);}
+  #horde-blip{
+    position:absolute;width:16px;height:16px;border-radius:50%;
+    background:radial-gradient(circle, var(--red), rgba(122,20,20,.2));
+    transform:translate(-50%,-50%);
+    box-shadow:0 0 14px var(--red);
+    animation:hordepulse 1.1s infinite;
+  }
+  @keyframes hordepulse{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.35)}}
+
+  #encounter-flash{
+    position:absolute;inset:-8px;border-radius:50%;
+    border:3px solid var(--red);opacity:0;pointer-events:none;
+    animation:none;
+  }
+  .flash-on{ animation:flashring 1s infinite !important; opacity:1 !important; }
+  @keyframes flashring{0%,100%{box-shadow:0 0 0 0 rgba(255,59,59,.6)}50%{box-shadow:0 0 0 14px rgba(255,59,59,0)}}
+
+  #center-label{
+    position:absolute;left:50%;top:18px;transform:translateX(-50%);
+    font-size:10px;letter-spacing:2px;color:var(--bone-dim);text-align:center;
+  }
+  #toast{
+    position:absolute;left:50%;bottom:14px;transform:translateX(-50%);
+    font-size:11px;color:var(--amber);background:rgba(0,0,0,.5);
+    padding:6px 12px;border:1px solid var(--green-dim);border-radius:4px;
+    opacity:0;transition:opacity .4s;white-space:nowrap;max-width:90%;text-overflow:ellipsis;overflow:hidden;
+    pointer-events:none;
+  }
+  #toast.show{opacity:1;}
+
+  /* ---------- HANDS / WEAPON HUD ---------- */
+  #handszone{
+    position:relative;z-index:25;display:flex;justify-content:space-between;
+    padding:0 6px;height:34vh;pointer-events:none;
+  }
+  .hand{
+    width:42vw;height:100%;position:relative;pointer-events:auto;
+    display:flex;align-items:flex-end;
+  }
+  .hand svg{width:100%;height:auto;display:block;}
+  .hand.limp svg{ filter:grayscale(1) brightness(.5); transform:translateY(10%) rotate(8deg); transition:transform .4s;}
+  #lefthand{justify-content:flex-start;}
+  #righthand{justify-content:flex-end;}
+  #lefthand svg{transform:translate(-8%,4%);}
+  #righthand svg{transform:translate(8%,4%) scaleX(-1);}
+  .durability-tag{
+    position:absolute;bottom:6px;font-size:10px;color:var(--bone-dim);
+    letter-spacing:1px;background:rgba(0,0,0,.4);padding:2px 6px;border-radius:3px;
+  }
+  #lefthand .durability-tag{left:10px;}
+  #righthand .durability-tag{right:10px;}
+  .hand-hit{ animation:hit .15s; }
+  @keyframes hit{0%{transform:scale(1) }50%{transform:scale(.92)}100%{transform:scale(1)}}
+
+  /* ---------- BOTTOM CONTROL BAR ---------- */
+  #controls{
+    position:relative;z-index:25;display:flex;gap:8px;padding:8px 12px 14px;
+  }
+  button{
+    flex:1;font-family:'Share Tech Mono',monospace;
+    background:#10160d;border:1px solid var(--green-dim);color:var(--green);
+    padding:10px 6px;font-size:11px;letter-spacing:1px;border-radius:4px;
+    cursor:pointer;text-align:center;
+  }
+  button:active{background:var(--green-dim);color:#06140c;}
+  button.alert{border-color:var(--red);color:var(--red);}
+  button.amber{border-color:var(--amber);color:var(--amber);}
+  button:disabled{opacity:.35;}
+
+  /* ---------- SIM SPEED SLIDER ---------- */
+  #simrow{display:flex;gap:6px;padding:0 12px 8px;align-items:center;font-size:10px;color:var(--bone-dim);letter-spacing:1px;}
+  #speedSlider{flex:1;accent-color:var(--green);}
+
+  /* ---------- MODALS ---------- */
+  .modal-bg{
+    position:fixed;inset:0;background:rgba(5,8,4,.85);z-index:100;
+    display:none;align-items:center;justify-content:center;backdrop-filter:blur(2px);
+  }
+  .modal-bg.show{display:flex;}
+  .modal{
+    width:min(440px,92vw);max-height:86vh;overflow:auto;
+    background:var(--panel);border:1px solid var(--green-dim);border-radius:6px;
+    padding:18px;box-shadow:0 0 40px rgba(0,0,0,.6);
+  }
+  .modal h2{
+    font-family:'Black Ops One',cursive;color:var(--green);font-size:16px;
+    letter-spacing:3px;margin-bottom:12px;border-bottom:1px solid var(--grid);padding-bottom:8px;
+  }
+  .modal p{font-size:12px;color:var(--bone-dim);line-height:1.6;margin-bottom:10px;}
+  .modal .closeBtn{margin-top:12px;}
+  .opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+  .opt-grid button{font-size:10px;padding:10px 4px;}
+  .opt-grid button.selected{background:var(--green-dim);color:#06140c;}
+  .res-list{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;font-size:11px;margin-bottom:12px;}
+  .res-item{border:1px solid var(--grid);padding:6px 8px;border-radius:4px;display:flex;justify-content:space-between;}
+  .limb-list{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;}
+  .limb-row{display:flex;align-items:center;gap:8px;font-size:11px;}
+  .limb-row .barwrap{flex:1;height:8px;}
+  .limb-fill{height:100%;}
+
+  /* ---------- START SCREEN ---------- */
+  #start{
+    position:fixed;inset:0;z-index:200;background:var(--bg);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:24px;gap:14px;
+  }
+  #start h1{font-family:'Black Ops One',cursive;font-size:32px;color:var(--green);letter-spacing:6px;text-shadow:0 0 14px rgba(77,255,138,.5);}
+  #start .sub{font-size:11px;color:var(--bone-dim);letter-spacing:2px;max-width:320px;line-height:1.7;}
+  #start button{width:220px;padding:14px;font-size:13px;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- perimeter limb/stamina frame -->
+  <div class="frame-edge" id="edge-top"></div>
+  <div class="frame-edge" id="edge-left"></div>
+  <div class="frame-edge" id="edge-right"></div>
+  <div class="frame-edge" id="edge-bottom"></div>
+
+  <!-- top status -->
+  <div id="topbar">
+    <div class="row">
+      <span class="title">OUTBREAK</span>
+      <span id="modeLabel">SIM MODE · WALKING</span>
+    </div>
+    <div class="row"><span>STAMINA</span><span id="staminaVal">100</span></div>
+    <div class="barwrap"><div class="barfill" id="staminaFill" style="width:100%"></div></div>
+    <div class="row"><span>HORDE PROXIMITY</span><span id="hordeVal">120m</span></div>
+    <div class="barwrap"><div class="barfill" id="hordeFill" style="width:0%"></div></div>
+  </div>
+
+  <!-- radar -->
+  <div id="radarwrap">
+    <div id="radar">
+      <div id="sweep"></div>
+      <div id="encounter-flash"></div>
+      <div id="player-dot"></div>
+      <div id="horde-blip" style="display:none;"></div>
+      <div id="lootlayer"></div>
+      <div id="center-label">RANGE 250m</div>
+      <div id="toast"></div>
+    </div>
+  </div>
+
+  <!-- hands -->
+  <div id="handszone">
+    <div class="hand" id="lefthand"><span class="durability-tag" id="leftDur"></span></div>
+    <div class="hand" id="righthand"><span class="durability-tag" id="rightDur"></span></div>
+  </div>
+
+  <!-- sim speed -->
+  <div id="simrow">
+    <span>PACE</span>
+    <input type="range" id="speedSlider" min="0" max="3" step="1" value="1">
+    <span id="paceLabel">WALK</span>
+  </div>
+
+  <!-- controls -->
+  <div id="controls">
+    <button id="btnInventory">LOADOUT</button>
+    <button id="btnBase" class="amber">SET BASE</button>
+    <button id="btnReturn" class="amber" disabled>RETURN HOME</button>
+    <button id="btnLog">LOG</button>
+  </div>
+
+</div>
+
+<!-- START SCREEN -->
+<div id="start">
+  <h1>OUTBREAK</h1>
+  <div class="sub">
+    A field HUD overlay for an AR survival run.<br><br>
+    Walk in real life to scout the radar, sprint to escape the horde,
+    and tap your left / right hands to fight when it closes in.
+    Use the GPS toggle if you're outdoors, or the pace slider to test indoors.
+  </div>
+  <button id="btnStartGPS">ENABLE GPS &amp; START</button>
+  <button id="btnStartSim">START IN SIMULATION MODE</button>
+</div>
+
+<!-- INVENTORY MODAL -->
+<div class="modal-bg" id="modal-inventory">
+  <div class="modal">
+    <h2>LOADOUT</h2>
+    <p>Select a left-hand / right-hand combo from gear you've recovered. Broken weapons revert that hand to a fist.</p>
+    <div class="opt-grid" id="loadoutOptions"></div>
+    <p id="invHint" style="color:var(--bone-dim);"></p>
+    <div class="res-list" id="resourceList"></div>
+    <button class="closeBtn" onclick="closeModal('modal-inventory')">CLOSE</button>
+  </div>
+</div>
+
+<!-- BASE MODAL -->
+<div class="modal-bg" id="modal-base">
+  <div class="modal">
+    <h2>SAFE ZONE</h2>
+    <p id="baseIntro">You're home. Manage injuries, eat, drink, and repair gear before heading out again.</p>
+    <div class="limb-list" id="limbList"></div>
+    <div class="opt-grid">
+      <button id="actEat">EAT (-1 FOOD)</button>
+      <button id="actDrink">DRINK (-1 WATER)</button>
+      <button id="actRepair">REPAIR GEAR (-1 SCRAP)</button>
+      <button id="actAmputate" class="alert">AMPUTATE / SPLINT (-1 ANTIBIOTIC)</button>
+    </div>
+    <div class="res-list" id="resourceListBase"></div>
+    <button class="closeBtn" onclick="closeModal('modal-base')">HEAD OUT</button>
+  </div>
+</div>
+
+<!-- LOG MODAL -->
+<div class="modal-bg" id="modal-log">
+  <div class="modal">
+    <h2>RUN LOG</h2>
+    <div id="logEntries" style="font-size:11px;color:var(--bone-dim);line-height:1.8;max-height:50vh;overflow:auto;"></div>
+    <button class="closeBtn" onclick="closeModal('modal-log')">CLOSE</button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   OUTBREAK — Field HUD prototype
+   ============================================================ */
+
+const WEAPONS = {
+  fist:        { name:"Fists",         hand:"either", dmg:5,  maxDur:Infinity },
+  riotShield:  { name:"Riot Shield",   hand:"left",   dmg:3,  maxDur:80,  block:0.5 },
+  machete:     { name:"Machete",       hand:"right",  dmg:22, maxDur:40 },
+  shortsword:  { name:"Short Sword",   hand:"either", dmg:14, maxDur:50 },
+  spear:       { name:"Spear (2H)",    hand:"both",   dmg:38, maxDur:35 },
+  spikedFists: { name:"Spiked Fists",  hand:"left",   dmg:9,  maxDur:60 },
+  combatKnife: { name:"Combat Knife",  hand:"right",  dmg:13, maxDur:55 },
+  pistol:      { name:"Pistol",        hand:"right",  dmg:55, maxDur:Infinity, ammo:true, noise:true },
+  shotgun:     { name:"Shotgun",       hand:"right",  dmg:999,maxDur:Infinity, ammo:true, noise:true, clear:true },
+};
+
+const LOADOUTS = [
+  { left:"fist",        right:"fist",        label:"Bare Hands" },
+  { left:"riotShield",  right:"machete",     label:"Shield + Machete" },
+  { left:"shortsword",  right:"shortsword",  label:"Dual Short Swords" },
+  { left:"spear",       right:"spear",       label:"Spear (2-Handed)" },
+  { left:"spikedFists", right:"combatKnife", label:"Knuckles + Knife" },
+  { left:"riotShield",  right:"pistol",      label:"Shield + Pistol" },
+  { left:"fist",        right:"shotgun",     label:"Fist + Shotgun" },
+];
+
+const PACE = ["IDLE","WALK","JOG","SPRINT"];
+const PACE_SPEED = [0, 1.2, 2.6, 4.2]; // m/s reference
+
+let state = {
+  mode: "sim", // "sim" or "gps"
+  pace: 1,
+  stamina: 100,
+  limbs: { leftArm:100, rightArm:100, legs:100, torso:100 },
+  durability: { left: WEAPONS.fist.maxDur, right: WEAPONS.fist.maxDur },
+  equipped: { left:"fist", right:"fist" },
+  owned: { fist:true },
+  resources: { food:2, water:2, scrap:1, antibiotics:0, ammo:2 },
+  horde: { distance: 120, health: 100, maxHealth:100, active:false },
+  loot: [],
+  home: null, // {lat,lon} or sim distance marker
+  simDistFromHome: 0,
+  gpsLastPos: null,
+  log: [],
+};
+
+const $ = id => document.getElementById(id);
+
+/* ---------------- LOG / TOAST ---------------- */
+function addLog(msg){
+  const t = new Date().toLocaleTimeString();
+  state.log.unshift(`[${t}] ${msg}`);
+  if(state.log.length>50) state.log.pop();
+  renderLog();
+}
+function renderLog(){
+  $("logEntries").innerHTML = state.log.map(l=>`<div>${l}</div>`).join("") || "<div>No events yet.</div>";
+}
+let toastTimer=null;
+function toast(msg){
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove("show"), 2600);
+  addLog(msg);
+}
+
+/* ---------------- AUDIO (synthesized) ---------------- */
+let actx=null;
+function audioCtx(){ if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)(); return actx; }
+function playGroan(){
+  try{
+    const ctx = audioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type="sawtooth";
+    osc.frequency.setValueAtTime(70 + Math.random()*30, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime+0.8);
+    gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime+0.1);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+0.9);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime+0.9);
+  }catch(e){}
+}
+function playHit(){
+  try{
+    const ctx = audioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type="square";
+    osc.frequency.setValueAtTime(220, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(60, ctx.currentTime+0.15);
+    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+0.15);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime+0.15);
+  }catch(e){}
+}
+function playGunshot(){
+  try{
+    const ctx = audioCtx();
+    const bufferSize = ctx.sampleRate*0.2;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for(let i=0;i<bufferSize;i++) data[i] = (Math.random()*2-1) * (1-i/bufferSize);
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.4, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+0.2);
+    noise.connect(gain); gain.connect(ctx.destination);
+    noise.start();
+  }catch(e){}
+}
+
+/* ---------------- WEAPON / HAND RENDERING ---------------- */
+function fistSVG(weapon){
+  // returns inner SVG markup for a hand based on weapon
+  switch(weapon){
+    case "machete":
+      return `<svg viewBox="0 0 200 200"><g>
+        <ellipse cx="60" cy="160" rx="55" ry="40" fill="#3a4634"/>
+        <rect x="55" y="10" width="22" height="120" rx="4" fill="#9aa6a0" transform="rotate(-18 66 70)"/>
+        <rect x="55" y="100" width="26" height="40" rx="4" fill="#5b4632" transform="rotate(-18 66 70)"/>
+      </g></svg>`;
+    case "riotShield":
+      return `<svg viewBox="0 0 200 200"><g>
+        <ellipse cx="60" cy="170" rx="60" ry="40" fill="#3a4634"/>
+        <rect x="10" y="10" width="120" height="150" rx="14" fill="#2b3d4a" stroke="#6fa8c8" stroke-width="4"/>
+        <rect x="30" y="30" width="80" height="110" rx="8" fill="#1d2b34"/>
+      </g></svg>`;
+    case "shortsword":
+      return `<svg viewBox="0 0 200 200"><g>
+        <ellipse cx="60" cy="165" rx="55" ry="38" fill="#3a4634"/>
+        <rect x="60" y="20" width="16" height="100" rx="3" fill="#c4cbc6" transform="rotate(-14 68 70)"/>
+        <rect x="56" y="105" width="24" height="35" rx="4" fill="#5b4632" transform="rotate(-14 68 70)"/>
+      </g></svg>`;
+    case "spear":
+      return `<svg viewBox="0 0 200 200"><g>
+        <ellipse cx="80" cy="175" rx="70" ry="35" fill="#3a4634"/>
+        <rect x="70" y="-10" width="12" height="220" fill="#7a5a3a" transform="rotate(-10 76 100)"/>
+        <polygon points="64,-10 88,-10 76,-50" fill="#c4cbc6" transform="rotate(-10 76 100)"/>
+      </g></svg>`;
+    case "spikedFists":
+      return `<svg viewBox="0 0 200 200"><g>
+        <ellipse cx="60" cy="160" rx="58" ry="42" fill="#3a4634"/>
+        <polygon points="30,120 40,90 50,120" fill="#c4cbc6"/>
+        <polygon points="55,115 65,85 75,115" fill="#c4cbc6"/>
+        <polygon points="80,120 90,90 100,120" fill="#c4cbc6"/>
+      </g></svg>`;
+    case "combatKnife":
+      return `<svg viewBox="0 0 200 200"><g>
+        <ellipse cx="60" cy="165" rx="55" ry="38" fill="#3a4634"/>
+        <rect x="65" y="40" width="14" height="70" rx="3" fill="#c4cbc6" transform="rotate(-10 72 75)"/>
+        <rect x="60" y="100" width="22" height="30" rx="4" fill="#222" transform="rotate(-10 72 75)"/>
+      </g></svg>`;
+    case "pistol":
+      return `<svg viewBox="0 0 200 200"><g>
+        <ellipse cx="60" cy="165" rx="55" ry="38" fill="#3a4634"/>
+        <rect x="40" y="90" width="70" height="22" rx="4" fill="#222"/>
+        <rect x="50" y="110" width="20" height="40" rx="3" fill="#222"/>
+      </g></svg>`;
+    case "shotgun":
+      return `<svg viewBox="0 0 200 200"><g>
+        <ellipse cx="70" cy="170" rx="65" ry="36" fill="#3a4634"/>
+        <rect x="30" y="70" width="140" height="20" rx="4" fill="#3a2c1e"/>
+        <rect x="30" y="92" width="140" height="14" rx="4" fill="#222"/>
+      </g></svg>`;
+    default: // fist
+      return `<svg viewBox="0 0 200 200"><g>
+        <ellipse cx="60" cy="155" rx="58" ry="46" fill="#3a4634"/>
+        <circle cx="55" cy="105" r="42" fill="#5e6b53"/>
+      </g></svg>`;
+  }
+}
+
+function renderHands(){
+  const leftW = state.durability.left<=0 ? "fist" : state.equipped.left;
+  const rightW = state.durability.right<=0 ? "fist" : state.equipped.right;
+  $("lefthand").innerHTML = fistSVG(leftW) + `<span class="durability-tag" id="leftDur"></span>`;
+  $("righthand").innerHTML = fistSVG(rightW) + `<span class="durability-tag" id="rightDur"></span>`;
+
+  $("lefthand").classList.toggle("limp", state.limbs.leftArm<=0);
+  $("righthand").classList.toggle("limp", state.limbs.rightArm<=0);
+
+  const ld = WEAPONS[leftW].maxDur===Infinity ? "—" : `${Math.max(0,Math.round(state.durability.left))}%`;
+  const rd = WEAPONS[rightW].maxDur===Infinity ? "—" : `${Math.max(0,Math.round(state.durability.right))}%`;
+  $("leftDur").textContent = `${WEAPONS[leftW].name} ${ld}`;
+  $("rightDur").textContent = `${WEAPONS[rightW].name} ${rd}`;
+}
+
+/* ---------------- LOADOUT / EQUIP ---------------- */
+function equip(left,right){
+  // unequip whatever, set durability fresh if switching to an owned item not currently equipped at full
+  state.equipped.left = left;
+  state.equipped.right = right;
+  if(state.durability.leftKey !== left) state.durability.left = WEAPONS[left].maxDur===Infinity?Infinity:WEAPONS[left].maxDur;
+  if(state.durability.rightKey !== right) state.durability.right = WEAPONS[right].maxDur===Infinity?Infinity:WEAPONS[right].maxDur;
+  state.durability.leftKey = left;
+  state.durability.rightKey = right;
+  renderHands();
+}
+equip("fist","fist");
+
+function renderLoadoutOptions(){
+  const wrap = $("loadoutOptions");
+  wrap.innerHTML = "";
+  LOADOUTS.forEach(combo=>{
+    const ownedAll = (combo.left==="fist"||state.owned[combo.left]) && (combo.right==="fist"||state.owned[combo.right]);
+    const btn = document.createElement("button");
+    btn.textContent = combo.label;
+    if(!ownedAll){ btn.disabled = true; btn.title="Not found yet"; }
+    if(state.equipped.left===combo.left && state.equipped.right===combo.right) btn.classList.add("selected");
+    btn.onclick = ()=>{ equip(combo.left, combo.right); toast(`Equipped: ${combo.label}`); renderLoadoutOptions(); };
+    wrap.appendChild(btn);
+  });
+  $("invHint").textContent = "Combos grey out until you scavenge the matching gear from loot nodes.";
+  renderResourceList("resourceList");
+}
+
+function renderResourceList(targetId){
+  const r = state.resources;
+  $(targetId).innerHTML = `
+    <div class="res-item"><span>Food</span><span>${r.food}</span></div>
+    <div class="res-item"><span>Water</span><span>${r.water}</span></div>
+    <div class="res-item"><span>Scrap</span><span>${r.scrap}</span></div>
+    <div class="res-item"><span>Antibiotics</span><span>${r.antibiotics}</span></div>
+    <div class="res-item"><span>Ammo</span><span>${r.ammo}</span></div>
+  `;
+}
+
+/* ---------------- RADAR / LOOT ---------------- */
+const RADAR_RANGE = 250; // meters represented edge-to-edge radius
+function radarRadiusPx(){ return $("radar").clientWidth/2; }
+
+function spawnLoot(){
+  if(state.loot.length>=4) return;
+  const types = [
+    {type:"loot-common", weight:6, name:"Supply Cache"},
+    {type:"loot-high", weight:1, name:"Gun Shop"},
+    {type:"loot-weapon", weight:2, name:"Weapon Drop"},
+  ];
+  const total = types.reduce((s,t)=>s+t.weight,0);
+  let r = Math.random()*total, pick;
+  for(const t of types){ if(r<t.weight){pick=t;break;} r-=t.weight; }
+  state.loot.push({
+    id: Math.random().toString(36).slice(2),
+    type: pick.type,
+    name: pick.name,
+    bearing: Math.random()*360,
+    distance: 60 + Math.random()*180,
+  });
+}
+
+function renderLoot(){
+  const layer = $("lootlayer");
+  layer.innerHTML = "";
+  const R = radarRadiusPx();
+  state.loot.forEach(l=>{
+    const frac = Math.min(l.distance/RADAR_RANGE, 0.96);
+    const rad = frac*R;
+    const ang = (l.bearing-90) * Math.PI/180;
+    const x = R + Math.cos(ang)*rad;
+    const y = R + Math.sin(ang)*rad;
+    const div = document.createElement("div");
+    div.className = "blip "+l.type;
+    div.style.left = x+"px";
+    div.style.top = y+"px";
+    div.title = `${l.name} — ${Math.round(l.distance)}m`;
+    layer.appendChild(div);
+  });
+}
+
+function renderHorde(){
+  const blip = $("horde-blip");
+  if(state.horde.distance > RADAR_RANGE*1.3){
+    blip.style.display="none";
+    return;
+  }
+  blip.style.display="block";
+  const R = radarRadiusPx();
+  const frac = Math.min(state.horde.distance/RADAR_RANGE, 0.98);
+  const rad = frac*R;
+  // fixed bearing for the horde, behind player (south-ish), recompute occasionally
+  if(state._hordeBearing===undefined) state._hordeBearing = 150 + Math.random()*60;
+  const ang = (state._hordeBearing-90) * Math.PI/180;
+  blip.style.left = (R + Math.cos(ang)*rad)+"px";
+  blip.style.top = (R + Math.sin(ang)*rad)+"px";
+}
+
+/* ---------------- LIMB / EDGE UI ---------------- */
+function updateEdges(){
+  const map = {
+    "edge-left": state.limbs.leftArm,
+    "edge-right": state.limbs.rightArm,
+    "edge-bottom": state.limbs.legs,
+    "edge-top": state.stamina,
+  };
+  for(const [id,val] of Object.entries(map)){
+    const el = $(id);
+    el.classList.remove("edge-crit","edge-warn");
+    if(val<=0) el.classList.add("edge-crit");
+    else if(val<35) el.classList.add("edge-warn");
+  }
+}
+
+function updateTopbar(){
+  $("staminaVal").textContent = Math.round(state.stamina);
+  $("staminaFill").style.width = Math.max(0,state.stamina)+"%";
+  const hv = Math.max(0, Math.round(state.horde.distance));
+  $("hordeVal").textContent = hv+"m";
+  const pct = 100 - Math.min(100, (hv/120)*100);
+  $("hordeFill").style.width = Math.max(0,pct)+"%";
+  $("modeLabel").textContent = (state.mode==="gps"?"GPS MODE · ":"SIM MODE · ") + PACE[state.pace];
+  $("paceLabel").textContent = PACE[state.pace];
+}
+
+/* ---------------- LIMB DAMAGE ---------------- */
+function damageLimb(){
+  const limbsAvail = [];
+  if(state.limbs.leftArm>0) limbsAvail.push("leftArm");
+  if(state.limbs.rightArm>0) limbsAvail.push("rightArm");
+  limbsAvail.push("legs","torso");
+  const limb = limbsAvail[Math.floor(Math.random()*limbsAvail.length)];
+  state.limbs[limb] = Math.max(0, state.limbs[limb] - (15+Math.random()*20));
+  toast(`HIT — ${labelLimb(limb)} took damage (${Math.round(state.limbs[limb])}%)`);
+  if(state.limbs[limb]<=0){
+    if(limb==="leftArm"||limb==="rightArm"){
+      toast(`${labelLimb(limb)} is CRIPPLED — that hand is unusable until treated.`);
+    } else if(limb==="legs"){
+      toast(`LEGS CRIPPLED — your movement is slowed. Outrunning the horde now costs more stamina.`);
+    } else {
+      toast(`TORSO badly hurt — stamina regen impaired.`);
+    }
+  }
+  updateEdges();
+  renderHands();
+}
+function labelLimb(l){
+  return {leftArm:"Left arm",rightArm:"Right arm",legs:"Legs",torso:"Torso"}[l];
+}
+
+/* ---------------- ENCOUNTER / COMBAT ---------------- */
+function setEncounter(active){
+  state.horde.active = active;
+  $("encounter-flash").classList.toggle("flash-on", active);
+  if(active && !state._groanInterval){
+    playGroan();
+    state._groanInterval = setInterval(playGroan, 2600);
+  }
+  if(!active && state._groanInterval){
+    clearInterval(state._groanInterval);
+    state._groanInterval = null;
+  }
+}
+
+function attack(side){
+  if(!state.horde.active) return;
+  const limbKey = side==="left"?"leftArm":"rightArm";
+  if(state.limbs[limbKey]<=0){ toast(`${labelLimb(limbKey)} is crippled — can't attack with that hand.`); return; }
+
+  const weaponKey = state.durability[side]<=0 ? "fist" : state.equipped[side];
+  const weapon = WEAPONS[weaponKey];
+
+  if(weapon.ammo){
+    if(state.resources.ammo<=0){ toast("Out of ammo — switch to melee."); return; }
+    state.resources.ammo--;
+    playGunshot();
+    if(weapon.clear){
+      state.horde.health = 0;
+      toast("SHOTGUN BLAST — horde scattered! (noise will draw more soon)");
+    } else {
+      state.horde.health -= weapon.dmg;
+      toast(`Pistol shot — ${weapon.dmg} dmg.`);
+    }
+    if(weapon.noise){
+      state.horde.distance = Math.max(10, state.horde.distance - 5); // shot draws them in faster next time too
+      state._noiseFlag = true;
+    }
+  } else {
+    playHit();
+    state.horde.health -= weapon.dmg;
+    if(weapon.maxDur!==Infinity){
+      state.durability[side] -= 1;
+      if(state.durability[side]<=0){
+        toast(`Your ${weapon.name} broke! That hand is now bare.`);
+      }
+    }
+  }
+
+  document.getElementById(side+"hand").classList.add("hand-hit");
+  setTimeout(()=>document.getElementById(side+"hand").classList.remove("hand-hit"), 150);
+
+  if(state.horde.health<=0){
+    toast("Horde cleared! You find scraps among the bodies.");
+    state.resources.scrap += 1;
+    if(Math.random()<0.3) state.resources.ammo += 2;
+    state.horde.health = state.horde.maxHealth = Math.min(220, state.horde.maxHealth+15);
+    state.horde.distance = 90 + Math.random()*80;
+    state._hordeBearing = undefined;
+    setEncounter(false);
+  }
+  renderHands();
+}
+
+document.getElementById("lefthand").addEventListener("click", ()=>attack("left"));
+document.getElementById("righthand").addEventListener("click", ()=>attack("right"));
+
+/* ---------------- HOME / BASE ---------------- */
+function distanceToHomeMeters(){
+  if(state.mode==="gps"){
+    if(!state.home || !state.gpsLastPos) return Infinity;
+    return haversine(state.home.lat, state.home.lon, state.gpsLastPos.lat, state.gpsLastPos.lon);
+  } else {
+    return state.simDistFromHome;
+  }
+}
+function haversine(lat1,lon1,lat2,lon2){
+  const R=6371000, toRad = d=>d*Math.PI/180;
+  const dLat = toRad(lat2-lat1), dLon = toRad(lon2-lon1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+  return 2*R*Math.asin(Math.sqrt(a));
+}
+
+$("btnBase").onclick = ()=>{
+  if(state.mode==="gps" && state.gpsLastPos){
+    state.home = {lat:state.gpsLastPos.lat, lon:state.gpsLastPos.lon};
+    toast("Base tagged at your current GPS location.");
+  } else {
+    state.home = "sim";
+    state.simDistFromHome = 0;
+    toast("Base tagged here (simulation).");
+  }
+  $("btnReturn").disabled = false;
+};
+
+$("btnReturn").onclick = ()=>{
+  const d = distanceToHomeMeters();
+  if(d>20){ toast(`Still ${Math.round(d)}m from base — keep moving toward it.`); return; }
+  openModal("modal-base");
+};
+
+function renderLimbList(){
+  const order = ["leftArm","rightArm","legs","torso"];
+  $("limbList").innerHTML = order.map(l=>{
+    const v = state.limbs[l];
+    const color = v<=0?"var(--red)":v<35?"var(--amber)":"var(--green)";
+    return `<div class="limb-row">
+      <span style="width:80px;">${labelLimb(l)}</span>
+      <div class="barwrap"><div class="limb-fill" style="width:${v}%;background:${color}"></div></div>
+      <span style="width:34px;text-align:right;">${Math.round(v)}%</span>
+    </div>`;
+  }).join("");
+  renderResourceList("resourceListBase");
+}
+
+$("actEat").onclick = ()=>{
+  if(state.resources.food<=0){ toast("No food left."); return; }
+  state.resources.food--;
+  state.stamina = 100;
+  const lowest = Object.keys(state.limbs).reduce((a,b)=>state.limbs[a]<state.limbs[b]?a:b);
+  state.limbs[lowest] = Math.min(100, state.limbs[lowest]+15);
+  toast("Ate rations — stamina restored, minor healing.");
+  renderLimbList(); updateEdges(); updateTopbar(); renderHands();
+};
+$("actDrink").onclick = ()=>{
+  if(state.resources.water<=0){ toast("No water left."); return; }
+  state.resources.water--;
+  state.torsoBoost = true;
+  state.limbs.torso = Math.min(100, state.limbs.torso+15);
+  toast("Drank water — torso condition improved, regen boosted for the next run.");
+  renderLimbList(); updateEdges();
+};
+$("actRepair").onclick = ()=>{
+  if(state.resources.scrap<=0){ toast("No scrap left."); return; }
+  state.resources.scrap--;
+  ["left","right"].forEach(side=>{
+    const w = state.equipped[side];
+    if(WEAPONS[w].maxDur!==Infinity) state.durability[side]=WEAPONS[w].maxDur;
+  });
+  toast("Repaired equipped weapons to full durability.");
+  renderHands(); renderLimbList();
+};
+$("actAmputate").onclick = ()=>{
+  const crippled = Object.keys(state.limbs).filter(l=>state.limbs[l]<=0);
+  if(crippled.length===0){ toast("No crippled limbs to treat."); return; }
+  if(state.resources.antibiotics<=0){ toast("No antibiotics left."); return; }
+  state.resources.antibiotics--;
+  const limb = crippled[0];
+  state.limbs[limb] = 50;
+  toast(`${labelLimb(limb)} splinted / prosthetic crafted — restored to 50%.`);
+  renderLimbList(); updateEdges(); renderHands();
+};
+
+/* ---------------- MODALS ---------------- */
+function openModal(id){ $(id).classList.add("show"); if(id==="modal-inventory") renderLoadoutOptions(); if(id==="modal-base") renderLimbList(); if(id==="modal-log") renderLog(); }
+function closeModal(id){ $(id).classList.remove("show"); }
+$("btnInventory").onclick = ()=>openModal("modal-inventory");
+$("btnLog").onclick = ()=>openModal("modal-log");
+
+/* ---------------- GPS ---------------- */
+function startGPS(){
+  if(!navigator.geolocation){ toast("Geolocation not available — falling back to simulation."); return; }
+  navigator.geolocation.watchPosition(pos=>{
+    const {latitude, longitude, speed} = pos.coords;
+    const now = Date.now();
+    let mps = speed;
+    if(mps==null || isNaN(mps)){
+      if(state.gpsLastPos){
+        const d = haversine(state.gpsLastPos.lat,state.gpsLastPos.lon,latitude,longitude);
+        const dt = (now-state.gpsLastPos.t)/1000;
+        mps = dt>0 ? d/dt : 0;
+      } else mps = 0;
+    }
+    state.gpsLastPos = {lat:latitude, lon:longitude, t:now};
+    state._gpsSpeed = mps;
+    // map to pace bucket
+    if(mps<0.4) state.pace=0;
+    else if(mps<1.8) state.pace=1;
+    else if(mps<3.2) state.pace=2;
+    else state.pace=3;
+  }, err=>{
+    toast("GPS error: "+err.message+" — using simulation pace.");
+  }, {enableHighAccuracy:true, maximumAge:2000, timeout:8000});
+}
+
+/* ---------------- SIM SPEED ---------------- */
+$("speedSlider").addEventListener("input", e=>{
+  if(state.mode==="gps") return;
+  state.pace = parseInt(e.target.value,10);
+});
+
+/* ---------------- GAME LOOP ---------------- */
+function tick(){
+  const speed = PACE_SPEED[state.pace];
+  const legsCrippled = state.limbs.legs<=0;
+  const effSpeed = legsCrippled ? speed*0.5 : speed;
+
+  // stamina
+  if(state.pace===3) state.stamina -= legsCrippled?4:2.2;
+  else if(state.pace===2) state.stamina -= legsCrippled?1.6:0.6;
+  else if(state.pace===1) state.stamina -= legsCrippled?0.4:0;
+  else state.stamina += state.limbs.torso>0?1.2:0.6;
+  state.stamina = Math.max(0, Math.min(100, state.stamina));
+  if(state.stamina<=0 && state.pace===3){
+    toast("Exhausted — can't sustain a sprint. Slow down before you collapse.");
+    state.pace = 2;
+    $("speedSlider").value = 2;
+  }
+
+  // horde distance dynamics
+  if(!state.horde.active){
+    if(effSpeed<1.2) state.horde.distance -= (2.5 + Math.random()*2.5);
+    else if(effSpeed<3) state.horde.distance += (0.5 + Math.random());
+    else state.horde.distance += (2 + Math.random()*2);
+    if(state._noiseFlag){ state.horde.distance -= 8; state._noiseFlag=false; }
+  }
+
+  if(state.horde.distance<=30 && !state.horde.active){
+    setEncounter(true);
+    toast("They're on you — fight or sprint!");
+  }
+  if(state.horde.distance>60 && state.horde.active){
+    setEncounter(false);
+    toast("The horde lost your scent... for now.");
+  }
+  if(state.horde.distance<=0){
+    state.horde.distance = 0;
+    if(Math.random()<0.6) damageLimb();
+    state.horde.distance = 70 + Math.random()*70;
+    state._hordeBearing = undefined;
+    setEncounter(false);
+  }
+  state.horde.distance = Math.max(0, state.horde.distance);
+
+  // loot approach (abstracted)
+  state.loot.forEach(l=> l.distance -= effSpeed*0.8);
+  const collected = state.loot.filter(l=>l.distance<=5);
+  collected.forEach(l=>{
+    if(l.type==="loot-common"){
+      const give = Math.random()<0.5?"food":"water";
+      state.resources[give]++;
+      toast(`Found a ${l.name} — +1 ${give}.`);
+    } else if(l.type==="loot-high"){
+      state.resources.ammo += 2;
+      if(Math.random()<0.4) state.resources.antibiotics++;
+      toast(`${l.name} cleared — +2 ammo${Math.random()<0.4?', +1 antibiotics':''}.`);
+    } else {
+      const pool = ["riotShield","machete","shortsword","spear","spikedFists","combatKnife"];
+      const w = pool[Math.floor(Math.random()*pool.length)];
+      state.owned[w]=true;
+      state.resources.scrap++;
+      toast(`Weapon drop: ${WEAPONS[w].name} added to your gear.`);
+    }
+  });
+  state.loot = state.loot.filter(l=>l.distance>5);
+  if(Math.random()<0.35) spawnLoot();
+
+  // home distance (sim)
+  if(state.mode==="sim" && state.home){
+    if(state.pace>0) state.simDistFromHome += effSpeed * (Math.random()<0.5?1:-1) * 1.2;
+    state.simDistFromHome = Math.max(0,state.simDistFromHome);
+  }
+  $("btnReturn").disabled = !(state.home!=null && distanceToHomeMeters()<=20);
+
+  updateTopbar();
+  updateEdges();
+  renderLoot();
+  renderHorde();
+}
+
+/* ---------------- START ---------------- */
+$("btnStartGPS").onclick = ()=>{
+  state.mode="gps";
+  startGPS();
+  $("start").style.display="none";
+  audioCtx();
+  toast("GPS engaged. Move around to populate the radar.");
+};
+$("btnStartSim").onclick = ()=>{
+  state.mode="sim";
+  $("start").style.display="none";
+  audioCtx();
+  toast("Simulation mode. Use the PACE slider to move.");
+};
+
+spawnLoot(); spawnLoot();
+renderHands();
+updateTopbar();
+updateEdges();
+setInterval(tick, 1000);
+tick();
+</script>
+</body>
+</html>
