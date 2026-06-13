@@ -3,1442 +3,1572 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>DEAD WALK — Zombie Survival</title>
+<title>DEAD WALK</title>
 <style>
-  :root {
-    --bg: #0a0a0a;
-    --bg2: #111;
-    --bg3: #1a1a1a;
-    --panel: #141414;
-    --border: #222;
-    --red: #c0392b;
-    --red2: #e74c3c;
-    --green: #1a6b2a;
-    --green2: #27ae60;
-    --amber: #d4820a;
-    --amber2: #f39c12;
-    --blue: #1a4a7a;
-    --blue2: #2980b9;
-    --purple: #5b2d8a;
-    --purple2: #8e44ad;
-    --text: #ddd;
-    --muted: #666;
-    --danger: #ff3c3c;
-    --hp: #e74c3c;
-    --food: #f39c12;
-    --water: #3498db;
-    --stamina: #2ecc71;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
-  html, body { background: var(--bg); color: var(--text); font-family: 'Courier New', monospace; min-height: 100vh; overflow-x: hidden; }
+:root{
+  --bg:#080c10;--bg2:#0f1419;--bg3:#141c24;--panel:#0d1117;
+  --border:#1e2832;--border2:#2a3848;
+  --red:#c0392b;--red2:#e74c3c;--red3:#ff6b5b;
+  --green:#1a5c2a;--green2:#2ecc71;--green3:#4dff88;
+  --amber:#c47a0a;--amber2:#f39c12;--amber3:#ffd166;
+  --blue:#1a3a5c;--blue2:#2980b9;--blue3:#56b4f5;
+  --purple:#3d1a6b;--purple2:#8e44ad;--purple3:#c084fc;
+  --teal:#0d4a4a;--teal2:#1abc9c;
+  --text:#c8d6e5;--muted:#556678;--dim:#2a3848;
+  --hp:#e74c3c;--food:#f39c12;--water:#3498db;--stam:#2ecc71;
+  --road:#1a2330;--fog:#0a0e14cc;
+  --node-safe:#1a5c2a;--node-med:#5c3a0a;--node-high:#5c1a1a;--node-boss:#3d006b;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none;}
+html,body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;min-height:100vh;overflow:hidden;touch-action:pan-x pan-y;}
 
-  /* ── Screens ── */
-  .screen { display: none; min-height: 100vh; flex-direction: column; }
-  .screen.active { display: flex; }
+/* ── SCREENS ── */
+.screen{display:none;position:fixed;inset:0;flex-direction:column;overflow:hidden;}
+.screen.active{display:flex;}
 
-  /* ── TITLE ── */
-  #title-screen { align-items: center; justify-content: center; background: var(--bg); }
-  .title-art { text-align: center; margin-bottom: 2rem; }
-  .title-big { font-size: 3rem; font-weight: 900; color: var(--red2); letter-spacing: .15em; text-shadow: 0 0 30px #c0392b66; line-height: 1; }
-  .title-sub { color: var(--muted); font-size: .75rem; letter-spacing: .3em; margin-top: .4rem; }
-  .title-btn { background: var(--red); color: #fff; border: none; padding: 1rem 2.5rem; font-family: inherit; font-size: 1rem; letter-spacing: .2em; cursor: pointer; margin: .5rem; text-transform: uppercase; border-radius: 2px; transition: background .15s; }
-  .title-btn:hover, .title-btn:active { background: var(--red2); }
-  .title-btn.sec { background: var(--bg3); color: var(--muted); border: 1px solid var(--border); }
-  .title-btn.sec:active { background: #222; }
+/* ══════════════════════ TITLE ══════════════════════ */
+#title-screen{background:var(--bg);align-items:center;justify-content:center;overflow-y:auto;}
+.title-scene{text-align:center;padding:2rem 1.5rem;}
+.title-eyebrow{font-size:.6rem;letter-spacing:.5em;color:var(--muted);margin-bottom:.8rem;}
+.title-big{font-size:3.2rem;font-weight:900;color:var(--red2);letter-spacing:.1em;line-height:1;text-shadow:0 0 40px #c0392b55;}
+.title-sub{font-size:.65rem;letter-spacing:.35em;color:var(--muted);margin-top:.4rem;}
+.title-tagline{font-size:.72rem;color:#445566;line-height:1.8;margin:1.5rem auto;max-width:260px;}
+.tb{display:block;width:220px;margin:.4rem auto;padding:.85rem;background:var(--red);color:#fff;border:none;font-family:inherit;font-size:.85rem;letter-spacing:.2em;cursor:pointer;border-radius:3px;text-transform:uppercase;transition:background .15s;}
+.tb:active{background:var(--red2);}
+.tb.sec{background:var(--bg3);color:var(--muted);border:1px solid var(--border);}
+.tb.sec:active{background:#1a2330;}
 
-  /* ── CHARACTER SELECT ── */
-  #char-screen { background: var(--bg); padding: 1rem; }
-  .screen-title { font-size: 1rem; letter-spacing: .3em; color: var(--red2); text-align: center; padding: .75rem 0; border-bottom: 1px solid var(--border); margin-bottom: 1rem; text-transform: uppercase; }
-  .char-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-bottom: 1rem; }
-  .char-card { background: var(--bg3); border: 2px solid var(--border); border-radius: 4px; padding: .75rem; cursor: pointer; transition: border-color .15s; position: relative; }
-  .char-card.selected { border-color: var(--red2); }
-  .char-card.selected::after { content: '✓'; position: absolute; top: .4rem; right: .5rem; color: var(--red2); font-size: .9rem; }
-  .char-icon { font-size: 2.2rem; text-align: center; margin-bottom: .4rem; }
-  .char-name { font-size: .85rem; font-weight: 700; color: #fff; text-align: center; margin-bottom: .4rem; letter-spacing: .1em; }
-  .char-desc { font-size: .65rem; color: var(--muted); text-align: center; margin-bottom: .5rem; line-height: 1.4; }
-  .stat-row { display: flex; justify-content: space-between; align-items: center; margin: 2px 0; }
-  .stat-label { font-size: .6rem; color: var(--muted); }
-  .stat-bar { width: 60%; height: 4px; background: var(--bg); border-radius: 2px; overflow: hidden; }
-  .stat-fill { height: 100%; border-radius: 2px; }
-  .s-hp { background: var(--hp); }
-  .s-str { background: var(--red2); }
-  .s-spd { background: var(--stamina); }
-  .s-stam { background: var(--blue2); }
-  .confirm-btn { width: 100%; padding: 1rem; background: var(--red); color: #fff; border: none; font-family: inherit; font-size: .9rem; letter-spacing: .2em; cursor: pointer; border-radius: 2px; text-transform: uppercase; }
-  .confirm-btn:disabled { background: #333; color: var(--muted); cursor: default; }
+/* ══════════════════════ CHAR SELECT ══════════════════════ */
+#char-screen{background:var(--bg);overflow-y:auto;}
+.screen-hdr{font-size:.75rem;letter-spacing:.35em;color:var(--red2);text-align:center;padding:.8rem;border-bottom:1px solid var(--border);text-transform:uppercase;flex-shrink:0;}
+.char-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;padding:.75rem;}
+.char-card{background:var(--bg3);border:2px solid var(--border);border-radius:6px;padding:.75rem;cursor:pointer;transition:border-color .15s,background .15s;position:relative;}
+.char-card.sel{border-color:var(--red2);background:#1a0d0d;}
+.char-card.sel::after{content:'✓';position:absolute;top:.4rem;right:.6rem;color:var(--red2);font-size:.9rem;}
+.c-icon{font-size:2rem;text-align:center;margin-bottom:.3rem;}
+.c-name{font-size:.8rem;font-weight:700;color:#fff;text-align:center;letter-spacing:.1em;}
+.c-role{font-size:.58rem;color:var(--amber2);text-align:center;margin-bottom:.3rem;letter-spacing:.08em;}
+.c-desc{font-size:.6rem;color:var(--muted);text-align:center;line-height:1.4;margin-bottom:.5rem;}
+.sr{display:flex;align-items:center;gap:4px;margin:2px 0;}
+.sl{font-size:.55rem;color:var(--muted);width:28px;}
+.sb{flex:1;height:4px;background:#111;border-radius:2px;overflow:hidden;}
+.sf{height:100%;border-radius:2px;}
+.f-hp{background:var(--hp);}
+.f-str{background:var(--red3);}
+.f-spd{background:var(--green2);}
+.f-cd{background:var(--amber2);}
+.c-special{font-size:.55rem;color:#334455;text-align:center;margin-top:.35rem;}
+.confirm-btn{margin:.75rem;padding:.85rem;background:var(--red);color:#fff;border:none;font-family:inherit;font-size:.85rem;letter-spacing:.2em;cursor:pointer;border-radius:3px;text-transform:uppercase;flex-shrink:0;}
+.confirm-btn:disabled{background:#1a1a1a;color:#333;cursor:default;}
 
-  /* ── MAIN GAME ── */
-  #game-screen { background: var(--bg); flex-direction: column; }
+/* ══════════════════════ GAME SCREEN ══════════════════════ */
+#game-screen{background:var(--bg);}
 
-  /* Top HUD */
-  .hud { background: var(--panel); border-bottom: 1px solid var(--border); padding: .5rem .75rem; display: flex; flex-direction: column; gap: .3rem; }
-  .hud-row { display: flex; align-items: center; gap: .5rem; }
-  .hud-name { font-size: .7rem; letter-spacing: .1em; color: var(--red2); font-weight: 700; }
-  .bar-wrap { flex: 1; height: 6px; background: #222; border-radius: 3px; overflow: hidden; }
-  .bar-inner { height: 100%; border-radius: 3px; transition: width .3s; }
-  .bar-label { font-size: .6rem; color: var(--muted); min-width: 24px; text-align: right; }
+/* HUD strip */
+.hud{background:var(--panel);border-bottom:1px solid var(--border);padding:.45rem .75rem;flex-shrink:0;}
+.hud-top{display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem;}
+.hud-name{font-size:.72rem;font-weight:700;color:var(--red3);letter-spacing:.1em;min-width:60px;}
+.hud-day{font-size:.62rem;color:var(--muted);margin-left:auto;}
+.hud-day span{color:var(--amber2);font-weight:700;}
+.bars{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:.3rem;}
+.bar-item{display:flex;flex-direction:column;gap:2px;}
+.bar-lbl{font-size:.48rem;color:var(--muted);letter-spacing:.05em;}
+.bar-track{height:5px;background:#111;border-radius:3px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:3px;transition:width .3s;}
 
-  /* Step counter */
-  .step-panel { background: var(--bg3); border-bottom: 1px solid var(--border); padding: .4rem .75rem; display: flex; align-items: center; justify-content: space-between; }
-  .step-info { font-size: .7rem; color: var(--muted); }
-  .step-val { color: var(--amber2); font-weight: 700; }
-  .step-btn { background: var(--amber); color: #fff; border: none; font-family: inherit; font-size: .65rem; padding: .3rem .7rem; border-radius: 2px; cursor: pointer; letter-spacing: .1em; text-transform: uppercase; }
-  .step-btn:active { background: var(--amber2); transform: scale(.97); }
+/* Step pedometer strip */
+.ped-strip{background:var(--bg2);border-bottom:1px solid var(--border);padding:.35rem .75rem;display:flex;align-items:center;gap:.6rem;flex-shrink:0;}
+.ped-icon{font-size:1rem;}
+.ped-label{font-size:.62rem;color:var(--muted);flex:1;}
+.ped-count{font-size:.8rem;font-weight:700;color:var(--amber3);}
+.ped-track{flex:2;height:6px;background:#111;border-radius:3px;overflow:hidden;}
+.ped-fill{height:100%;background:linear-gradient(90deg,var(--amber),var(--amber2));border-radius:3px;transition:width .4s;}
+.ped-target{font-size:.55rem;color:var(--muted);}
+.perm-btn{font-size:.55rem;background:var(--amber);color:#fff;border:none;font-family:inherit;padding:.25rem .5rem;border-radius:2px;cursor:pointer;}
 
-  /* Zone tabs */
-  .zone-tabs { display: flex; border-bottom: 1px solid var(--border); overflow-x: auto; background: var(--panel); }
-  .zone-tab { flex: 0 0 auto; padding: .5rem .9rem; font-size: .65rem; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; letter-spacing: .1em; text-transform: uppercase; transition: color .15s; }
-  .zone-tab.active { color: var(--red2); border-bottom-color: var(--red2); }
-  .zone-tab.locked { opacity: .4; cursor: not-allowed; }
-  .zone-tab.danger-zone { color: #ff6b35; }
-  .zone-tab.danger-zone.active { color: #ff6b35; border-bottom-color: #ff6b35; }
+/* ══ MAP CANVAS ══ */
+.map-wrap{flex:1;position:relative;overflow:hidden;}
+#map-canvas{position:absolute;inset:0;width:100%;height:100%;cursor:grab;}
+#map-canvas:active{cursor:grabbing;}
 
-  /* Map area */
-  .map-area { flex: 1; overflow-y: auto; padding: .75rem; }
-  .zone-header { margin-bottom: .75rem; }
-  .zone-name { font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: .2rem; }
-  .zone-danger-tag { display: inline-block; font-size: .6rem; padding: .2rem .5rem; border-radius: 2px; margin-left: .5rem; letter-spacing: .1em; text-transform: uppercase; vertical-align: middle; }
-  .tag-safe { background: #1a3a1a; color: var(--green2); }
-  .tag-medium { background: #3a2a1a; color: var(--amber2); }
-  .tag-high { background: #3a1a1a; color: var(--red2); }
-  .tag-extreme { background: #2a001a; color: #ff6bff; }
-  .zone-desc { font-size: .72rem; color: var(--muted); line-height: 1.5; margin-bottom: .75rem; }
+/* Map UI overlays */
+.map-legend{position:absolute;bottom:.75rem;left:.75rem;background:rgba(8,12,16,.85);border:1px solid var(--border);border-radius:4px;padding:.45rem .6rem;font-size:.55rem;color:var(--muted);line-height:1.9;pointer-events:none;}
+.map-legend-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:middle;}
+.zone-label-overlay{position:absolute;pointer-events:none;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;font-weight:700;text-shadow:0 1px 4px #000;}
 
-  /* Map cells */
-  .map-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .35rem; margin-bottom: .75rem; }
-  .map-cell { background: var(--bg3); border: 1px solid var(--border); border-radius: 3px; padding: .4rem; cursor: pointer; transition: border-color .15s, background .15s; position: relative; min-height: 70px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-  .map-cell:active { background: #1e1e1e; }
-  .map-cell.current { border-color: var(--green2); background: #0d1f0d; }
-  .map-cell.explored { border-color: #2a2a2a; opacity: .7; }
-  .map-cell.locked { opacity: .3; cursor: not-allowed; }
-  .map-cell.danger { border-color: #3a1a00; }
-  .map-cell.danger.current { border-color: var(--red2); background: #1f0d0d; }
-  .cell-icon { font-size: 1.4rem; margin-bottom: .2rem; }
-  .cell-name { font-size: .55rem; color: var(--muted); letter-spacing: .05em; }
-  .cell-badge { position: absolute; top: 3px; right: 3px; font-size: .5rem; padding: 1px 4px; border-radius: 2px; }
-  .badge-loot { background: #1a3a1a; color: var(--green2); }
-  .badge-zombie { background: #3a0a0a; color: var(--red2); }
-  .badge-boss { background: #3a0025; color: #ff6bff; }
-  .badge-ally { background: #1a2a3a; color: var(--blue2); }
-  .badge-current { position: absolute; bottom: 3px; left: 3px; width: 6px; height: 6px; background: var(--green2); border-radius: 50%; }
+/* Side panel (slides up from bottom) */
+.side-panel{position:absolute;bottom:0;left:0;right:0;background:var(--panel);border-top:1px solid var(--border2);border-radius:12px 12px 0 0;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:30;max-height:65vh;display:flex;flex-direction:column;}
+.side-panel.open{transform:translateY(0);}
+.panel-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:.6rem auto .4rem;flex-shrink:0;}
+.panel-scroll{overflow-y:auto;padding:.5rem .75rem .75rem;flex:1;}
+.panel-node-name{font-size:1rem;font-weight:700;color:#fff;margin-bottom:.15rem;}
+.panel-danger{display:inline-block;font-size:.55rem;padding:.15rem .45rem;border-radius:2px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.5rem;}
+.panel-desc{font-size:.68rem;color:var(--muted);line-height:1.5;margin-bottom:.65rem;}
+.panel-row{display:flex;gap:.5rem;margin-bottom:.5rem;}
+.panel-action{flex:1;padding:.65rem;border:none;font-family:inherit;font-size:.72rem;border-radius:3px;cursor:pointer;letter-spacing:.1em;text-transform:uppercase;}
+.pa-enter{background:var(--red);color:#fff;}
+.pa-enter:active{background:var(--red2);}
+.pa-enter:disabled{background:#222;color:#444;cursor:default;}
+.pa-loot{background:var(--green);color:var(--green2);}
+.pa-loot:active{background:#1a4a1a;}
+.pa-close{background:var(--bg3);color:var(--muted);border:1px solid var(--border);}
+.steps-req{font-size:.62rem;color:var(--amber2);margin-bottom:.4rem;}
+.loot-chips{display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.5rem;}
+.loot-chip{font-size:.6rem;background:#1a2a1a;color:var(--green2);border:1px solid #1a4a1a;padding:.15rem .4rem;border-radius:2px;}
+.loot-chip.weapon{background:#2a1a1a;color:var(--red3);border-color:#4a1a1a;}
+.loot-chip.gun{background:#1a1a2a;color:var(--blue3);border-color:#1a1a4a;}
+.enemy-chip{display:flex;align-items:center;gap:.4rem;background:#1a0a0a;border:1px solid #3a0a0a;border-radius:3px;padding:.3rem .5rem;margin-bottom:.4rem;font-size:.65rem;}
 
-  /* Loot log / event feed */
-  .event-feed { background: var(--panel); border: 1px solid var(--border); border-radius: 3px; padding: .6rem; margin-bottom: .75rem; max-height: 120px; overflow-y: auto; }
-  .event-line { font-size: .68rem; line-height: 1.6; }
-  .ev-info { color: var(--muted); }
-  .ev-loot { color: var(--green2); }
-  .ev-danger { color: var(--red2); }
-  .ev-team { color: var(--blue2); }
-  .ev-warn { color: var(--amber2); }
-  .ev-boss { color: #ff6bff; }
+/* Team / inventory in side panel */
+.panel-section-title{font-size:.55rem;letter-spacing:.2em;color:var(--muted);text-transform:uppercase;margin:.5rem 0 .3rem;}
+.team-row{display:flex;gap:.5rem;overflow-x:auto;padding-bottom:.25rem;margin-bottom:.4rem;}
+.tmcard{flex:0 0 auto;background:var(--bg3);border:1px solid var(--border);border-radius:3px;padding:.4rem .5rem;text-align:center;min-width:72px;}
+.tmcard.dead{opacity:.35;filter:grayscale(1);}
+.tm-ico{font-size:1.2rem;}
+.tm-nm{font-size:.52rem;color:var(--muted);margin:.15rem 0;}
+.tm-hp{height:3px;background:#111;border-radius:2px;overflow:hidden;}
+.tm-hp-f{height:100%;background:var(--hp);}
+.inv-row{display:grid;grid-template-columns:repeat(4,1fr);gap:.3rem;}
+.inv-sl{background:var(--bg);border:1px solid var(--border);border-radius:2px;padding:.3rem;min-height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer;}
+.inv-sl:active{background:#111;}
+.inv-sl.eqp{border-color:var(--amber2);}
+.inv-ico{font-size:1rem;}
+.inv-nm{font-size:.48rem;color:var(--muted);margin-top:.1rem;}
+.inv-cnt{font-size:.5rem;color:var(--amber2);}
 
-  /* Team panel */
-  .team-panel { display: flex; gap: .5rem; margin-bottom: .75rem; overflow-x: auto; padding-bottom: .25rem; }
-  .team-card { flex: 0 0 auto; background: var(--bg3); border: 1px solid var(--border); border-radius: 3px; padding: .5rem; min-width: 90px; text-align: center; }
-  .team-card.dead { opacity: .4; filter: grayscale(1); }
-  .team-icon { font-size: 1.4rem; }
-  .team-name { font-size: .6rem; color: var(--muted); margin-top: .2rem; }
-  .team-hp-bar { height: 3px; background: #222; border-radius: 2px; margin-top: .3rem; overflow: hidden; }
-  .team-hp-fill { height: 100%; background: var(--hp); border-radius: 2px; }
+/* ══════════════════════ COMBAT ══════════════════════ */
+#combat-screen{background:#030508;overflow:hidden;}
+.combat-scene{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:space-around;position:relative;padding:.5rem;}
 
-  /* Inventory */
-  .inventory { background: var(--panel); border: 1px solid var(--border); border-radius: 3px; padding: .6rem; margin-bottom: .75rem; }
-  .inv-title { font-size: .65rem; letter-spacing: .2em; color: var(--muted); text-transform: uppercase; margin-bottom: .5rem; }
-  .inv-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .35rem; }
-  .inv-slot { background: var(--bg); border: 1px solid var(--border); border-radius: 2px; padding: .35rem; text-align: center; min-height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; }
-  .inv-slot:active { background: #1e1e1e; }
-  .inv-slot.equipped { border-color: var(--amber2); }
-  .inv-icon { font-size: 1.1rem; }
-  .inv-name { font-size: .5rem; color: var(--muted); margin-top: .15rem; }
-  .inv-count { font-size: .55rem; color: var(--amber2); }
+/* Scrolling bg parallax lines */
+.cb-bg{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
+.cb-line{position:absolute;height:1px;background:linear-gradient(90deg,transparent,#1a2832,transparent);animation:scanline 3s linear infinite;}
+@keyframes scanline{from{top:-2%;opacity:.6;}to{top:102%;opacity:.1;}}
 
-  /* ── COMBAT ── */
-  #combat-screen { background: #050505; flex-direction: column; overflow: hidden; position: relative; }
-  .combat-bg { position: absolute; inset: 0; overflow: hidden; }
-  .blood-splat { position: absolute; border-radius: 50%; background: radial-gradient(circle, #8b000066, transparent 70%); }
+/* Zombie display */
+.zombie-stage{position:relative;display:flex;align-items:center;justify-content:center;width:160px;height:200px;}
+#zsvg-wrap{transform-origin:center bottom;}
+.z-idle{animation:zIdle 2s ease-in-out infinite;}
+.z-attack{animation:zAtk .55s ease-in-out forwards;}
+.z-stun{animation:zStun .5s ease-in-out;}
+.z-hit{animation:zHit .3s ease;}
+.z-die{animation:zDie .9s ease-in-out forwards;}
+@keyframes zIdle{0%,100%{transform:translateY(0) rotate(-1deg);}50%{transform:translateY(-5px) rotate(1.5deg);}}
+@keyframes zAtk{0%{transform:translateX(0) scale(1);}30%{transform:translateX(50px) scale(1.12);}65%{transform:translateX(-6px) scale(.98);}100%{transform:translateX(0) scale(1);}}
+@keyframes zStun{0%,100%{transform:rotate(0) translateX(0);}20%{transform:rotate(-9deg) translateX(-12px);}40%{transform:rotate(7deg) translateX(10px);}60%{transform:rotate(-4deg) translateX(-5px);}80%{transform:rotate(3deg) translateX(4px);}}
+@keyframes zHit{0%,100%{filter:brightness(1);}50%{filter:brightness(4) saturate(0);}}
+@keyframes zDie{0%{transform:translateY(0) rotate(0) scaleY(1);opacity:1;}100%{transform:translateY(80px) rotate(85deg) scaleY(.1);opacity:0;}}
 
-  .combat-hud { padding: .6rem .75rem; background: rgba(0,0,0,.7); border-bottom: 1px solid #300; position: relative; z-index: 10; }
-  .combat-title { font-size: .65rem; letter-spacing: .3em; color: var(--red2); text-transform: uppercase; margin-bottom: .4rem; }
-  .combat-bars { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+/* Combat HUD */
+.chud{padding:.5rem .75rem;background:rgba(3,5,8,.85);border-bottom:1px solid #1a0808;flex-shrink:0;position:relative;z-index:10;}
+.chud-title{font-size:.55rem;letter-spacing:.35em;color:var(--red2);text-transform:uppercase;margin-bottom:.35rem;}
+.chud-bars{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;}
+.chud-zname{font-size:.65rem;color:var(--muted);text-align:center;margin-bottom:2px;}
+.chud-bar{height:7px;background:#111;border-radius:4px;overflow:hidden;margin-bottom:2px;}
+.chud-fill{height:100%;border-radius:4px;transition:width .2s;}
+.chud-val{font-size:.55rem;color:var(--muted);text-align:right;}
 
-  /* Combat arena */
-  .combat-arena { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
-  .zombie-container { position: relative; display: flex; align-items: center; justify-content: center; }
+/* Combat status banner */
+.c-status{font-size:.78rem;font-weight:700;letter-spacing:.15em;color:var(--amber3);text-align:center;min-height:1.4rem;margin:.3rem 0;}
+.c-status.danger{color:var(--red3);animation:blink .35s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.2;}}
 
-  /* 2D Zombie SVG */
-  .zombie-svg-wrap { position: relative; }
-  .zombie-svg-wrap svg { display: block; }
+/* REACT flash */
+.react-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:20;}
+.react-txt{font-size:2.8rem;font-weight:900;color:var(--red2);text-shadow:0 0 30px var(--red);letter-spacing:.1em;opacity:0;transform:scale(.4);transition:opacity .08s,transform .08s;}
+.react-txt.on{opacity:1;transform:scale(1.05);}
 
-  /* Reaction flash */
-  .react-flash { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
-  .react-text { font-size: 2rem; font-weight: 900; color: var(--red2); opacity: 0; text-shadow: 0 0 20px var(--red); letter-spacing: .1em; transform: scale(.5); transition: opacity .1s, transform .1s; }
-  .react-text.show { opacity: 1; transform: scale(1.1); }
+/* HP bar zombie */
+.z-hp-wrap{text-align:center;margin-bottom:.3rem;}
+.z-hp-track{width:180px;height:8px;background:#1a0000;border-radius:4px;overflow:hidden;margin:0 auto;}
+.z-hp-bar{height:100%;background:var(--red2);border-radius:4px;transition:width .2s;}
 
-  /* Reaction window (tap zone) */
-  .tap-zone { width: 100%; min-height: 100px; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; z-index: 20; }
-  .tap-ring { width: 80px; height: 80px; border-radius: 50%; border: 2px solid #333; display: flex; align-items: center; justify-content: center; transition: border-color .1s; }
-  .tap-ring.danger-ring { border-color: var(--red2); animation: pulse-ring 0.5s ease-in-out infinite; }
-  .tap-ring.success-ring { border-color: var(--green2); }
-  @keyframes pulse-ring { 0%,100%{transform:scale(1);box-shadow:0 0 0 0 #c0392b44;} 50%{transform:scale(1.06);box-shadow:0 0 0 12px #c0392b00;} }
-  .tap-icon { font-size: 2rem; }
+/* Defend tap zone */
+.defend-zone{display:flex;flex-direction:column;align-items:center;gap:.5rem;}
+.tap-ring{width:76px;height:76px;border-radius:50%;border:2px solid #223;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .1s,transform .1s;}
+.tap-ring.pulse{border-color:var(--red2);box-shadow:0 0 0 0 #e74c3c88;animation:tapPulse .45s ease-in-out infinite;}
+@keyframes tapPulse{0%{box-shadow:0 0 0 0 #e74c3c88;}70%{box-shadow:0 0 0 14px transparent;}100%{box-shadow:0 0 0 0 transparent;}}
+.tap-ring.success{border-color:var(--green2);}
+.tap-ico{font-size:2.2rem;}
+.tap-hint{font-size:.58rem;color:var(--muted);letter-spacing:.1em;}
 
-  /* Attack zone (appears after stun) */
-  .attack-zone { display: none; flex-direction: column; align-items: center; gap: .5rem; padding: .75rem; }
-  .attack-zone.show { display: flex; }
-  .atk-btn { background: var(--red); color: #fff; border: none; font-family: inherit; font-size: .8rem; padding: .7rem 1.5rem; border-radius: 2px; cursor: pointer; letter-spacing: .15em; text-transform: uppercase; position: relative; overflow: hidden; }
-  .atk-btn:disabled { background: #333; color: #555; cursor: not-allowed; }
-  .atk-btn .cooldown-fill { position: absolute; left: 0; top: 0; height: 100%; background: rgba(0,0,0,.4); transition: width linear; }
-  .gun-btn { background: var(--blue); color: #fff; border: none; font-family: inherit; font-size: .8rem; padding: .7rem 1.5rem; border-radius: 2px; cursor: pointer; letter-spacing: .15em; text-transform: uppercase; }
-  .gun-btn:disabled { background: #1a1a2a; color: #444; cursor: not-allowed; }
+/* Attack zone (post-stun) */
+.atk-zone{display:none;flex-direction:column;align-items:center;gap:.45rem;}
+.atk-zone.show{display:flex;}
+.atk-btn{position:relative;overflow:hidden;padding:.7rem 1.8rem;border:none;font-family:inherit;font-size:.8rem;letter-spacing:.15em;text-transform:uppercase;border-radius:3px;cursor:pointer;}
+.atk-btn.melee{background:var(--red);color:#fff;}
+.atk-btn.melee:disabled{background:#2a0a0a;color:#554444;cursor:not-allowed;}
+.atk-btn.gun{background:var(--blue);color:var(--blue3);}
+.atk-btn.gun:disabled{background:#0a0a1a;color:#334;cursor:not-allowed;}
+.cd-fill{position:absolute;left:0;top:0;height:100%;background:rgba(0,0,0,.5);pointer-events:none;}
+.wep-lbl{font-size:.58rem;color:var(--muted);}
+.stun-banner{font-size:.7rem;color:var(--amber3);letter-spacing:.2em;}
 
-  .combat-log { background: rgba(0,0,0,.7); border-top: 1px solid #300; padding: .5rem .75rem; max-height: 80px; overflow-y: auto; }
-  .clog-line { font-size: .65rem; line-height: 1.6; }
-  .cl-hit { color: var(--red2); }
-  .cl-block { color: var(--green2); }
-  .cl-stun { color: var(--amber2); }
-  .cl-kill { color: #ff6bff; }
-  .cl-miss { color: var(--muted); }
+/* Floating damage */
+.dmg-float{position:absolute;font-size:1.2rem;font-weight:900;pointer-events:none;animation:floatUp .75s ease-out forwards;z-index:50;}
+@keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1);}100%{opacity:0;transform:translateY(-50px) scale(.7);}}
 
-  /* Zombie health */
-  .zombie-hp-wrap { width: 200px; margin-bottom: .5rem; }
-  .zombie-hp-bar { height: 8px; background: #222; border-radius: 4px; overflow: hidden; }
-  .zombie-hp-fill { height: 100%; background: var(--red2); border-radius: 4px; transition: width .2s; }
-  .zombie-label { font-size: .65rem; color: var(--muted); text-align: center; margin-bottom: .3rem; letter-spacing: .1em; }
+/* blood splats */
+.splat{position:absolute;border-radius:50%;background:radial-gradient(circle,#8b000055,transparent 70%);pointer-events:none;}
 
-  /* Range attack zone */
-  .range-zone { display: none; flex-direction: column; align-items: center; gap: .5rem; }
-  .range-zone.show { display: flex; }
-  .aim-ring { width: 100px; height: 100px; border-radius: 50%; border: 1px dashed var(--blue2); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: border-color .1s, transform .1s; }
-  .aim-ring:active { transform: scale(.95); border-color: var(--blue2); }
-  .aim-center { width: 16px; height: 16px; border-radius: 50%; background: var(--blue2); opacity: .7; }
+/* Range mode */
+.range-overlay{display:none;position:absolute;inset:0;background:rgba(0,20,50,.8);flex-direction:column;align-items:center;justify-content:center;z-index:25;gap:.75rem;}
+.range-overlay.show{display:flex;}
+.range-title{font-size:.72rem;letter-spacing:.3em;color:var(--blue3);text-transform:uppercase;}
+.aim-ring{width:90px;height:90px;border-radius:50%;border:1px dashed var(--blue2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .1s;}
+.aim-ring:active{transform:scale(.93);}
+.aim-dot{width:14px;height:14px;border-radius:50%;background:var(--blue3);opacity:.8;}
+.ammo-lbl{font-size:.65rem;color:var(--muted);}
+.skip-btn{font-size:.6rem;background:transparent;border:1px solid #223;color:var(--muted);font-family:inherit;padding:.3rem .75rem;border-radius:2px;cursor:pointer;}
 
-  /* ── GAME OVER / WIN ── */
-  #end-screen { background: var(--bg); align-items: center; justify-content: center; }
-  .end-icon { font-size: 4rem; margin-bottom: 1rem; }
-  .end-title { font-size: 1.8rem; font-weight: 900; letter-spacing: .2em; margin-bottom: .5rem; }
-  .end-title.dead { color: var(--red2); }
-  .end-title.win { color: var(--green2); }
-  .end-cause { font-size: .8rem; color: var(--muted); margin-bottom: 2rem; letter-spacing: .1em; }
-  .end-stats { background: var(--bg3); border: 1px solid var(--border); padding: 1rem 1.5rem; border-radius: 3px; margin-bottom: 2rem; width: 100%; max-width: 300px; }
-  .end-stat-row { display: flex; justify-content: space-between; font-size: .75rem; padding: .3rem 0; border-bottom: 1px solid var(--border); }
-  .end-stat-row:last-child { border-bottom: none; }
+/* Combat log */
+.clog{background:rgba(3,5,8,.9);border-top:1px solid #1a0808;padding:.4rem .75rem;max-height:72px;overflow-y:auto;flex-shrink:0;}
+.clog-line{font-size:.62rem;line-height:1.55;}
+.cl-h{color:var(--red3);}
+.cl-b{color:var(--green2);}
+.cl-s{color:var(--amber2);}
+.cl-k{color:var(--purple3);}
+.cl-m{color:var(--muted);}
 
-  /* Notification toast */
-  .toast { position: fixed; top: 1rem; left: 50%; transform: translateX(-50%) translateY(-100px); background: #111; border: 1px solid var(--border); border-radius: 3px; padding: .5rem 1rem; font-size: .75rem; z-index: 999; transition: transform .3s; white-space: nowrap; max-width: 90vw; }
-  .toast.show { transform: translateX(-50%) translateY(0); }
-  .toast.warn { border-color: var(--red2); color: var(--red2); }
-  .toast.good { border-color: var(--green2); color: var(--green2); }
-  .toast.info { border-color: var(--blue2); color: var(--blue2); }
+/* ══════════════════════ END ══════════════════════ */
+#end-screen{background:var(--bg);align-items:center;justify-content:center;overflow-y:auto;}
+.end-wrap{text-align:center;padding:2rem 1.5rem;}
+.end-ico{font-size:4rem;margin-bottom:.75rem;}
+.end-ttl{font-size:1.8rem;font-weight:900;letter-spacing:.2em;margin-bottom:.4rem;}
+.end-ttl.dead{color:var(--red2);}
+.end-ttl.win{color:var(--green2);}
+.end-cause{font-size:.72rem;color:var(--muted);letter-spacing:.1em;margin-bottom:1.5rem;}
+.end-stats{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:.85rem 1.25rem;margin-bottom:1.5rem;width:260px;}
+.est{display:flex;justify-content:space-between;font-size:.72rem;padding:.3rem 0;border-bottom:1px solid var(--border);}
+.est:last-child{border:none;}
+.est-val{color:var(--amber2);font-weight:700;}
 
-  /* Zombie animations */
-  @keyframes zombie-idle { 0%,100%{transform:translateY(0) rotate(-1deg);} 50%{transform:translateY(-4px) rotate(1deg);} }
-  @keyframes zombie-attack { 0%{transform:translateX(0);} 25%{transform:translateX(30px) scale(1.1);} 50%{transform:translateX(-5px);} 100%{transform:translateX(0);} }
-  @keyframes zombie-stun { 0%{transform:translateX(0) rotate(0);} 25%{transform:translateX(-10px) rotate(-8deg);} 50%{transform:translateX(8px) rotate(6deg);} 75%{transform:translateX(-4px) rotate(-3deg);} 100%{transform:translateX(0) rotate(0);} }
-  @keyframes zombie-hit { 0%,100%{opacity:1;filter:brightness(1);} 50%{opacity:.5;filter:brightness(3) saturate(0);} }
-  @keyframes zombie-death { 0%{transform:translateY(0) rotate(0) scaleY(1);opacity:1;} 100%{transform:translateY(60px) rotate(90deg) scaleY(.2);opacity:0;} }
-  @keyframes dmg-float { 0%{opacity:1;transform:translateY(0);} 100%{opacity:0;transform:translateY(-40px);} }
+/* Toast */
+.toast{position:fixed;top:.75rem;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--bg3);border:1px solid var(--border);border-radius:3px;padding:.45rem .9rem;font-size:.72rem;z-index:999;transition:transform .25s;white-space:nowrap;max-width:88vw;pointer-events:none;}
+.toast.on{transform:translateX(-50%) translateY(0);}
+.toast.warn{border-color:var(--red2);color:var(--red2);}
+.toast.good{border-color:var(--green2);color:var(--green2);}
+.toast.info{border-color:var(--blue2);color:var(--blue2);}
 
-  .zombie-idle { animation: zombie-idle 2s ease-in-out infinite; }
-  .zombie-attacking { animation: zombie-attack 0.6s ease-in-out; }
-  .zombie-stunned { animation: zombie-stun 0.5s ease-in-out; filter: brightness(1.5) sepia(.5); }
-  .zombie-hit-anim { animation: zombie-hit 0.3s ease-in-out; }
-  .zombie-dying { animation: zombie-death 0.8s ease-in-out forwards; }
-
-  .dmg-number { position: absolute; font-size: 1.1rem; font-weight: 900; pointer-events: none; animation: dmg-float 0.8s ease-out forwards; }
-
-  /* Range mode overlay */
-  .range-overlay { position: absolute; inset: 0; background: rgba(0,30,60,.7); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 25; }
-
-  /* Scrollbar */
-  ::-webkit-scrollbar { width: 4px; height: 4px; }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+/* scrollbar */
+::-webkit-scrollbar{width:3px;height:3px;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
 </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════ TITLE ═══════════════════════════ -->
+<!-- ═══ TITLE ═══ -->
 <div id="title-screen" class="screen active">
-  <div class="title-art">
-    <div style="font-size:.65rem;letter-spacing:.4em;color:var(--muted);margin-bottom:.8rem;">[ OUTBREAK ZONE — DAY 1 ]</div>
-    <div class="title-big">DEAD WALK</div>
-    <div class="title-sub">REAL-WORLD SURVIVAL</div>
-    <!-- Animated zombie pixel art SVG -->
-    <svg width="180" height="220" viewBox="0 0 180 220" xmlns="http://www.w3.org/2000/svg" style="margin:1.5rem auto;display:block;">
-      <g id="title-zombie" style="animation:zombie-idle 2.5s ease-in-out infinite;transform-origin:90px 110px;">
-        <!-- body -->
-        <rect x="62" y="90" width="56" height="70" rx="4" fill="#2d1a0a"/>
-        <!-- torn shirt -->
-        <rect x="62" y="90" width="56" height="45" rx="4" fill="#1a3a1a"/>
-        <polygon points="62,120 72,135 62,135" fill="#0d0d0d"/>
-        <polygon points="118,118 108,133 118,133" fill="#0d0d0d"/>
-        <!-- head -->
-        <rect x="65" y="50" width="50" height="48" rx="6" fill="#4a3520"/>
-        <!-- eyes (glowing red) -->
-        <ellipse cx="78" cy="68" rx="6" ry="7" fill="#1a0000"/>
-        <ellipse cx="102" cy="68" rx="6" ry="7" fill="#1a0000"/>
-        <ellipse cx="78" cy="69" rx="3.5" ry="4" fill="#cc0000"/>
-        <ellipse cx="102" cy="69" rx="3.5" ry="4" fill="#cc0000"/>
-        <!-- pupils -->
-        <ellipse cx="79" cy="69" rx="1.5" ry="2" fill="#ff4444"/>
-        <ellipse cx="103" cy="69" rx="1.5" ry="2" fill="#ff4444"/>
-        <!-- mouth -->
-        <rect x="72" y="84" width="36" height="8" rx="3" fill="#2a0000"/>
-        <rect x="76" y="85" width="4" height="6" rx="1" fill="#8b0000"/>
-        <rect x="84" y="85" width="4" height="6" rx="1" fill="#8b0000"/>
-        <rect x="96" y="85" width="4" height="6" rx="1" fill="#8b0000"/>
-        <!-- hair patches -->
-        <rect x="65" y="50" width="12" height="8" rx="2" fill="#1a0f00"/>
-        <rect x="90" y="48" width="18" height="10" rx="3" fill="#1a0f00"/>
-        <!-- arms -->
-        <rect x="32" y="92" width="30" height="16" rx="6" fill="#3d2a10"/>
-        <rect x="118" y="88" width="30" height="16" rx="6" fill="#3d2a10" style="transform:rotate(12deg);transform-origin:133px 100px;"/>
-        <!-- hands -->
-        <ellipse cx="36" cy="100" rx="10" ry="9" fill="#4a3520"/>
-        <ellipse cx="143" cy="97" rx="10" ry="9" fill="#4a3520"/>
-        <!-- legs -->
-        <rect x="68" y="155" width="20" height="50" rx="4" fill="#1a1a2a"/>
-        <rect x="92" y="158" width="20" height="48" rx="4" fill="#1a1a2a" style="transform:rotate(5deg);transform-origin:102px 185px;"/>
-        <!-- boots -->
-        <rect x="60" y="195" width="28" height="16" rx="4" fill="#0a0a0a"/>
-        <rect x="88" y="198" width="28" height="14" rx="4" fill="#0a0a0a"/>
-        <!-- blood drips -->
-        <ellipse cx="82" cy="92" rx="3" ry="5" fill="#8b000088"/>
-        <ellipse cx="110" cy="105" rx="2" ry="4" fill="#8b000066"/>
+  <div class="title-scene">
+    <div class="title-eyebrow">OUTBREAK — NGÀY THỨ NHẤT</div>
+    <div class="title-big">DEAD<br>WALK</div>
+    <div class="title-sub">SURVIVAL · REAL STEPS · OPEN WORLD</div>
+    <svg width="140" height="180" viewBox="0 0 140 180" style="margin:1.2rem auto;display:block;">
+      <g style="animation:zIdle 2.5s ease-in-out infinite;transform-origin:70px 90px;">
+        <rect x="42" y="60" width="56" height="60" rx="5" fill="#1e3a1e"/>
+        <rect x="42" y="60" width="56" height="38" rx="5" fill="#1e3a1e" opacity=".9"/>
+        <rect x="18" y="63" width="28" height="13" rx="6" fill="#3a5a3a"/>
+        <rect x="94" y="58" width="28" height="13" rx="6" fill="#3a5a3a" transform="rotate(-8,108,64)"/>
+        <ellipse cx="21" cy="70" rx="9" ry="8" fill="#4a6a4a"/>
+        <ellipse cx="119" cy="62" rx="9" ry="8" fill="#4a6a4a"/>
+        <rect x="48" y="115" width="18" height="46" rx="4" fill="#0e1e2e"/>
+        <rect x="74" y="118" width="18" height="44" rx="4" fill="#0e1e2e" transform="rotate(4,83,140)"/>
+        <rect x="40" y="153" width="26" height="13" rx="3" fill="#060c12"/>
+        <rect x="68" y="155" width="26" height="12" rx="3" fill="#060c12"/>
+        <rect x="34" y="10" width="52" height="55" rx="8" fill="#3a5a3a"/>
+        <ellipse cx="53" cy="32" rx="7" ry="8" fill="#0a1400"/>
+        <ellipse cx="73" cy="32" rx="7" ry="8" fill="#0a1400"/>
+        <ellipse cx="53" cy="33" rx="4" ry="5" fill="#cc0000"/>
+        <ellipse cx="73" cy="33" rx="4" ry="5" fill="#cc0000"/>
+        <rect x="42" y="52" width="36" height="10" rx="3" fill="#1a0000"/>
+        <rect x="46" y="53" width="4" height="8" rx="1" fill="#bbb"/>
+        <rect x="54" y="53" width="4" height="8" rx="1" fill="#bbb"/>
+        <rect x="62" y="53" width="4" height="8" rx="1" fill="#bbb"/>
+        <rect x="70" y="54" width="4" height="7" rx="1" fill="#aaa"/>
+        <ellipse cx="44" cy="20" rx="3" ry="2" fill="#8b0000" opacity=".5"/>
+        <ellipse cx="76" cy="18" rx="2" ry="2" fill="#8b0000" opacity=".4"/>
       </g>
     </svg>
-    <div style="font-size:.65rem;color:var(--muted);line-height:1.8;max-width:260px;margin:0 auto;">
-      Walk in real life to explore.<br>
-      Find loot. Build your team.<br>
-      Survive the dead.
-    </div>
+    <div class="title-tagline">Dùng bước chân thật để khám phá.<br>Cướp vũ khí. Tuyển đồng đội.<br>Tiêu diệt Overlord và sống sót.</div>
+    <button class="tb" onclick="showCharSelect()">▶ BẮT ĐẦU</button>
+    <button class="tb sec" onclick="howTo()">? HƯỚNG DẪN</button>
   </div>
-  <button class="title-btn" onclick="showCharSelect()">▶ START GAME</button>
-  <button class="title-btn sec" onclick="showHowTo()">? HOW TO PLAY</button>
 </div>
 
-<!-- ═══════════════════════════════════════ CHAR SELECT ═══════════════════ -->
+<!-- ═══ CHAR SELECT ═══ -->
 <div id="char-screen" class="screen">
-  <div class="screen-title">Choose Survivor</div>
-  <div style="flex:1;overflow-y:auto;padding:0 1rem 1rem;">
-    <div class="char-grid" id="char-grid"></div>
-    <button class="confirm-btn" id="confirm-char" onclick="confirmChar()" disabled>Confirm Survivor</button>
-  </div>
+  <div class="screen-hdr">Chọn nhân vật</div>
+  <div class="char-grid" id="char-grid" style="overflow-y:auto;"></div>
+  <button class="confirm-btn" id="confirm-char" onclick="confirmChar()" disabled>Xác nhận</button>
 </div>
 
-<!-- ═══════════════════════════════════════ GAME ════════════════════════════ -->
+<!-- ═══ GAME ═══ -->
 <div id="game-screen" class="screen">
-  <!-- Top HUD -->
+  <!-- HUD -->
   <div class="hud">
-    <div class="hud-row">
-      <span class="hud-name" id="hud-name">MARCUS</span>
-      <span style="font-size:.6rem;color:var(--muted);">HP</span>
-      <div class="bar-wrap"><div class="bar-inner s-hp" id="bar-hp" style="width:100%"></div></div>
-      <span class="bar-label" id="val-hp">100</span>
-      <span style="font-size:.6rem;color:var(--muted);">🍗</span>
-      <div class="bar-wrap"><div class="bar-inner" id="bar-food" style="width:100%;background:var(--food)"></div></div>
-      <span style="font-size:.6rem;color:var(--muted);">💧</span>
-      <div class="bar-wrap"><div class="bar-inner" id="bar-water" style="width:100%;background:var(--water)"></div></div>
-    </div>
-    <div class="hud-row">
-      <span style="font-size:.6rem;color:var(--muted);">STAM</span>
-      <div class="bar-wrap"><div class="bar-inner s-stam" id="bar-stam" style="width:100%"></div></div>
-      <span class="bar-label" id="val-stam">100</span>
-      <span style="font-size:.6rem;color:var(--muted);margin-left:.5rem;">ZONE</span>
-      <span style="font-size:.7rem;color:var(--amber2);font-weight:700;" id="hud-zone">OUTSKIRTS</span>
-      <span style="font-size:.6rem;color:var(--muted);margin-left:.5rem;">DAY</span>
-      <span style="font-size:.7rem;color:#fff;font-weight:700;" id="hud-day">1</span>
-    </div>
-  </div>
-
-  <!-- Step counter -->
-  <div class="step-panel">
-    <div class="step-info">Steps today: <span class="step-val" id="step-count">0</span> / <span id="step-target">200</span></div>
-    <div style="display:flex;gap:.4rem;">
-      <button class="step-btn" onclick="addSteps(50)">+50 Steps</button>
-      <button class="step-btn" style="background:#333;" onclick="advanceDay()">Rest Day</button>
-    </div>
-  </div>
-
-  <!-- Zone tabs -->
-  <div class="zone-tabs" id="zone-tabs"></div>
-
-  <!-- Map area -->
-  <div class="map-area">
-    <div class="zone-header">
-      <div>
-        <span class="zone-name" id="zone-title">OUTSKIRTS</span>
-        <span class="zone-danger-tag tag-safe" id="zone-danger-tag">SAFE</span>
+    <div class="hud-top">
+      <span class="hud-name" id="hud-name">?</span>
+      <div style="display:flex;gap:.4rem;margin-left:.4rem;align-items:center;">
+        <span id="team-icons" style="font-size:1rem;letter-spacing:.1rem;"></span>
       </div>
-      <div class="zone-desc" id="zone-desc">Suburban outskirts. Sparse zombie activity. Good for early looting.</div>
+      <span class="hud-day">Ngày <span id="hud-day">1</span></span>
     </div>
-
-    <!-- Team -->
-    <div style="font-size:.6rem;letter-spacing:.2em;color:var(--muted);text-transform:uppercase;margin-bottom:.4rem;">Team</div>
-    <div class="team-panel" id="team-panel"></div>
-
-    <!-- Map cells -->
-    <div style="font-size:.6rem;letter-spacing:.2em;color:var(--muted);text-transform:uppercase;margin-bottom:.4rem;">Locations</div>
-    <div class="map-grid" id="map-grid"></div>
-
-    <!-- Event feed -->
-    <div class="event-feed" id="event-feed">
-      <div class="event-line ev-info">> Woke up. The city is silent.</div>
-      <div class="event-line ev-info">> Walk to explore new locations.</div>
+    <div class="bars">
+      <div class="bar-item">
+        <div class="bar-lbl">HP <span id="v-hp" style="color:var(--red3);">100</span></div>
+        <div class="bar-track"><div class="bar-fill f-hp" id="b-hp" style="width:100%;"></div></div>
+      </div>
+      <div class="bar-item">
+        <div class="bar-lbl">🍗 <span id="v-food" style="color:var(--amber2);">80</span></div>
+        <div class="bar-track"><div class="bar-fill" id="b-food" style="width:80%;background:var(--food);"></div></div>
+      </div>
+      <div class="bar-item">
+        <div class="bar-lbl">💧 <span id="v-water" style="color:var(--blue2);">80</span></div>
+        <div class="bar-track"><div class="bar-fill" id="b-water" style="width:80%;background:var(--water);"></div></div>
+      </div>
+      <div class="bar-item">
+        <div class="bar-lbl">STM <span id="v-stam" style="color:var(--green2);">100</span></div>
+        <div class="bar-track"><div class="bar-fill f-cd" id="b-stam" style="width:100%;background:var(--stam);"></div></div>
+      </div>
     </div>
+  </div>
 
-    <!-- Inventory -->
-    <div class="inventory">
-      <div class="inv-title">Inventory <span id="inv-count-label" style="color:var(--amber2);">(0/8)</span></div>
-      <div class="inv-grid" id="inv-grid"></div>
+  <!-- Pedometer strip -->
+  <div class="ped-strip">
+    <span class="ped-icon">🥾</span>
+    <div style="flex:1;">
+      <div class="ped-label">Bước hôm nay: <span class="ped-count" id="ped-count">0</span> / <span id="ped-target">500</span></div>
+      <div class="ped-track"><div class="ped-fill" id="ped-fill" style="width:0%;"></div></div>
     </div>
+    <button class="perm-btn" id="perm-btn" onclick="requestMotion()">Cấp quyền đi bộ</button>
+  </div>
 
-    <div style="height:1rem;"></div>
+  <!-- MAP canvas -->
+  <div class="map-wrap">
+    <canvas id="map-canvas"></canvas>
+    <div class="map-legend">
+      <div><span class="map-legend-dot" style="background:#2ecc71;"></span>An toàn</div>
+      <div><span class="map-legend-dot" style="background:#f39c12;"></span>Nguy hiểm</div>
+      <div><span class="map-legend-dot" style="background:#e74c3c;"></span>Cực nguy</div>
+      <div><span class="map-legend-dot" style="background:#c084fc;"></span>Boss</div>
+    </div>
+  </div>
+
+  <!-- Bottom side panel -->
+  <div class="side-panel" id="side-panel">
+    <div class="panel-handle" onclick="closeSidePanel()"></div>
+    <div class="panel-scroll" id="panel-scroll">
+      <!-- filled dynamically -->
+    </div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════ COMBAT ══════════════════════════ -->
+<!-- ═══ COMBAT ═══ -->
 <div id="combat-screen" class="screen">
-  <div class="combat-bg" id="combat-bg"></div>
-
-  <!-- Combat HUD -->
-  <div class="combat-hud">
-    <div class="combat-title">⚠ COMBAT</div>
-    <div class="combat-bars">
-      <div>
-        <div style="font-size:.6rem;color:var(--muted);margin-bottom:2px;">YOU <span id="c-hp-val">100</span></div>
-        <div class="bar-wrap" style="height:8px;"><div class="bar-inner s-hp" id="c-bar-hp" style="width:100%"></div></div>
-        <div style="font-size:.6rem;color:var(--muted);margin-top:2px;">STAM <span id="c-stam-val">100</span></div>
-        <div class="bar-wrap" style="height:5px;"><div class="bar-inner s-stam" id="c-bar-stam" style="width:100%"></div></div>
-      </div>
-      <div>
-        <div class="zombie-label" id="zombie-name-label">WALKER</div>
-        <div class="zombie-hp-wrap">
-          <div class="zombie-hp-bar"><div class="zombie-hp-fill" id="zombie-hp-bar" style="width:100%"></div></div>
-        </div>
-        <div style="font-size:.6rem;color:var(--muted);text-align:center;" id="zombie-hp-val">60 HP</div>
-      </div>
-    </div>
-    <!-- Status -->
-    <div style="font-size:.65rem;color:var(--amber2);margin-top:.3rem;" id="combat-status">Watch for attack!</div>
+  <div class="cb-bg" id="cb-bg">
+    <div class="cb-line" style="animation-delay:0s;width:60%;left:20%;"></div>
+    <div class="cb-line" style="animation-delay:.8s;width:80%;left:5%;"></div>
+    <div class="cb-line" style="animation-delay:1.6s;width:50%;left:30%;"></div>
   </div>
 
-  <!-- Arena -->
-  <div class="combat-arena">
-    <!-- Range attack zone (appears before melee) -->
-    <div class="range-zone" id="range-zone">
-      <div style="font-size:.7rem;color:var(--blue2);letter-spacing:.2em;">AIM &amp; FIRE</div>
-      <div class="aim-ring" onclick="shootGun()">
-        <div class="aim-center"></div>
+  <!-- Range overlay -->
+  <div class="range-overlay" id="range-overlay">
+    <div class="range-title">◎ Ngắm bắn từ xa</div>
+    <div class="aim-ring" onclick="shootGun()"><div class="aim-dot"></div></div>
+    <div class="ammo-lbl" id="ammo-lbl">Đạn: 0</div>
+    <button class="skip-btn" onclick="skipRange()">Bỏ qua → Cận chiến</button>
+  </div>
+
+  <!-- HUD -->
+  <div class="chud">
+    <div class="chud-title">⚠ CHIẾN ĐẤU</div>
+    <div class="chud-bars">
+      <div>
+        <div style="font-size:.58rem;color:var(--muted);margin-bottom:2px;">Bạn &nbsp;<span id="c-hp-v" style="color:var(--red3);">100</span></div>
+        <div class="chud-bar"><div class="chud-fill f-hp" id="c-hp-b" style="width:100%;"></div></div>
+        <div style="font-size:.56rem;color:var(--muted);">STM <span id="c-stam-v">100</span></div>
+        <div class="chud-bar" style="height:4px;"><div class="chud-fill" id="c-stam-b" style="width:100%;background:var(--stam);"></div></div>
       </div>
-      <div style="font-size:.65rem;color:var(--muted);" id="ammo-label">Ammo: 0</div>
-      <button style="background:transparent;border:1px solid #333;color:var(--muted);font-family:inherit;font-size:.65rem;padding:.3rem .8rem;border-radius:2px;cursor:pointer;" onclick="skipRange()">Skip → Melee</button>
-    </div>
-
-    <!-- Zombie SVG -->
-    <div class="zombie-svg-wrap" id="zombie-wrap">
-      <div class="react-flash"><div class="react-text" id="react-text">REACT!</div></div>
-    </div>
-
-    <!-- Tap zone (react to defend) -->
-    <div class="tap-zone" id="tap-zone" onclick="tapDefend()">
-      <div class="tap-ring" id="tap-ring">
-        <div class="tap-icon" id="tap-icon">🛡</div>
+      <div>
+        <div class="chud-zname" id="c-zname">WALKER</div>
+        <div class="z-hp-wrap">
+          <div class="z-hp-track"><div class="z-hp-bar" id="z-hp-b" style="width:100%;"></div></div>
+        </div>
+        <div class="chud-val" id="c-zhp-v">60 HP</div>
       </div>
     </div>
+    <div class="c-status" id="c-status">Chuẩn bị...</div>
+  </div>
 
-    <!-- Attack zone (after stun) -->
-    <div class="attack-zone" id="attack-zone">
-      <div style="font-size:.7rem;color:var(--amber2);letter-spacing:.2em;">STUNNED! ATTACK!</div>
-      <button class="atk-btn" id="atk-btn" onclick="meleeAttack()">
-        <div class="cooldown-fill" id="cooldown-fill" style="width:0%"></div>
-        <span id="atk-label">⚔ STRIKE</span>
+  <!-- Combat arena -->
+  <div class="combat-scene">
+    <div class="react-overlay"><div class="react-txt" id="react-txt">PHẢN XẠ!</div></div>
+
+    <!-- Zombie HP -->
+    <!-- drawn above in chud -->
+
+    <!-- Zombie stage -->
+    <div class="zombie-stage">
+      <div id="zsvg-wrap"></div>
+    </div>
+
+    <!-- Defend tap -->
+    <div class="defend-zone" id="defend-zone">
+      <div class="tap-ring" id="tap-ring" onclick="tapDefend()">
+        <div class="tap-ico" id="tap-ico">🛡</div>
+      </div>
+      <div class="tap-hint" id="tap-hint">Chạm để phòng thủ</div>
+    </div>
+
+    <!-- Attack zone -->
+    <div class="atk-zone" id="atk-zone">
+      <div class="stun-banner">⚡ BỊ CHOÁNG! TẤN CÔNG!</div>
+      <button class="atk-btn melee" id="atk-melee" onclick="doMelee()">
+        <div class="cd-fill" id="cd-melee" style="width:0%;"></div>
+        <span id="atk-melee-lbl">⚔ CHÉM</span>
       </button>
-      <div style="font-size:.65rem;color:var(--muted);" id="weapon-label">Fists</div>
+      <button class="atk-btn gun" id="atk-gun" onclick="doGun()" style="display:none;">
+        <span id="atk-gun-lbl">🔫 BẮN</span>
+      </button>
+      <div class="wep-lbl" id="wep-lbl">Tay không</div>
     </div>
   </div>
 
   <!-- Combat log -->
-  <div class="combat-log" id="combat-log">
-    <div class="clog-line cl-hit">Combat started!</div>
-  </div>
+  <div class="clog" id="clog"></div>
 </div>
 
-<!-- ═══════════════════════════════════════ END ═════════════════════════════ -->
+<!-- ═══ END ═══ -->
 <div id="end-screen" class="screen">
-  <div class="end-icon" id="end-icon">💀</div>
-  <div class="end-title" id="end-title">YOU DIED</div>
-  <div class="end-cause" id="end-cause">Cause: Zombie Attack</div>
-  <div class="end-stats">
-    <div class="end-stat-row"><span>Days Survived</span><span id="end-days">0</span></div>
-    <div class="end-stat-row"><span>Zombies Killed</span><span id="end-kills">0</span></div>
-    <div class="end-stat-row"><span>Steps Walked</span><span id="end-steps">0</span></div>
-    <div class="end-stat-row"><span>Areas Explored</span><span id="end-areas">0</span></div>
-    <div class="end-stat-row"><span>Team Recruited</span><span id="end-team">0</span></div>
+  <div class="end-wrap">
+    <div class="end-ico" id="end-ico">💀</div>
+    <div class="end-ttl" id="end-ttl">CHẾT RỒI</div>
+    <div class="end-cause" id="end-cause">Nguyên nhân: Zombie</div>
+    <div class="end-stats">
+      <div class="est"><span>Ngày sống sót</span><span class="est-val" id="e-days">0</span></div>
+      <div class="est"><span>Zombie đã giết</span><span class="est-val" id="e-kills">0</span></div>
+      <div class="est"><span>Tổng bước chân</span><span class="est-val" id="e-steps">0</span></div>
+      <div class="est"><span>Khu vực khám phá</span><span class="est-val" id="e-areas">0</span></div>
+      <div class="est"><span>Đồng đội tuyển</span><span class="est-val" id="e-team">0</span></div>
+    </div>
+    <button class="tb" onclick="restartGame()">↺ CHƠI LẠI</button>
   </div>
-  <button class="title-btn" onclick="restartGame()">↺ PLAY AGAIN</button>
 </div>
 
-<!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
-// ═══════════════════════════════════════════════════════════════════════════
-//  DATA
-// ═══════════════════════════════════════════════════════════════════════════
-
-const CHARACTERS = [
-  { id:'marcus', name:'MARCUS', icon:'🪖', desc:'Ex-soldier. Slow but hits like a truck.', hp:120, str:9, spd:5, stam:7, recover:5, cooldown:2.0, special:'Combat medkit' },
-  { id:'yuki',   name:'YUKI',   icon:'🏹', desc:'Scout. Fast, nimble, quick stamina recovery.', hp:80, str:6, spd:9, stam:9, recover:8, cooldown:1.2, special:'Silent movement' },
-  { id:'nova',   name:'NOVA',   icon:'🔬', desc:'Scientist. Crafts items, decent combat.', hp:90, str:6, spd:7, stam:8, recover:7, cooldown:1.5, special:'Craft meds' },
-  { id:'rook',   name:'ROOK',   icon:'🪓', desc:'Lumberjack. High damage, medium speed.', hp:110, str:8, spd:6, stam:6, recover:6, cooldown:1.7, special:'Axe mastery' },
+// ═══════════════════════════════════════════════════════
+//   DATA
+// ═══════════════════════════════════════════════════════
+const CHARS=[
+  {id:'marcus',name:'MARCUS',icon:'🪖',role:'Cựu binh',desc:'Chịu đòn cực tốt. Đánh chậm nhưng cực mạnh.',hp:130,str:9,spd:5,stam:7,rec:4,cd:2.0,sp:'Sơ cứu chiến đấu'},
+  {id:'yuki',  name:'YUKI',  icon:'🏹',role:'Trinh sát',desc:'Nhanh nhẹn. Phục hồi thể lực siêu nhanh.',hp:80, str:6,spd:9,stam:9,rec:9,cd:1.1,sp:'Di chuyển im lặng'},
+  {id:'nova',  name:'NOVA',  icon:'🔬',role:'Khoa học',desc:'Chế đồ vật. Cân bằng mọi chỉ số.',hp:95, str:6,spd:7,stam:8,rec:7,cd:1.5,sp:'Chế tạo thuốc'},
+  {id:'rook',  name:'ROOK',  icon:'🪓',role:'Tiều phu',desc:'Sát thương rìu cực cao. Tốc độ trung bình.',hp:115,str:8,spd:6,stam:6,rec:5,cd:1.8,sp:'Rìu chiến thượng thừa'},
 ];
 
-const ALLIES = [
-  { id:'jin',   name:'JIN',   icon:'🧔', desc:'Old guard.', hp:90, str:7, spd:6, stam:7, recover:5, cooldown:1.8, dead:false },
-  { id:'mara',  name:'MARA',  icon:'👩', desc:'Nurse.', hp:70, str:5, spd:8, stam:9, recover:9, cooldown:1.3, dead:false },
-  { id:'duke',  name:'DUKE',  icon:'👴', desc:'Hunter.', hp:100, str:8, spd:5, stam:6, recover:6, cooldown:2.0, dead:false },
+const ALLIES=[
+  {id:'jin', name:'JIN', icon:'🧔',desc:'Vệ binh cũ.',hp:95, str:7,spd:6,stam:7,rec:5,dead:false,maxHp:95},
+  {id:'mara',name:'MARA',icon:'👩',desc:'Y tá.',     hp:75, str:5,spd:8,stam:9,rec:9,dead:false,maxHp:75},
+  {id:'duke',name:'DUKE',icon:'👴',desc:'Thợ săn.',  hp:105,str:8,spd:5,stam:6,rec:6,dead:false,maxHp:105},
 ];
 
-const ZONES = [
-  {
-    id:'outskirts', name:'OUTSKIRTS', danger:'SAFE', dangerClass:'tag-safe', steps:200,
-    desc:'Suburban outskirts. Sparse zombie activity. Good for early looting.',
-    unlockZombies:0, color:'#1a3a1a',
-    cells:[
-      { id:'house1', icon:'🏠', name:'Old House', loots:['bandage','canned food','knife'], zombie:null, badge:'loot', explored:false },
-      { id:'garage', icon:'🏚', name:'Garage', loots:['wrench','gasoline','pipe'], zombie:'walker', badge:'zombie', explored:false },
-      { id:'park',   icon:'🌳', name:'Park', loots:['water bottle','berries','rope'], zombie:null, badge:'loot', explored:false },
-      { id:'ally1',  icon:'👣', name:'Survivor?', loots:['canned food'], zombie:null, badge:'ally', allyId:'jin', explored:false },
-    ]
-  },
-  {
-    id:'suburbs', name:'SUBURBS', danger:'MEDIUM', dangerClass:'tag-medium', steps:400,
-    desc:'Denser housing. More supplies but zombies patrol in packs.',
-    unlockZombies:2, color:'#3a2a0a',
-    cells:[
-      { id:'store',   icon:'🏪', name:'Store', loots:['pistol','ammo','food x3'], zombie:'crawler', badge:'zombie', explored:false },
-      { id:'school',  icon:'🏫', name:'School', loots:['backpack','medkit','axe'], zombie:'runner', badge:'zombie', explored:false },
-      { id:'clinic',  icon:'🏥', name:'Clinic', loots:['medkit x2','bandage x3','water x2'], zombie:'walker', badge:'loot', explored:false },
-      { id:'ally2',   icon:'⛺', name:'Camp', loots:['water','ammo'], zombie:null, badge:'ally', allyId:'mara', explored:false },
-    ]
-  },
-  {
-    id:'downtown', name:'DOWNTOWN', danger:'HIGH', dangerClass:'tag-high', steps:600,
-    desc:'City center. Zombie hordes. Rich loot if you survive.',
-    unlockZombies:5, color:'#3a1a0a',
-    cells:[
-      { id:'bank',     icon:'🏦', name:'Bank', loots:['shotgun','ammo x5','medkit'], zombie:'brute', badge:'zombie', explored:false },
-      { id:'hotel',    icon:'🏨', name:'Hotel', loots:['food x5','water x5','rifle'], zombie:'runner', badge:'zombie', explored:false },
-      { id:'police',   icon:'🚔', name:'Police HQ', loots:['pistol x2','ammo x10','vest'], zombie:'brute', badge:'zombie', explored:false },
-      { id:'ally3',    icon:'🔦', name:'Hideout', loots:['ammo x3','food'], zombie:null, badge:'ally', allyId:'duke', explored:false },
-    ]
-  },
-  {
-    id:'hospital', name:'HOSPITAL', danger:'EXTREME', dangerClass:'tag-extreme', steps:900,
-    desc:'Patient zero ground zero. Boss zombie lairs. Greatest loot.',
-    unlockZombies:8, color:'#2a000a',
-    cells:[
-      { id:'icu',      icon:'🏥', name:'ICU', loots:['medkit x5','stim','antibiotics'], zombie:'boss', badge:'boss', explored:false },
-      { id:'morgue',   icon:'💀', name:'Morgue', loots:['hazmat','antidote'], zombie:'boss', badge:'boss', explored:false },
-      { id:'roof',     icon:'🔭', name:'Rooftop', loots:['sniper','ammo x20'], zombie:'boss', badge:'boss', explored:false },
-      { id:'bunker',   icon:'🔐', name:'Bunker', loots:[], zombie:'boss', badge:'boss', explored:false, finalBoss:true },
-    ]
-  }
+const WEAPONS={
+  'dao':     {icon:'🔪',dmg:22,cd:1.1,type:'melee'},
+  'ống thép':{icon:'🔧',dmg:16,cd:1.0,type:'melee'},
+  'cờ lê':   {icon:'🔩',dmg:19,cd:1.1,type:'melee'},
+  'rìu':     {icon:'🪓',dmg:38,cd:2.1,type:'melee'},
+  'gậy bóng chày':{icon:'🏏',dmg:25,cd:1.4,type:'melee'},
+  'súng lục':{icon:'🔫',dmg:30,ammo:6, type:'gun'},
+  'shotgun': {icon:'🔫',dmg:75,ammo:4, type:'gun'},
+  'súng trường':{icon:'🔫',dmg:52,ammo:8,type:'gun'},
+  'sniper':  {icon:'🎯',dmg:95,ammo:3, type:'gun'},
+};
+
+const CONS={
+  'băng':        {icon:'🩹',eff:'hp+20'},
+  'hộp y tế':    {icon:'🧰',eff:'hp+60'},
+  'đồ hộp':      {icon:'🥫',eff:'food+40'},
+  'nước chai':   {icon:'💧',eff:'water+50'},
+  'quả mọng':    {icon:'🫐',eff:'food+15'},
+  'thuốc kích':  {icon:'💉',eff:'stam+100'},
+  'kháng độc':   {icon:'🧪',eff:'hp+40'},
+  'thuốc kháng': {icon:'💊',eff:'hp+30'},
+  'ba lô':       {icon:'🎒',eff:'slots+4'},
+  'áo giáp':     {icon:'🦺',eff:'armor'},
+  'đạn':         {icon:'🔸',eff:'ammo+6'},
+  'dây thừng':   {icon:'🪢',eff:null},
+  'xăng':        {icon:'⛽',eff:null},
+};
+
+const ZDEFS={
+  walker: {name:'WALKER',   hp:70,  dmg:18,reactMs:2000,score:10,icon:'🧟'},
+  crawler:{name:'CRAWLER',  hp:50,  dmg:10,reactMs:1600,score:8, icon:'🧟'},
+  runner: {name:'RUNNER',   hp:90,  dmg:28,reactMs:900, score:20,icon:'🏃'},
+  brute:  {name:'BRUTE',    hp:180, dmg:45,reactMs:750, score:40,icon:'🧟‍♂️'},
+  boss:   {name:'OVERLORD', hp:350, dmg:60,reactMs:650, score:100,icon:'☠️'},
+};
+
+// ═══════════════════════════════════════════════════════
+//  MAP NODE GRAPH  (canvas-drawn RPG map)
+// ═══════════════════════════════════════════════════════
+// Each zone is a big region; nodes are locations within the world.
+// Edges connect adjacent nodes. Player starts at node 0.
+// World is 1000×1400 px (logical), panned/zoomed on canvas.
+const MAP_W=1000, MAP_H=1400;
+const NODES=[
+  // ── ZONE 0: NGOẠI Ô (OUTSKIRTS) ──
+  {id:0, x:500,y:1300, label:'Nhà kho',     icon:'🏠', zone:0, steps:0,    type:'start',  loots:['băng','đồ hộp','dao'],       enemy:null,     badge:'loot', explored:false},
+  {id:1, x:320,y:1150, label:'Nhà để xe',  icon:'🏚', zone:0, steps:80,   type:'loot',   loots:['ống thép','đồ hộp','xăng'],  enemy:'walker', badge:'zombie',explored:false},
+  {id:2, x:680,y:1160, label:'Công viên',  icon:'🌳', zone:0, steps:80,   type:'loot',   loots:['nước chai','quả mọng','dây thừng'],enemy:null,badge:'loot',explored:false},
+  {id:3, x:200,y:1000, label:'Tiệm tạp',  icon:'🏪', zone:0, steps:150,  type:'loot',   loots:['đồ hộp','nước chai','băng'], enemy:'walker', badge:'zombie',explored:false},
+  {id:4, x:800,y:1020, label:'Trạm xăng', icon:'⛽', zone:0, steps:150,  type:'ally',   loots:['đồ hộp'],                    enemy:null,     badge:'ally', allyId:'jin',  explored:false},
+
+  // ── ZONE 1: KHU DÂN CƯ (SUBURBS) ──
+  {id:5, x:400,y:870,  label:'Trường học', icon:'🏫', zone:1, steps:300,  type:'loot',   loots:['ba lô','hộp y tế','rìu'],    enemy:'runner', badge:'zombie',explored:false},
+  {id:6, x:650,y:840,  label:'Siêu thị',  icon:'🛒', zone:1, steps:300,  type:'loot',   loots:['súng lục','đạn','đồ hộp'],   enemy:'crawler',badge:'zombie',explored:false},
+  {id:7, x:200,y:780,  label:'Trạm y tế', icon:'🏥', zone:1, steps:380,  type:'loot',   loots:['hộp y tế','băng','nước chai'],enemy:'walker',badge:'loot', explored:false},
+  {id:8, x:820,y:720,  label:'Nhà thờ',   icon:'⛪', zone:1, steps:380,  type:'ally',   loots:['nước chai','băng'],          enemy:null,     badge:'ally', allyId:'mara', explored:false},
+
+  // ── ZONE 2: TRUNG TÂM (DOWNTOWN) ──
+  {id:9, x:350,y:590,  label:'Tòa án',    icon:'🏛', zone:2, steps:550,  type:'loot',   loots:['shotgun','đạn','hộp y tế'],  enemy:'brute',  badge:'zombie',explored:false},
+  {id:10,x:650,y:560,  label:'Khách sạn', icon:'🏨', zone:2, steps:550,  type:'loot',   loots:['đồ hộp','nước chai','súng trường'],enemy:'runner',badge:'zombie',explored:false},
+  {id:11,x:180,y:500,  label:'Đồn cảnh sát',icon:'🚔',zone:2,steps:620,  type:'loot',   loots:['súng lục','đạn','áo giáp'],  enemy:'brute',  badge:'zombie',explored:false},
+  {id:12,x:820,y:480,  label:'Hầm trú ẩn',icon:'🔦', zone:2, steps:620,  type:'ally',   loots:['đạn','đồ hộp'],             enemy:null,     badge:'ally', allyId:'duke', explored:false},
+
+  // ── ZONE 3: BỆNH VIỆN (HOSPITAL — BOSS) ──
+  {id:13,x:300,y:340,  label:'Phòng ICU',  icon:'🏥', zone:3, steps:850,  type:'loot',   loots:['hộp y tế','thuốc kích','kháng độc'],enemy:'brute',badge:'boss',explored:false},
+  {id:14,x:700,y:320,  label:'Nhà xác',   icon:'💀', zone:3, steps:850,  type:'boss',   loots:['kháng độc','thuốc kháng'],   enemy:'brute',  badge:'boss', explored:false},
+  {id:15,x:500,y:200,  label:'Mái nhà',   icon:'🔭', zone:3, steps:920,  type:'loot',   loots:['sniper','đạn'],             enemy:'boss',   badge:'boss', explored:false},
+  {id:16,x:500,y:80,   label:'Hầm ngầm',  icon:'🔐', zone:3, steps:1000, type:'final',  loots:[],                           enemy:'boss',   badge:'boss', explored:false, finalBoss:true},
 ];
 
-const ZOMBIES = {
-  walker:  { name:'WALKER',  hp:60,  dmg:15, react:1800, score:10, icon:'🧟' },
-  crawler: { name:'CRAWLER', hp:45,  dmg:8,  react:1400, score:8,  icon:'🧟' },
-  runner:  { name:'RUNNER',  hp:80,  dmg:25, react:900,  score:20, icon:'🏃' },
-  brute:   { name:'BRUTE',   hp:150, dmg:40, react:700,  score:40, icon:'🧟‍♂️' },
-  boss:    { name:'OVERLORD',hp:300, dmg:55, react:600,  score:100,icon:'☠️' },
-};
+const EDGES=[
+  [0,1],[0,2],[1,3],[2,4],[1,5],[3,5],[2,6],[4,6],[3,7],[5,7],[4,8],[6,8],
+  [5,9],[7,9],[6,10],[8,10],[7,11],[9,11],[8,12],[10,12],
+  [9,13],[11,13],[10,14],[12,14],[13,15],[14,15],[15,16]
+];
 
-const WEAPONS = {
-  'knife':   { icon:'🔪', dmg:20, cd:1.2, type:'melee' },
-  'pipe':    { icon:'🔧', dmg:15, cd:1.0, type:'melee' },
-  'wrench':  { icon:'🔩', dmg:18, cd:1.1, type:'melee' },
-  'axe':     { icon:'🪓', dmg:35, cd:2.0, type:'melee' },
-  'pistol':  { icon:'🔫', dmg:30, ammo:6,  type:'gun' },
-  'shotgun': { icon:'🔫', dmg:70, ammo:4,  type:'gun' },
-  'rifle':   { icon:'🔫', dmg:50, ammo:8,  type:'gun' },
-  'sniper':  { icon:'🎯', dmg:90, ammo:3,  type:'gun' },
-};
+const ZONE_META=[
+  {name:'NGOẠI Ô',     color:'#2ecc71', fog:'#1a3a1a', reqKills:0},
+  {name:'KHU DÂN CƯ', color:'#f39c12', fog:'#3a2a0a', reqKills:2},
+  {name:'TRUNG TÂM',  color:'#e74c3c', fog:'#3a1a1a', reqKills:5},
+  {name:'BỆNH VIỆN',  color:'#c084fc', fog:'#2a003a', reqKills:8},
+];
 
-const CONSUMABLES = {
-  'bandage':     { icon:'🩹', effect:'hp+20', label:'+20 HP' },
-  'medkit':      { icon:'🧰', effect:'hp+60', label:'+60 HP' },
-  'medkit x2':   { icon:'🧰', effect:'hp+60', label:'+60 HP', count:2 },
-  'medkit x5':   { icon:'🧰', effect:'hp+60', label:'+60 HP', count:5 },
-  'canned food': { icon:'🥫', effect:'food+40', label:'+40 Food' },
-  'food x3':     { icon:'🍱', effect:'food+40', label:'+40 Food', count:3 },
-  'food x5':     { icon:'🍱', effect:'food+40', label:'+40 Food', count:5 },
-  'water bottle':{ icon:'💧', effect:'water+50', label:'+50 Water' },
-  'water':       { icon:'💧', effect:'water+50', label:'+50 Water' },
-  'water x2':    { icon:'💧', effect:'water+50', label:'+50 Water', count:2 },
-  'water x5':    { icon:'💧', effect:'water+50', label:'+50 Water', count:5 },
-  'berries':     { icon:'🫐', effect:'food+15', label:'+15 Food' },
-  'stim':        { icon:'💉', effect:'stam+100', label:'+100 Stamina' },
-  'antidote':    { icon:'🧪', effect:'hp+40', label:'+40 HP' },
-  'antibiotics': { icon:'💊', effect:'hp+30', label:'+30 HP' },
-  'hazmat':      { icon:'🥼', effect:'armor', label:'Armor' },
-  'backpack':    { icon:'🎒', effect:'slots+4', label:'+4 Slots' },
-  'vest':        { icon:'🦺', effect:'armor', label:'Armor' },
-  'ammo':        { icon:'🔸', effect:'ammo+6',  label:'+6 Ammo' },
-  'ammo x3':     { icon:'🔸', effect:'ammo+6',  label:'+6 Ammo', count:3 },
-  'ammo x5':     { icon:'🔸', effect:'ammo+6',  label:'+6 Ammo', count:5 },
-  'ammo x10':    { icon:'🔸', effect:'ammo+6',  label:'+6 Ammo', count:10 },
-  'ammo x20':    { icon:'🔸', effect:'ammo+6',  label:'+6 Ammo', count:20 },
-  'rope':        { icon:'🪢', effect:null, label:'Craft material' },
-  'gasoline':    { icon:'⛽', effect:null, label:'Craft material' },
-};
-
-// ═══════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 //  STATE
-// ═══════════════════════════════════════════════════════════════════════════
-let G = {
-  player: null,
-  hp: 100, maxHp: 100,
-  food: 80, water: 80,
-  stamina: 100, maxStamina: 100,
-  day: 1,
-  steps: 0,
-  stepTarget: 200,
-  totalSteps: 0,
-  currentZone: 0,
-  currentCell: null,
-  team: [],
-  inventory: [],
-  maxSlots: 8,
-  equippedWeapon: null,
-  equippedGun: null,
-  ammo: 0,
-  zombiesKilled: 0,
-  areasExplored: 0,
-  unlockedZones: 1,
-  deathCause: '',
-  // combat state
-  combat: null,
+// ═══════════════════════════════════════════════════════
+let G={
+  player:null, hp:100, maxHp:100, food:80, water:80, stamina:100, maxStamina:100,
+  day:1, steps:0, totalSteps:0,
+  currentNode:0, unlockedZone:0,
+  team:[], inventory:[], maxSlots:8,
+  equippedWeapon:null, equippedGun:null, ammo:0,
+  kills:0, areas:0,
+  combat:null,
 };
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  SCREENS
-// ═══════════════════════════════════════════════════════════════════════════
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
-function showCharSelect() {
-  renderCharGrid();
-  showScreen('char-screen');
-}
-function showHowTo() {
-  alert('HOW TO PLAY:\n\n📍 Walk in real life → tap "+50 Steps" for every 50 real steps\n\n🗺 Explore locations in each zone\n\n⚔ COMBAT:\n  • Watch for the REACT! flash\n  • Tap the shield to defend\n  • Stunned zombie = Attack window!\n  • Guns: aim & shoot before melee range\n\n📦 Loot weapons, food, water\n\n👥 Recruit allies to conquer dangerous zones\n\n💀 Survive: manage HP, Food, Water, Stamina');
+// Canvas map state
+let CAM={x:0,y:0,scale:1,dragging:false,lastX:0,lastY:0};
+let canvas,ctx;
+let selectedNode=null;
+let motionGranted=false;
+let pedoSteps=0; // raw accel steps since last reset
+
+// ═══════════════════════════════════════════════════════
+//  PEDOMETER  (DeviceMotion)
+// ═══════════════════════════════════════════════════════
+let lastAcc=0, stepThresh=12, stepCooldown=false, accBuf=[];
+const STEP_COOLDOWN_MS=320;
+
+function requestMotion(){
+  if(typeof DeviceMotionEvent!=='undefined' && typeof DeviceMotionEvent.requestPermission==='function'){
+    DeviceMotionEvent.requestPermission().then(r=>{
+      if(r==='granted'){initMotion();}
+      else{toast('Quyền bị từ chối — dùng nút thủ công','warn');}
+    }).catch(()=>toast('Cần iOS 13+ và HTTPS','warn'));
+  } else if(typeof DeviceMotionEvent!=='undefined'){
+    initMotion();
+  } else {
+    toast('Thiết bị không hỗ trợ cảm biến','warn');
+  }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  CHARACTER SELECT
-// ═══════════════════════════════════════════════════════════════════════════
-let selectedChar = null;
-function renderCharGrid() {
-  const grid = document.getElementById('char-grid');
-  grid.innerHTML = '';
-  CHARACTERS.forEach(c => {
-    const div = document.createElement('div');
-    div.className = 'char-card';
-    div.innerHTML = `
-      <div class="char-icon">${c.icon}</div>
-      <div class="char-name">${c.name}</div>
-      <div class="char-desc">${c.desc}</div>
-      <div class="stat-row"><span class="stat-label">HP</span><div class="stat-bar"><div class="stat-fill s-hp" style="width:${c.hp/1.2}%"></div></div></div>
-      <div class="stat-row"><span class="stat-label">STR</span><div class="stat-bar"><div class="stat-fill s-str" style="width:${c.str*10}%"></div></div></div>
-      <div class="stat-row"><span class="stat-label">SPD</span><div class="stat-bar"><div class="stat-fill s-spd" style="width:${c.spd*10}%"></div></div></div>
-      <div class="stat-row"><span class="stat-label">STAM</span><div class="stat-bar"><div class="stat-fill s-stam" style="width:${c.stam*10}%"></div></div></div>
-      <div style="font-size:.58rem;color:#666;margin-top:.4rem;text-align:center;">✦ ${c.special}</div>
-    `;
-    div.onclick = () => {
-      selectedChar = c;
-      document.querySelectorAll('.char-card').forEach(x => x.classList.remove('selected'));
-      div.classList.add('selected');
-      document.getElementById('confirm-char').disabled = false;
-    };
-    grid.appendChild(div);
+function initMotion(){
+  motionGranted=true;
+  document.getElementById('perm-btn').textContent='✓ Đang đếm bước';
+  document.getElementById('perm-btn').style.background='var(--green)';
+  document.getElementById('perm-btn').onclick=null;
+  toast('Đang đếm bước chân thật!','good');
+  window.addEventListener('devicemotion', onMotion, {passive:true});
+}
+
+function onMotion(e){
+  const a=e.accelerationIncludingGravity||e.acceleration;
+  if(!a) return;
+  const mag=Math.sqrt((a.x||0)**2+(a.y||0)**2+(a.z||0)**2);
+  accBuf.push(mag);
+  if(accBuf.length>5) accBuf.shift();
+  const avg=accBuf.reduce((s,v)=>s+v,0)/accBuf.length;
+  if(avg>stepThresh && !stepCooldown){
+    stepCooldown=true;
+    countStep();
+    setTimeout(()=>stepCooldown=false, STEP_COOLDOWN_MS);
+  }
+}
+
+function countStep(){
+  G.steps++;
+  G.totalSteps++;
+  G.stamina=Math.max(0,G.stamina-0.15*(10-G.player.spd)/5);
+  updatePed();
+  checkZoneUnlock();
+}
+
+// Manual step button fallback (kept for non-motion devices)
+function manualSteps(n){
+  G.steps+=n; G.totalSteps+=n;
+  G.stamina=Math.max(0,G.stamina-n*0.05*(10-G.player.spd)/5);
+  updatePed(); checkZoneUnlock();
+}
+
+function updatePed(){
+  const t=getStepTarget();
+  document.getElementById('ped-count').textContent=G.steps;
+  document.getElementById('ped-target').textContent=t;
+  document.getElementById('ped-fill').style.width=Math.min(100,G.steps/t*100)+'%';
+}
+
+function getStepTarget(){
+  // target = steps needed to fully unlock current zone's farthest node
+  const maxSteps=NODES.filter(n=>n.zone===G.unlockedZone).reduce((m,n)=>Math.max(m,n.steps),0);
+  return maxSteps||500;
+}
+
+function checkZoneUnlock(){
+  const kills=G.kills;
+  for(let z=1;z<ZONE_META.length;z++){
+    if(G.unlockedZone<z && kills>=ZONE_META[z].reqKills && G.steps>=NODES.filter(n=>n.zone===z-1).reduce((m,n)=>Math.max(m,n.steps),0)){
+      G.unlockedZone=z;
+      toast(`🗺 ${ZONE_META[z].name} đã mở!`,'good');
+      addLog(`🗺 Khu mới: ${ZONE_META[z].name}`,'ev-team');
+      drawMap();
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  SCREENS
+// ═══════════════════════════════════════════════════════
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function showCharSelect(){renderChars();showScreen('char-screen');}
+function howTo(){alert('HƯỚNG DẪN:\n\n👟 ĐI BỘ THẬT\n  • Nhấn "Cấp quyền đi bộ" → cảm biến điện thoại đếm bước\n  • Bước chân mở ra địa điểm mới trên bản đồ\n\n🗺 BẢN ĐỒ RPG\n  • Nhấn vào node để xem thông tin\n  • Nhấn "Vào đây" khi đủ bước chân\n\n⚔ CHIẾN ĐẤU\n  • Chờ PHẢN XẠ! rồi chạm 🛡 để đỡ\n  • Zombie choáng → nhấn ⚔ CHÉM\n  • Có súng → bắn trước khi cận chiến\n  • Cooldown phụ thuộc vũ khí & STR\n\n💀 Chú ý HP, đồ ăn, nước — đừng để kiệt sức!');}
+
+// ═══════════════════════════════════════════════════════
+//  CHAR SELECT
+// ═══════════════════════════════════════════════════════
+let selChar=null;
+function renderChars(){
+  const g=document.getElementById('char-grid');
+  g.innerHTML='';
+  CHARS.forEach(c=>{
+    const d=document.createElement('div');
+    d.className='char-card';
+    d.innerHTML=`<div class="c-icon">${c.icon}</div><div class="c-name">${c.name}</div><div class="c-role">${c.role}</div><div class="c-desc">${c.desc}</div>
+    <div class="sr"><span class="sl">HP</span><div class="sb"><div class="sf f-hp" style="width:${c.hp/1.3}%"></div></div></div>
+    <div class="sr"><span class="sl">STR</span><div class="sb"><div class="sf f-str" style="width:${c.str*10}%"></div></div></div>
+    <div class="sr"><span class="sl">SPD</span><div class="sb"><div class="sf f-spd" style="width:${c.spd*10}%"></div></div></div>
+    <div class="sr"><span class="sl">CD</span><div class="sb"><div class="sf f-cd" style="width:${(3-c.cd)/2*100}%"></div></div></div>
+    <div class="c-special">✦ ${c.sp}</div>`;
+    d.onclick=()=>{selChar=c;document.querySelectorAll('.char-card').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');document.getElementById('confirm-char').disabled=false;};
+    g.appendChild(d);
   });
 }
-
-function confirmChar() {
-  G.player = selectedChar;
-  G.hp = G.maxHp = selectedChar.hp;
-  G.stamina = G.maxStamina = selectedChar.stam * 10;
+function confirmChar(){
+  G.player=selChar;G.hp=G.maxHp=selChar.hp;G.stamina=G.maxStamina=selChar.stam*10;
   startGame();
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  GAME INIT
-// ═══════════════════════════════════════════════════════════════════════════
-function startGame() {
-  G.food = 80; G.water = 80;
-  G.day = 1; G.steps = 0; G.totalSteps = 0;
-  G.currentZone = 0; G.currentCell = null;
-  G.team = []; G.inventory = []; G.equippedWeapon = null; G.equippedGun = null; G.ammo = 0;
-  G.zombiesKilled = 0; G.areasExplored = 0; G.unlockedZones = 1; G.maxSlots = 8;
-  // reset zone explored state
-  ZONES.forEach(z => z.cells.forEach(c => c.explored = false));
-  renderGame();
+// ═══════════════════════════════════════════════════════
+//  START GAME
+// ═══════════════════════════════════════════════════════
+function startGame(){
+  G.food=80;G.water=80;G.day=1;G.steps=0;G.totalSteps=0;
+  G.currentNode=0;G.unlockedZone=0;
+  G.team=[];G.inventory=[];G.equippedWeapon=null;G.equippedGun=null;G.ammo=0;
+  G.kills=0;G.areas=0;G.maxSlots=8;
+  NODES.forEach(n=>n.explored=false);
+  ALLIES.forEach(a=>{a.dead=false;a.hp=a.maxHp;});
+  // start node auto-explored
+  NODES[0].explored=true; G.areas=1;
+  collectLoots(NODES[0]);
+
   showScreen('game-screen');
-  startDecayLoop();
+  initCanvas();
+  updateHUD();
+  updatePed();
+  startDecay();
+
+  addLog('> Thức dậy. Thành phố im lặng chết chóc.','ev-info');
+  addLog('> Đi bộ để khám phá bản đồ.','ev-info');
+
+  // center camera on start node
+  const n=NODES[0];
+  setTimeout(()=>{
+    const W=canvas.width,H=canvas.height;
+    CAM.scale=1.2;
+    CAM.x=W/2-n.x*CAM.scale;
+    CAM.y=H/2-n.y*CAM.scale;
+    drawMap();
+  },100);
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  RENDER GAME
-// ═══════════════════════════════════════════════════════════════════════════
-function renderGame() {
-  const p = G.player;
-  document.getElementById('hud-name').textContent = p.name;
-  document.getElementById('bar-hp').style.width = (G.hp / G.maxHp * 100) + '%';
-  document.getElementById('val-hp').textContent = Math.ceil(G.hp);
-  document.getElementById('bar-food').style.width = G.food + '%';
-  document.getElementById('bar-water').style.width = G.water + '%';
-  document.getElementById('bar-stam').style.width = (G.stamina / G.maxStamina * 100) + '%';
-  document.getElementById('val-stam').textContent = Math.ceil(G.stamina);
-  document.getElementById('hud-day').textContent = G.day;
-  document.getElementById('step-count').textContent = G.steps;
-  document.getElementById('step-target').textContent = G.stepTarget;
-
-  const zone = ZONES[G.currentZone];
-  document.getElementById('hud-zone').textContent = zone.name;
-  renderZoneTabs();
-  renderZoneHeader();
-  renderMap();
-  renderTeam();
-  renderInventory();
+// ═══════════════════════════════════════════════════════
+//  CANVAS MAP
+// ═══════════════════════════════════════════════════════
+function initCanvas(){
+  canvas=document.getElementById('map-canvas');
+  ctx=canvas.getContext('2d');
+  resizeCanvas();
+  window.addEventListener('resize',resizeCanvas);
+  canvas.addEventListener('pointerdown',onPanStart,{passive:false});
+  canvas.addEventListener('pointermove',onPanMove,{passive:false});
+  canvas.addEventListener('pointerup',onPanEnd);
+  canvas.addEventListener('pointercancel',onPanEnd);
+  canvas.addEventListener('click',onMapClick);
+  drawMap();
 }
 
-function renderZoneTabs() {
-  const tabs = document.getElementById('zone-tabs');
-  tabs.innerHTML = '';
-  ZONES.forEach((z, i) => {
-    const tab = document.createElement('div');
-    tab.className = 'zone-tab' + (i === G.currentZone ? ' active' : '') + (i >= G.unlockedZones ? ' locked' : '') + (z.danger === 'HIGH' || z.danger === 'EXTREME' ? ' danger-zone' : '');
-    tab.textContent = z.name;
-    tab.onclick = () => { if (i < G.unlockedZones) { G.currentZone = i; renderGame(); } else toast('⚠ Clear more zones to unlock!', 'warn'); };
-    tabs.appendChild(tab);
+function resizeCanvas(){
+  const wrap=document.querySelector('.map-wrap');
+  canvas.width=wrap.clientWidth;
+  canvas.height=wrap.clientHeight;
+  clampCam();
+  drawMap();
+}
+
+let panMoved=false;
+function onPanStart(e){
+  CAM.dragging=true;panMoved=false;
+  CAM.lastX=e.clientX;CAM.lastY=e.clientY;
+  canvas.setPointerCapture(e.pointerId);
+}
+function onPanMove(e){
+  if(!CAM.dragging) return;
+  const dx=e.clientX-CAM.lastX,dy=e.clientY-CAM.lastY;
+  if(Math.abs(dx)+Math.abs(dy)>4) panMoved=true;
+  CAM.x+=dx;CAM.y+=dy;
+  CAM.lastX=e.clientX;CAM.lastY=e.clientY;
+  clampCam();drawMap();
+}
+function onPanEnd(){CAM.dragging=false;}
+function clampCam(){
+  const W=canvas?canvas.width:0,H=canvas?canvas.height:0;
+  const minX=W-MAP_W*CAM.scale-40,maxX=40;
+  const minY=H-MAP_H*CAM.scale-40,maxY=40;
+  CAM.x=Math.min(maxX,Math.max(minX,CAM.x));
+  CAM.y=Math.min(maxY,Math.max(minY,CAM.y));
+}
+
+function onMapClick(e){
+  if(panMoved) return;
+  const rect=canvas.getBoundingClientRect();
+  const mx=(e.clientX-rect.left-CAM.x)/CAM.scale;
+  const my=(e.clientY-rect.top-CAM.y)/CAM.scale;
+  let hit=null,best=Infinity;
+  NODES.forEach(n=>{
+    const d=Math.hypot(n.x-mx,n.y-my);
+    if(d<32&&d<best){best=d;hit=n;}
   });
+  if(hit) openNodePanel(hit);
+  else closeSidePanel();
 }
 
-function renderZoneHeader() {
-  const z = ZONES[G.currentZone];
-  document.getElementById('zone-title').textContent = z.name;
-  const tag = document.getElementById('zone-danger-tag');
-  tag.textContent = z.danger;
-  tag.className = 'zone-danger-tag ' + z.dangerClass;
-  document.getElementById('zone-desc').textContent = z.desc;
-}
+// Map colors
+const NODE_COLORS=['#2ecc71','#f39c12','#e74c3c','#c084fc'];
+const NODE_FOG=['#1a3a2a','#3a2a1a','#3a1a1a','#2a003a'];
+const ROAD_COLOR='#1a2330';
+const ROAD_BORDER='#0d1520';
 
-function renderMap() {
-  const grid = document.getElementById('map-grid');
-  grid.innerHTML = '';
-  const zone = ZONES[G.currentZone];
-  zone.cells.forEach(cell => {
-    const div = document.createElement('div');
-    const isCurrent = G.currentCell === cell.id;
-    div.className = 'map-cell' + (cell.explored ? ' explored' : '') + (isCurrent ? ' current' : '') + (cell.zombie ? ' danger' : '');
-    if (isCurrent && cell.zombie) div.classList.add('danger');
+function drawMap(){
+  if(!ctx||!canvas) return;
+  const W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.save();
+  ctx.translate(CAM.x,CAM.y);
+  ctx.scale(CAM.scale,CAM.scale);
 
-    let badgeHtml = '';
-    if (!cell.explored) {
-      if (cell.badge === 'loot') badgeHtml = '<span class="cell-badge badge-loot">LOOT</span>';
-      else if (cell.badge === 'zombie') badgeHtml = '<span class="cell-badge badge-zombie">⚠</span>';
-      else if (cell.badge === 'boss') badgeHtml = '<span class="cell-badge badge-boss">BOSS</span>';
-      else if (cell.badge === 'ally') badgeHtml = '<span class="cell-badge badge-ally">ALLY</span>';
+  // Background terrain patches per zone
+  const zoneRects=[
+    {x:0,   y:900, w:MAP_W,h:500, color:'#0c1a0c'},
+    {x:0,   y:620, w:MAP_W,h:320, color:'#1a1400'},
+    {x:0,   y:380, w:MAP_W,h:280, color:'#1a0808'},
+    {x:0,   y:0,   w:MAP_W,h:420, color:'#0f0018'},
+  ];
+  zoneRects.forEach((r,i)=>{
+    ctx.fillStyle=r.color;
+    ctx.fillRect(r.x,r.y,r.w,r.h);
+    // zone label
+    ctx.save();
+    ctx.font=`bold ${16/CAM.scale*0.9}px Courier New`;
+    ctx.fillStyle=NODE_COLORS[i]+'55';
+    ctx.textAlign='center';
+    ctx.fillText(ZONE_META[i].name, MAP_W/2, r.y+28);
+    ctx.restore();
+  });
+
+  // Grid / texture
+  ctx.strokeStyle='#0d1520';
+  ctx.lineWidth=0.5;
+  for(let gx=0;gx<MAP_W;gx+=80){
+    ctx.beginPath();ctx.moveTo(gx,0);ctx.lineTo(gx,MAP_H);ctx.stroke();
+  }
+  for(let gy=0;gy<MAP_H;gy+=80){
+    ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(MAP_W,gy);ctx.stroke();
+  }
+
+  // Edges (roads)
+  EDGES.forEach(([a,b])=>{
+    const na=NODES[a],nb=NODES[b];
+    const aLocked=na.zone>G.unlockedZone,bLocked=nb.zone>G.unlockedZone;
+    ctx.beginPath();
+    ctx.moveTo(na.x,na.y);
+    ctx.lineTo(nb.x,nb.y);
+    ctx.lineWidth=aLocked||bLocked?3:5;
+    ctx.strokeStyle=aLocked||bLocked?'#0d1520':'#1e2c3a';
+    ctx.stroke();
+    // road center line
+    if(!aLocked&&!bLocked){
+      ctx.beginPath();ctx.setLineDash([10,12]);
+      ctx.moveTo(na.x,na.y);ctx.lineTo(nb.x,nb.y);
+      ctx.lineWidth=1;ctx.strokeStyle='#2a3848';
+      ctx.stroke();ctx.setLineDash([]);
+    }
+  });
+
+  // Nodes
+  NODES.forEach(n=>{
+    const locked=n.zone>G.unlockedZone;
+    const reachable=G.steps>=n.steps;
+    const isCurrent=G.currentNode===n.id;
+    const isSelected=selectedNode&&selectedNode.id===n.id;
+    const c=NODE_COLORS[n.zone];
+    const r=isCurrent?20:16;
+
+    if(locked){
+      // fog node
+      ctx.beginPath();ctx.arc(n.x,n.y,14,0,Math.PI*2);
+      ctx.fillStyle='#0d1520';ctx.fill();
+      ctx.strokeStyle='#1a2330';ctx.lineWidth=1.5;ctx.stroke();
+      ctx.font=`${14}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillStyle='#2a3848';ctx.fillText('?',n.x,n.y);
+      return;
     }
 
-    div.innerHTML = `
-      ${badgeHtml}
-      ${isCurrent ? '<div class="badge-current"></div>' : ''}
-      <div class="cell-icon">${cell.icon}</div>
-      <div class="cell-name">${cell.name}</div>
-    `;
-    div.onclick = () => exploreCell(cell);
-    grid.appendChild(div);
-  });
-}
+    // shadow
+    ctx.beginPath();ctx.arc(n.x+2,n.y+3,r,0,Math.PI*2);
+    ctx.fillStyle='rgba(0,0,0,.5)';ctx.fill();
 
-function renderTeam() {
-  const panel = document.getElementById('team-panel');
-  panel.innerHTML = '';
-  // Player card
-  const pc = document.createElement('div');
-  pc.className = 'team-card';
-  pc.innerHTML = `<div class="team-icon">${G.player.icon}</div><div class="team-name">${G.player.name}</div><div class="team-hp-bar"><div class="team-hp-fill" style="width:${G.hp/G.maxHp*100}%"></div></div>`;
-  panel.appendChild(pc);
-  G.team.forEach(a => {
-    const ac = document.createElement('div');
-    ac.className = 'team-card' + (a.dead ? ' dead' : '');
-    ac.innerHTML = `<div class="team-icon">${a.icon}</div><div class="team-name">${a.name}</div><div class="team-hp-bar"><div class="team-hp-fill" style="width:${a.hp/(a.maxHp||90)*100}%"></div></div>`;
-    panel.appendChild(ac);
-  });
-  if (G.team.length === 0) {
-    const hint = document.createElement('div');
-    hint.style.cssText = 'font-size:.65rem;color:var(--muted);padding:.5rem;align-self:center;';
-    hint.textContent = 'No teammates yet.';
-    panel.appendChild(hint);
-  }
-}
-
-function renderInventory() {
-  const grid = document.getElementById('inv-grid');
-  grid.innerHTML = '';
-  document.getElementById('inv-count-label').textContent = `(${G.inventory.length}/${G.maxSlots})`;
-  for (let i = 0; i < G.maxSlots; i++) {
-    const slot = document.createElement('div');
-    slot.className = 'inv-slot';
-    const item = G.inventory[i];
-    if (item) {
-      const isEquipped = item === G.equippedWeapon || item === G.equippedGun;
-      if (isEquipped) slot.classList.add('equipped');
-      slot.innerHTML = `<div class="inv-icon">${item.icon}</div><div class="inv-name">${item.name}</div>${item.count > 1 ? `<div class="inv-count">×${item.count}</div>` : ''}`;
-      slot.onclick = () => useItem(i);
+    // node circle
+    ctx.beginPath();ctx.arc(n.x,n.y,r,0,Math.PI*2);
+    if(n.explored){
+      ctx.fillStyle=n.type==='final'?'#3d006b':c+'33';
+    } else if(reachable){
+      ctx.fillStyle=c+'22';
     } else {
-      slot.innerHTML = `<div style="color:#333;font-size:1rem;">+</div>`;
+      ctx.fillStyle='#111c2a';
     }
-    grid.appendChild(slot);
-  }
-}
+    ctx.fill();
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  STEPS / DAY
-// ═══════════════════════════════════════════════════════════════════════════
-function addSteps(n) {
-  if (G.stamina <= 10) { toast('Too exhausted to move!', 'warn'); return; }
-  G.steps += n;
-  G.totalSteps += n;
-  G.stamina = Math.max(0, G.stamina - n * 0.05 * (10 - G.player.spd) / 5);
-  G.stepTarget = ZONES[G.currentZone].steps;
+    // border
+    ctx.strokeStyle=isCurrent?'#ffffff':isSelected?c:reachable?c:c+'44';
+    ctx.lineWidth=isCurrent?2.5:isSelected?2:1.5;
+    ctx.stroke();
 
-  // Check zone unlock
-  const totalExplored = ZONES[G.currentZone].cells.filter(c => c.explored).length;
-  if (G.steps >= G.stepTarget) {
-    if (G.currentZone + 1 < ZONES.length && G.unlockedZones <= G.currentZone + 1) {
-      if (totalExplored >= 2) {
-        G.unlockedZones = G.currentZone + 2;
-        addEvent(`> 🗺 ${ZONES[G.currentZone + 1].name} is now accessible!`, 'ev-team');
-        toast('New zone unlocked!', 'good');
-      }
+    // glow ring for current
+    if(isCurrent){
+      ctx.beginPath();ctx.arc(n.x,n.y,r+5,0,Math.PI*2);
+      ctx.strokeStyle='rgba(255,255,255,.15)';ctx.lineWidth=1.5;ctx.stroke();
     }
+
+    // not reachable fog
+    if(!reachable&&!n.explored){
+      ctx.beginPath();ctx.arc(n.x,n.y,r,0,Math.PI*2);
+      ctx.fillStyle='rgba(0,0,0,.5)';ctx.fill();
+    }
+
+    // icon
+    ctx.font=`${isCurrent?14:12}px sans-serif`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillStyle=(reachable||n.explored)?'rgba(255,255,255,.9)':'rgba(255,255,255,.25)';
+    ctx.fillText(n.icon,n.x,n.y-(reachable?2:0));
+
+    // label
+    ctx.font=`${isCurrent?700:400} ${10/Math.max(1,CAM.scale)*1.3}px Courier New`;
+    ctx.textAlign='center';ctx.textBaseline='top';
+    ctx.fillStyle=(reachable||n.explored)?'rgba(200,214,229,.9)':'rgba(80,100,120,.5)';
+    ctx.fillText(n.label,n.x,n.y+r+3);
+
+    // badge indicator
+    if(!n.explored&&reachable){
+      const bdColor=n.badge==='ally'?'#56b4f5':n.badge==='boss'?'#c084fc':n.badge==='zombie'?'#e74c3c':'#2ecc71';
+      ctx.beginPath();ctx.arc(n.x+r-3,n.y-r+3,5,0,Math.PI*2);
+      ctx.fillStyle=bdColor;ctx.fill();
+    }
+
+    // step lock indicator
+    if(!reachable&&!locked){
+      ctx.font=`${9/Math.max(1,CAM.scale)*1.3}px Courier New`;
+      ctx.textAlign='center';ctx.textBaseline='top';
+      ctx.fillStyle='#f39c1266';
+      ctx.fillText(`${n.steps}👟`,n.x,n.y+r+12);
+    }
+  });
+
+  // Player marker on current node
+  const cn=NODES[G.currentNode];
+  ctx.beginPath();ctx.arc(cn.x,cn.y,4,0,Math.PI*2);
+  ctx.fillStyle='#ffffff';ctx.fill();
+  ctx.strokeStyle=NODE_COLORS[cn.zone];ctx.lineWidth=2;ctx.stroke();
+  // pulse ring animation handled by redraw
+  ctx.restore();
+
+  // Animate pulse
+  if(!G._pulse) G._pulse=0;
+  G._pulse=(G._pulse+1)%60;
+  requestAnimationFrame(drawMap);
+}
+
+// ═══════════════════════════════════════════════════════
+//  NODE PANEL
+// ═══════════════════════════════════════════════════════
+function openNodePanel(node){
+  selectedNode=node;
+  const panel=document.getElementById('side-panel');
+  const scroll=document.getElementById('panel-scroll');
+
+  const zm=ZONE_META[node.zone];
+  const locked=node.zone>G.unlockedZone;
+  const reachable=G.steps>=node.steps;
+  const isCurrent=G.currentNode===node.id;
+  const c=['#2ecc71','#f39c12','#e74c3c','#c084fc'][node.zone];
+  const tags=['AN TOÀN','NGUY HIỂM','CỰC NGUY','BOSS'][node.zone];
+  const tagBg=['#1a3a1a','#3a2a1a','#3a1a1a','#2a003a'][node.zone];
+
+  let lootChips=node.loots.map(l=>{
+    const w=WEAPONS[l];const isGun=w&&w.type==='gun';
+    return `<span class="loot-chip${w?(isGun?' gun':' weapon'):''}">${w?WEAPONS[l].icon:CONS[l]?CONS[l].icon:'📦'} ${l}</span>`;
+  }).join('');
+
+  let enemyHtml='';
+  if(node.enemy){
+    const z=ZDEFS[node.enemy];
+    enemyHtml=`<div class="enemy-chip"><span>${z.icon}</span><span style="color:var(--red3);font-weight:700;">${z.name}</span><span style="color:var(--muted);margin-left:auto;">${z.hp}HP · ${z.dmg}dmg</span></div>`;
   }
-  renderGame();
-}
-
-function advanceDay() {
-  G.day++;
-  G.steps = 0;
-  G.stepTarget = ZONES[G.currentZone].steps;
-  G.food = Math.max(0, G.food - 12);
-  G.water = Math.max(0, G.water - 18);
-  G.stamina = Math.min(G.maxStamina, G.stamina + 30 + G.player.recover * 3);
-  addEvent(`> 🌅 Day ${G.day} begins.`, 'ev-info');
-  if (G.food < 20) addEvent('> ⚠ Critically low on food!', 'ev-warn');
-  if (G.water < 20) addEvent('> ⚠ Critically low on water!', 'ev-warn');
-  checkDeath();
-  renderGame();
-}
-
-let decayInterval = null;
-function startDecayLoop() {
-  if (decayInterval) clearInterval(decayInterval);
-  decayInterval = setInterval(() => {
-    G.food = Math.max(0, G.food - 0.3);
-    G.water = Math.max(0, G.water - 0.4);
-    renderGame();
-    if (G.food <= 0) die('Starvation');
-    if (G.water <= 0) die('Dehydration');
-  }, 10000);
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  EXPLORE
-// ═══════════════════════════════════════════════════════════════════════════
-function exploreCell(cell) {
-  const zone = ZONES[G.currentZone];
-  // Check step requirement
-  const cellIndex = zone.cells.indexOf(cell);
-  const stepNeeded = Math.floor(zone.steps * (cellIndex + 1) / (zone.cells.length + 1));
-  if (G.steps < stepNeeded && !cell.explored) {
-    toast(`Need ${stepNeeded} steps to reach here`, 'warn');
-    return;
+  let allyHtml='';
+  if(node.allyId&&!node.explored){
+    const a=ALLIES.find(x=>x.id===node.allyId);
+    if(a&&!G.team.find(t=>t.id===a.id)) allyHtml=`<div class="enemy-chip" style="border-color:#1a3a5a;background:#0d1a2a;"><span>${a.icon}</span><span style="color:var(--blue3);">${a.name}</span><span style="color:var(--muted);margin-left:auto;">Tuyển mộ</span></div>`;
   }
 
-  G.currentCell = cell.id;
+  const enterDisabled=(locked||(!reachable&&!isCurrent)||node.explored&&!node.enemy)?'disabled':'';
+  const enterLabel=locked?'🔒 Bị khóa':!reachable?`🥾 Cần ${node.steps} bước`:node.explored?(node.enemy?'⚔ Chiến đấu lại':'✓ Đã khám phá'):'⚔ VÀO ĐÂY';
 
-  if (!cell.explored) {
-    G.areasExplored++;
-    cell.explored = true;
+  // Inventory section
+  let invHtml=`<div class="panel-section-title">Trang bị</div><div class="inv-row" id="inv-grid-p">`;
+  for(let i=0;i<G.maxSlots;i++){
+    const item=G.inventory[i];
+    const eq=item&&(item===G.equippedWeapon||item===G.equippedGun);
+    invHtml+=`<div class="inv-sl${eq?' eqp':''}" onclick="useItem(${i})">${item?`<div class="inv-ico">${item.icon}</div><div class="inv-nm">${item.name}</div>${item.count>1?`<div class="inv-cnt">×${item.count}</div>`:''}`:''}</div>`;
+  }
+  invHtml+=`</div>`;
 
-    // Ally encounter
-    if (cell.allyId) {
-      const ally = ALLIES.find(a => a.id === cell.allyId);
-      if (ally && !G.team.find(t => t.id === ally.id)) {
-        const allyLive = { ...ally, maxHp: ally.hp, dead: false };
-        G.team.push(allyLive);
-        addEvent(`> 👥 ${ally.name} joins your team!`, 'ev-team');
-        toast(`${ally.name} joined!`, 'good');
+  // Team section
+  let teamHtml=`<div class="panel-section-title">Đội nhóm</div><div class="team-row">`;
+  // player
+  teamHtml+=`<div class="tmcard"><div class="tm-ico">${G.player.icon}</div><div class="tm-nm">${G.player.name}</div><div class="tm-hp"><div class="tm-hp-f" style="width:${G.hp/G.maxHp*100}%"></div></div></div>`;
+  G.team.forEach(a=>{
+    teamHtml+=`<div class="tmcard${a.dead?' dead':''}"><div class="tm-ico">${a.icon}</div><div class="tm-nm">${a.name}</div><div class="tm-hp"><div class="tm-hp-f" style="width:${a.hp/a.maxHp*100}%"></div></div></div>`;
+  });
+  teamHtml+=`</div>`;
+
+  scroll.innerHTML=`
+    <div class="panel-node-name">${node.icon} ${node.label}</div>
+    <span class="panel-danger" style="background:${tagBg};color:${c};">${tags}</span>
+    ${!reachable&&!locked?`<div class="steps-req">🥾 Cần ${node.steps} bước — hiện có ${G.steps}</div>`:''}
+    <div class="loot-chips">${lootChips||'<span style="font-size:.62rem;color:var(--muted);">Không có đồ loot</span>'}</div>
+    ${enemyHtml}${allyHtml}
+    <div class="panel-row">
+      <button class="panel-action pa-enter" ${enterDisabled} onclick="enterNode(${node.id})">${enterLabel}</button>
+      <button class="panel-action pa-close" onclick="closeSidePanel()">✕</button>
+    </div>
+    <div style="border-top:1px solid var(--border);margin:.5rem 0;"></div>
+    ${teamHtml}
+    ${invHtml}
+    <div style="padding:.5rem 0 .25rem;display:flex;gap:.4rem;">
+      <button class="panel-action pa-loot" style="font-size:.62rem;padding:.4rem;" onclick="manualSteps(50)">+50 bước (thủ công)</button>
+      <button class="panel-action pa-close" style="font-size:.62rem;padding:.4rem;" onclick="advanceDay()">Nghỉ ngơi</button>
+    </div>
+  `;
+
+  panel.classList.add('open');
+}
+
+function closeSidePanel(){
+  document.getElementById('side-panel').classList.remove('open');
+  selectedNode=null;
+}
+
+// ═══════════════════════════════════════════════════════
+//  ENTER NODE
+// ═══════════════════════════════════════════════════════
+function enterNode(nodeId){
+  const node=NODES[nodeId];
+  if(!node) return;
+  if(node.zone>G.unlockedZone){toast('Khu vực bị khóa!','warn');return;}
+  if(G.steps<node.steps){toast(`Cần ${node.steps} bước!`,'warn');return;}
+
+  G.currentNode=nodeId;
+  closeSidePanel();
+
+  if(!node.explored){
+    node.explored=true;G.areas++;
+
+    // Ally recruit
+    if(node.allyId){
+      const ally=ALLIES.find(a=>a.id===node.allyId);
+      if(ally&&!G.team.find(t=>t.id===ally.id)){
+        G.team.push({...ally});
+        addLog(`> 👥 ${ally.name} gia nhập đội!`,'ev-team');
+        toast(`${ally.name} tham chiến!`,'good');
       }
     }
 
     // Loot
-    if (cell.loots && cell.loots.length > 0) {
-      cell.loots.forEach(lootName => {
-        const baseKey = lootName.replace(/ x\d+$/, '');
-        const wep = WEAPONS[baseKey];
-        const con = CONSUMABLES[lootName] || CONSUMABLES[baseKey];
-        if (wep && G.inventory.length < G.maxSlots) {
-          const wepItem = { name: baseKey, icon: wep.icon, type: wep.type, dmg: wep.dmg, cd: wep.cd || 0, ammo: wep.ammo || 0 };
-          G.inventory.push(wepItem);
-          addEvent(`> 📦 Found ${wepItem.icon} ${baseKey}!`, 'ev-loot');
-        } else if (con) {
-          const count = con.count || 1;
-          for (let c = 0; c < count && G.inventory.length < G.maxSlots; c++) {
-            G.inventory.push({ name: lootName.replace(/ x\d+$/, ''), icon: con.icon, type: 'consumable', effect: con.effect, label: con.label, count: 1 });
-          }
-          addEvent(`> 📦 Found ${con.icon} ${lootName}!`, 'ev-loot');
-        }
-      });
-    }
+    collectLoots(node);
 
-    // Zombie encounter
-    if (cell.zombie) {
-      const teamSize = G.team.filter(t => !t.dead).length;
-      const needed = zone.unlockZombies;
-      if (G.zombiesKilled < needed && teamSize < Math.ceil(needed / 3)) {
-        addEvent(`> ⚠ Too dangerous here. Need more team/kills first.`, 'ev-warn');
-        toast('Build your team first!', 'warn');
-        cell.explored = false;
-        G.areasExplored = Math.max(0, G.areasExplored - 1);
-        renderGame();
+    // Enemy
+    if(node.enemy){
+      const teamNeeded=ZONE_META[node.zone].reqKills;
+      if(G.kills<teamNeeded&&G.team.filter(t=>!t.dead).length<Math.ceil(teamNeeded/3)){
+        addLog(`> ⚠ Quá nguy hiểm — cần thêm đội/giết zombie`,'ev-warn');
+        toast('Cần đội mạnh hơn!','warn');
+        node.explored=false;G.areas--;G.currentNode=0;
+        updateHUD();drawMap();
         return;
       }
-      renderGame();
-      setTimeout(() => startCombat(cell.zombie, cell), 400);
+      updateHUD();drawMap();
+      setTimeout(()=>startCombat(node.enemy,node),500);
       return;
     }
   } else {
-    addEvent(`> 👁 ${cell.name} — already explored.`, 'ev-info');
+    addLog(`> 👁 ${node.label} — đã khám phá.`,'ev-info');
+    if(node.enemy){
+      // revisit with enemy (combat again)
+      setTimeout(()=>startCombat(node.enemy,node),300);
+      return;
+    }
   }
-  renderGame();
+  updateHUD();drawMap();
 }
 
-function addEvent(text, cls) {
-  const feed = document.getElementById('event-feed');
-  const line = document.createElement('div');
-  line.className = 'event-line ' + (cls || 'ev-info');
-  line.textContent = text;
-  feed.appendChild(line);
-  feed.scrollTop = feed.scrollHeight;
+function collectLoots(node){
+  node.loots.forEach(lootName=>{
+    if(G.inventory.length>=G.maxSlots) return;
+    const wDef=WEAPONS[lootName];
+    const cDef=CONS[lootName];
+    if(wDef){
+      G.inventory.push({name:lootName,icon:wDef.icon,type:wDef.type,dmg:wDef.dmg,cd:wDef.cd||0,ammo:wDef.ammo||0});
+      addLog(`> 📦 Nhặt ${wDef.icon} ${lootName}!`,'ev-loot');
+    } else if(cDef){
+      G.inventory.push({name:lootName,icon:cDef.icon,type:'consumable',eff:cDef.eff,count:1});
+      addLog(`> 📦 Nhặt ${cDef.icon} ${lootName}!`,'ev-loot');
+    }
+  });
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 //  USE ITEM
-// ═══════════════════════════════════════════════════════════════════════════
-function useItem(idx) {
-  const item = G.inventory[idx];
-  if (!item) return;
-
-  if (item.type === 'melee') {
-    G.equippedWeapon = item;
-    toast(`${item.icon} ${item.name} equipped!`, 'good');
-    renderGame();
-    return;
-  }
-  if (item.type === 'gun') {
-    G.equippedGun = item;
-    G.ammo += item.ammo;
-    G.inventory.splice(idx, 1);
-    toast(`${item.icon} ${item.name} equipped! (${item.ammo} ammo)`, 'good');
-    renderGame();
-    return;
-  }
-  if (item.type === 'consumable') {
-    applyEffect(item.effect);
-    toast(`${item.icon} ${item.label}`, 'good');
-    G.inventory.splice(idx, 1);
-    renderGame();
-  }
+// ═══════════════════════════════════════════════════════
+function useItem(idx){
+  const item=G.inventory[idx];
+  if(!item) return;
+  if(item.type==='melee'){G.equippedWeapon=item;toast(`${item.icon} ${item.name} trang bị!`,'good');}
+  else if(item.type==='gun'){G.equippedGun=item;G.ammo+=item.ammo;G.inventory.splice(idx,1);toast(`${item.icon} ${item.name} trang bị! (${item.ammo} đạn)`,'good');}
+  else if(item.type==='consumable'){applyEff(item.eff);toast(`${item.icon} ${item.name}`,'good');G.inventory.splice(idx,1);}
+  updateHUD();
+  if(document.getElementById('side-panel').classList.contains('open')&&selectedNode) openNodePanel(selectedNode);
+}
+function applyEff(eff){
+  if(!eff) return;
+  if(eff.startsWith('hp+'))   G.hp=Math.min(G.maxHp,G.hp+parseInt(eff.slice(3)));
+  if(eff.startsWith('food+')) G.food=Math.min(100,G.food+parseInt(eff.slice(5)));
+  if(eff.startsWith('water+'))G.water=Math.min(100,G.water+parseInt(eff.slice(6)));
+  if(eff.startsWith('stam+')) G.stamina=Math.min(G.maxStamina,G.stamina+parseInt(eff.slice(5)));
+  if(eff.startsWith('ammo+')) G.ammo+=parseInt(eff.slice(5));
+  if(eff.startsWith('slots+'))G.maxSlots+=parseInt(eff.slice(6));
 }
 
-function applyEffect(eff) {
-  if (!eff) return;
-  if (eff.startsWith('hp+')) G.hp = Math.min(G.maxHp, G.hp + parseInt(eff.slice(3)));
-  if (eff.startsWith('food+')) G.food = Math.min(100, G.food + parseInt(eff.slice(5)));
-  if (eff.startsWith('water+')) G.water = Math.min(100, G.water + parseInt(eff.slice(6)));
-  if (eff.startsWith('stam+')) G.stamina = Math.min(G.maxStamina, G.stamina + parseInt(eff.slice(5)));
-  if (eff.startsWith('ammo+')) G.ammo += parseInt(eff.slice(5));
-  if (eff.startsWith('slots+')) G.maxSlots += parseInt(eff.slice(6));
+// ═══════════════════════════════════════════════════════
+//  HUD UPDATE
+// ═══════════════════════════════════════════════════════
+function updateHUD(){
+  const p=G.player;
+  document.getElementById('hud-name').textContent=p.name;
+  document.getElementById('hud-day').textContent=G.day;
+  document.getElementById('v-hp').textContent=Math.ceil(G.hp);
+  document.getElementById('b-hp').style.width=(G.hp/G.maxHp*100)+'%';
+  document.getElementById('v-food').textContent=Math.ceil(G.food);
+  document.getElementById('b-food').style.width=G.food+'%';
+  document.getElementById('v-water').textContent=Math.ceil(G.water);
+  document.getElementById('b-water').style.width=G.water+'%';
+  document.getElementById('v-stam').textContent=Math.ceil(G.stamina);
+  document.getElementById('b-stam').style.width=(G.stamina/G.maxStamina*100)+'%';
+  document.getElementById('team-icons').textContent=G.team.filter(t=>!t.dead).map(t=>t.icon).join('');
+  updatePed();
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+//  DECAY
+// ═══════════════════════════════════════════════════════
+let decayLoop=null;
+function startDecay(){
+  if(decayLoop)clearInterval(decayLoop);
+  decayLoop=setInterval(()=>{
+    G.food=Math.max(0,G.food-.25);
+    G.water=Math.max(0,G.water-.35);
+    updateHUD();
+    if(G.food<=0) die('Chết đói');
+    if(G.water<=0) die('Chết khát');
+  },8000);
+}
+function advanceDay(){
+  G.day++;G.steps=0;
+  G.food=Math.max(0,G.food-10);G.water=Math.max(0,G.water-15);
+  G.stamina=Math.min(G.maxStamina,G.stamina+20+G.player.rec*3);
+  addLog(`> 🌅 Ngày ${G.day} bắt đầu.`,'ev-info');
+  if(G.food<20) addLog('> ⚠ Đồ ăn gần hết!','ev-warn');
+  if(G.water<20) addLog('> ⚠ Nước gần hết!','ev-warn');
+  updateHUD();
+  if(document.getElementById('side-panel').classList.contains('open')&&selectedNode) openNodePanel(selectedNode);
+}
+
+// ═══════════════════════════════════════════════════════
 //  COMBAT
-// ═══════════════════════════════════════════════════════════════════════════
-let combatTimeout = null;
-let reactTimeout = null;
-let cooldownInterval = null;
-let staminaRegenInterval = null;
+// ═══════════════════════════════════════════════════════
+let combatTimer=null,reactTimer=null,staminaRegen=null,atkCdTimer=null;
 
-function startCombat(zombieType, cell) {
-  const zDef = ZOMBIES[zombieType];
-  G.combat = {
-    type: zombieType,
-    def: zDef,
-    hp: zDef.hp,
-    maxHp: zDef.hp,
-    phase: 'range', // range → melee-idle → reacting → stunned → melee-idle
-    stunned: false,
-    blocked: false,
-    atkCooldown: false,
-    cell: cell,
-    teamBonus: G.team.filter(t => !t.dead).length * 0.15,
+function startCombat(zType,node){
+  const zDef=ZDEFS[zType];
+  G.combat={
+    type:zType, def:zDef,
+    hp:zDef.hp, maxHp:zDef.hp,
+    phase:'range', // range | melee-idle | reacting | stunned
+    blocked:false, atkCd:false,
+    node:node,
+    teamBonus:G.team.filter(t=>!t.dead).length*0.18,
   };
-  if (G.equippedGun && G.ammo > 0) {
-    G.combat.phase = 'range';
-    document.getElementById('range-zone').classList.add('show');
-    document.getElementById('ammo-label').textContent = `Ammo: ${G.ammo}`;
+  clearCombatTimers();
+  buildZombieSVG(zType);
+  clearClog();
+  addClog(`${zDef.icon} ${zDef.name} xuất hiện!`,'cl-h');
+  updateCombatHUD();
+
+  // Range phase?
+  if(G.equippedGun&&G.ammo>0){
+    G.combat.phase='range';
+    document.getElementById('range-overlay').classList.add('show');
+    document.getElementById('ammo-lbl').textContent=`Đạn: ${G.ammo}`;
+    document.getElementById('c-status').textContent='Ngắm bắn từ xa!';
+    document.getElementById('c-status').className='c-status';
   } else {
-    G.combat.phase = 'melee-idle';
-    document.getElementById('range-zone').classList.remove('show');
+    enterMeleePhase();
   }
-
-  renderCombatHUD();
-  renderZombieSVG(zombieType);
-  clearCombatLog();
-  addCombatLog(`${zDef.icon} ${zDef.name} appears!`, 'cl-hit');
-  if (G.equippedGun && G.ammo > 0) {
-    addCombatLog('Range! Shoot before it closes in.', 'cl-hit');
-    document.getElementById('combat-status').textContent = 'Aim and fire!';
-  } else {
-    addCombatLog('Entering melee range!', 'cl-hit');
-    scheduleZombieAttack();
-  }
-
-  document.getElementById('attack-zone').classList.remove('show');
-  document.getElementById('tap-ring').className = 'tap-ring';
-  document.getElementById('tap-icon').textContent = '🛡';
-  document.getElementById('react-text').classList.remove('show');
-
+  document.getElementById('atk-zone').classList.remove('show');
+  document.getElementById('defend-zone').style.display='';
+  document.getElementById('tap-ring').className='tap-ring';
+  document.getElementById('tap-ico').textContent='🛡';
+  document.getElementById('react-txt').classList.remove('on');
   showScreen('combat-screen');
-  if (combatTimeout) clearTimeout(combatTimeout);
 }
 
-function renderCombatHUD() {
-  const c = G.combat;
-  document.getElementById('zombie-name-label').textContent = c.def.name;
-  document.getElementById('zombie-hp-bar').style.width = (c.hp / c.maxHp * 100) + '%';
-  document.getElementById('zombie-hp-val').textContent = Math.ceil(c.hp) + ' HP';
-  document.getElementById('c-hp-val').textContent = Math.ceil(G.hp);
-  document.getElementById('c-bar-hp').style.width = (G.hp / G.maxHp * 100) + '%';
-  document.getElementById('c-stam-val').textContent = Math.ceil(G.stamina);
-  document.getElementById('c-bar-stam').style.width = (G.stamina / G.maxStamina * 100) + '%';
-  if (G.equippedWeapon) {
-    document.getElementById('weapon-label').textContent = `${G.equippedWeapon.icon} ${G.equippedWeapon.name}`;
+function enterMeleePhase(){
+  if(!G.combat) return;
+  document.getElementById('range-overlay').classList.remove('show');
+  G.combat.phase='melee-idle';
+  document.getElementById('c-status').textContent='Đứng yên... chú ý!';
+  document.getElementById('c-status').className='c-status';
+  setZAnim('z-idle');
+  scheduleReact();
+}
+
+function scheduleReact(){
+  if(!G.combat) return;
+  const delay=G.combat.def.reactMs+Math.random()*800;
+  combatTimer=setTimeout(triggerReact,delay);
+}
+
+function triggerReact(){
+  if(!G.combat||G.combat.phase!=='melee-idle') return;
+  G.combat.phase='reacting';
+  G.combat.blocked=false;
+  document.getElementById('c-status').textContent='⚡ PHẢN XẠ!';
+  document.getElementById('c-status').className='c-status danger';
+  document.getElementById('tap-ring').className='tap-ring pulse';
+  document.getElementById('tap-ico').textContent='⚡';
+  document.getElementById('react-txt').classList.add('on');
+  setZAnim('z-attack');
+
+  // Miss window — zombie hits if no tap in time
+  reactTimer=setTimeout(()=>{
+    if(!G.combat||G.combat.phase!=='reacting') return;
+    zombieHits();
+  }, 1300);
+}
+
+function tapDefend(){
+  if(!G.combat||G.combat.phase!=='reacting') return;
+  clearTimeout(reactTimer);
+  G.combat.phase='stunned';
+  G.combat.blocked=true;
+  document.getElementById('react-txt').classList.remove('on');
+  document.getElementById('tap-ring').className='tap-ring success';
+  document.getElementById('tap-ico').textContent='🛡';
+  document.getElementById('c-status').textContent='✓ ĐỠ! ZOMBIE CHOÁNG!';
+  document.getElementById('c-status').className='c-status';
+  setZAnim('z-stun');
+  addClog('Bạn đỡ thành công!','cl-b');
+  addClog('Zombie choáng — TẤN CÔNG!','cl-s');
+
+  // Show attack zone, hide defend
+  document.getElementById('defend-zone').style.display='none';
+  const az=document.getElementById('atk-zone');
+  az.classList.add('show');
+  // weapon labels
+  const wep=G.equippedWeapon;
+  document.getElementById('wep-lbl').textContent=wep?`${wep.icon} ${wep.name}`:'Tay không (yếu)';
+  if(G.equippedGun&&G.ammo>0){
+    document.getElementById('atk-gun').style.display='';
+    document.getElementById('atk-gun-lbl').textContent=`🔫 Bắn (${G.ammo} đạn)`;
   } else {
-    document.getElementById('weapon-label').textContent = 'Fists (weak)';
+    document.getElementById('atk-gun').style.display='none';
   }
-  document.getElementById('atk-btn').disabled = false;
-  document.getElementById('cooldown-fill').style.width = '0%';
+  document.getElementById('atk-melee').disabled=false;
+  document.getElementById('cd-melee').style.width='0%';
+
+  // Stun window: if player idles too long zombie recovers
+  combatTimer=setTimeout(()=>{
+    if(G.combat&&G.combat.phase==='stunned'){addClog('Zombie hồi phục!','cl-m');endStun();}
+  },4000);
 }
 
-function renderZombieSVG(type) {
-  const wrap = document.getElementById('zombie-wrap');
-  const colors = {
-    walker:  { body: '#2d3a1a', skin: '#5a7a3a', eye: '#cc0000' },
-    crawler: { body: '#1a1a2a', skin: '#4a4a6a', eye: '#8800cc' },
-    runner:  { body: '#2a1a0a', skin: '#7a5a3a', eye: '#ff8800' },
-    brute:   { body: '#3a0a0a', skin: '#7a2a2a', eye: '#ff0000' },
-    boss:    { body: '#1a0a2a', skin: '#5a3a7a', eye: '#ff00ff' },
-  };
-  const scale = { walker: 1, crawler: .8, runner: 1.1, brute: 1.3, boss: 1.5 }[type] || 1;
-  const c = colors[type] || colors.walker;
-  const s = scale;
-  const w = Math.round(120 * s), h = Math.round(160 * s);
-
-  wrap.innerHTML = `
-    <div class="react-flash"><div class="react-text" id="react-text">REACT!</div></div>
-    <svg id="zombie-svg" width="${w}" height="${h}" viewBox="0 0 120 160" class="zombie-idle">
-      <!-- legs -->
-      <rect x="38" y="110" width="18" height="45" rx="4" fill="${c.body}"/>
-      <rect x="64" y="113" width="18" height="43" rx="4" fill="${c.body}" transform="rotate(5,73,135)"/>
-      <rect x="30" y="148" width="26" height="12" rx="3" fill="#0a0a0a"/>
-      <rect x="58" y="150" width="26" height="11" rx="3" fill="#0a0a0a"/>
-      <!-- body -->
-      <rect x="30" y="65" width="60" height="50" rx="5" fill="${c.body}"/>
-      <!-- chest -->
-      <rect x="30" y="65" width="60" height="32" rx="5" fill="${c.body}" opacity=".7"/>
-      <!-- arms -->
-      <rect x="8" y="68" width="28" height="14" rx="7" fill="${c.skin}"/>
-      <rect x="84" y="62" width="28" height="14" rx="7" fill="${c.skin}" transform="rotate(-10,98,69)"/>
-      <!-- clawed hands -->
-      <ellipse cx="11" cy="75" rx="9" ry="8" fill="${c.skin}"/>
-      <ellipse cx="109" cy="66" rx="9" ry="8" fill="${c.skin}"/>
-      <!-- fingers -->
-      <line x1="5" y1="70" x2="2" y2="64" stroke="#888" stroke-width="2" stroke-linecap="round"/>
-      <line x1="9" y1="68" x2="7" y2="62" stroke="#888" stroke-width="2" stroke-linecap="round"/>
-      <line x1="13" y1="68" x2="12" y2="62" stroke="#888" stroke-width="2" stroke-linecap="round"/>
-      <line x1="103" y1="61" x2="101" y2="55" stroke="#888" stroke-width="2" stroke-linecap="round"/>
-      <line x1="108" y1="60" x2="107" y2="54" stroke="#888" stroke-width="2" stroke-linecap="round"/>
-      <line x1="113" y1="62" x2="113" y2="56" stroke="#888" stroke-width="2" stroke-linecap="round"/>
-      <!-- head -->
-      <rect x="33" y="12" width="54" height="58" rx="8" fill="${c.skin}"/>
-      <!-- jaw -->
-      <rect x="38" y="55" width="44" height="18" rx="4" fill="${c.skin}" opacity=".8"/>
-      <!-- eyes -->
-      <ellipse cx="50" cy="36" rx="8" ry="9" fill="#0a0000"/>
-      <ellipse cx="70" cy="36" rx="8" ry="9" fill="#0a0000"/>
-      <ellipse cx="50" cy="37" rx="5" ry="6" fill="${c.eye}"/>
-      <ellipse cx="70" cy="37" rx="5" ry="6" fill="${c.eye}"/>
-      <ellipse cx="51" cy="37" rx="2" ry="3" fill="#fff" opacity=".4"/>
-      <ellipse cx="71" cy="37" rx="2" ry="3" fill="#fff" opacity=".4"/>
-      <!-- mouth / teeth -->
-      <rect x="42" y="58" width="36" height="10" rx="3" fill="#2a0000"/>
-      <rect x="46" y="59" width="5" height="8" rx="1" fill="#ccc"/>
-      <rect x="55" y="59" width="4" height="8" rx="1" fill="#ccc"/>
-      <rect x="63" y="59" width="5" height="8" rx="1" fill="#ccc"/>
-      <rect x="72" y="60" width="4" height="7" rx="1" fill="#bbb"/>
-      <!-- wounds / rot -->
-      <ellipse cx="52" cy="24" rx="4" ry="3" fill="#8b0000" opacity=".6"/>
-      <ellipse cx="72" cy="22" rx="3" ry="2" fill="#8b0000" opacity=".5"/>
-      <line x1="40" y1="42" x2="48" y2="50" stroke="#5a0000" stroke-width="1.5" opacity=".7"/>
-      <!-- hair (sparse) -->
-      <rect x="33" y="12" width="14" height="10" rx="3" fill="${c.body}" opacity=".8"/>
-      <rect x="73" y="10" width="14" height="12" rx="3" fill="${c.body}" opacity=".8"/>
-      ${type === 'boss' ? `
-        <polygon points="60,0 55,10 65,10" fill="#ff00ff" opacity=".7"/>
-        <polygon points="40,8 36,16 44,16" fill="#aa00aa" opacity=".7"/>
-        <polygon points="80,8 76,16 84,16" fill="#aa00aa" opacity=".7"/>
-        <ellipse cx="50" cy="36" rx="3" ry="3" fill="#fff" opacity=".8"/>
-        <ellipse cx="70" cy="36" rx="3" ry="3" fill="#fff" opacity=".8"/>
-      ` : ''}
-      ${type === 'brute' ? `
-        <rect x="24" y="62" width="36" height="20" rx="8" fill="${c.skin}"/>
-        <rect x="60" y="56" width="36" height="20" rx="8" fill="${c.skin}"/>
-      ` : ''}
-    </svg>
-  `;
+function zombieHits(){
+  if(!G.combat) return;
+  const def=G.combat.def;
+  const raw=def.dmg*(0.8+Math.random()*.4);
+  const armor=G.inventory.some(i=>i.name==='áo giáp')?0.65:1;
+  const dmg=Math.round(raw*armor);
+  G.hp=Math.max(0,G.hp-dmg);
+  addClog(`${def.icon} ${def.name} đánh ${dmg} sát thương!`,'cl-h');
+  document.getElementById('react-txt').classList.remove('on');
+  document.getElementById('tap-ring').className='tap-ring';
+  document.getElementById('tap-ico').textContent='🛡';
+  document.getElementById('c-status').textContent='Chú ý tấn công tiếp!';
+  document.getElementById('c-status').className='c-status';
+  setZAnim('z-idle');
+  updateCombatHUD();
+  if(G.hp<=0){endCombat(false);die('Zombie tấn công');return;}
+  G.combat.phase='melee-idle';
+  scheduleReact();
 }
 
-function scheduleZombieAttack() {
-  if (!G.combat) return;
-  G.combat.phase = 'melee-idle';
-  document.getElementById('combat-status').textContent = 'Watch for attack...';
-  const delay = G.combat.def.react + Math.random() * 600;
-  combatTimeout = setTimeout(triggerZombieReact, delay);
-}
+function doMelee(){
+  if(!G.combat||G.combat.phase!=='stunned'||G.combat.atkCd) return;
+  if(G.stamina<5){addClog('Kiệt sức!','cl-m');return;}
+  clearTimeout(combatTimer);
+  G.combat.atkCd=true;
 
-function triggerZombieReact() {
-  if (!G.combat) return;
-  G.combat.phase = 'reacting';
-  G.combat.blocked = false;
-  document.getElementById('combat-status').textContent = '⚠ REACT NOW!';
+  const wep=G.equippedWeapon;
+  const baseDmg=wep?wep.dmg:9;
+  const cd=wep?(wep.cd+(10-G.player.str)*0.12):1.6;
+  const dmg=Math.round(baseDmg*(G.player.str/5)*(1+G.combat.teamBonus)*(0.85+Math.random()*.3));
+  const stamCost=8+cd*3;
 
-  const ring = document.getElementById('tap-ring');
-  ring.className = 'tap-ring danger-ring';
-  document.getElementById('tap-icon').textContent = '⚡';
+  G.combat.hp=Math.max(0,G.combat.hp-dmg);
+  G.stamina=Math.max(0,G.stamina-stamCost);
 
-  const rt = document.getElementById('react-text');
-  rt.classList.add('show');
-
-  const svg = document.getElementById('zombie-svg');
-  if (svg) { svg.className = ''; svg.classList.add('zombie-attacking'); }
-
-  combatTimeout = setTimeout(() => {
-    if (!G.combat || G.combat.phase !== 'reacting') return;
-    // Player missed the react window
-    zombieHitsPlayer();
-  }, 1200);
-}
-
-function tapDefend() {
-  if (!G.combat) return;
-  if (G.combat.phase !== 'reacting') {
-    // accidental tap
-    return;
-  }
-  clearTimeout(combatTimeout);
-  G.combat.phase = 'stunned';
-  G.combat.blocked = true;
-
-  const ring = document.getElementById('tap-ring');
-  ring.className = 'tap-ring success-ring';
-  document.getElementById('tap-icon').textContent = '🛡';
-  document.getElementById('react-text').classList.remove('show');
-  document.getElementById('combat-status').textContent = '✓ BLOCKED! ATTACK NOW!';
-
-  const svg = document.getElementById('zombie-svg');
-  if (svg) { svg.className = ''; svg.classList.add('zombie-stunned'); }
-
-  addCombatLog('You blocked the attack!', 'cl-block');
-  addCombatLog('Zombie is STUNNED — Attack!', 'cl-stun');
-
-  document.getElementById('tap-zone').style.display = 'none';
-  document.getElementById('attack-zone').classList.add('show');
-
-  // Stun window: if player doesn't attack in time, zombie recovers
-  combatTimeout = setTimeout(() => {
-    if (!G.combat || G.combat.phase !== 'stunned') return;
-    addCombatLog('Zombie recovered!', 'cl-miss');
-    endStun();
-  }, 3500);
-}
-
-function meleeAttack() {
-  if (!G.combat || G.combat.phase !== 'stunned') return;
-  if (G.combat.atkCooldown) return;
-  if (G.stamina < 5) { addCombatLog('Too exhausted!', 'cl-miss'); return; }
-
-  clearTimeout(combatTimeout);
-  G.combat.atkCooldown = true;
-
-  const wep = G.equippedWeapon;
-  const baseDmg = wep ? wep.dmg : 8;
-  const strMult = G.player.str / 5;
-  const teamBonus = 1 + G.combat.teamBonus;
-  const dmg = Math.round(baseDmg * strMult * teamBonus * (0.85 + Math.random() * .3));
-  const cd = wep ? (wep.cd + (10 - G.player.str) * 0.1) : 1.5;
-  const stamCost = wep ? 10 + (cd * 3) : 8;
-
-  G.combat.hp = Math.max(0, G.combat.hp - dmg);
-  G.stamina = Math.max(0, G.stamina - stamCost);
-
-  // Hit animation
-  const svg = document.getElementById('zombie-svg');
-  if (svg) { svg.className = ''; svg.classList.add('zombie-hit-anim'); }
-
-  // Floating damage number
-  showDmgNumber(dmg, '#ff4444');
-  addCombatLog(`${wep ? wep.icon : '👊'} Hit for ${dmg} dmg!`, 'cl-hit');
-
-  // Blood splat
+  setZAnim('z-hit');
+  spawnDmg(dmg,'#ff6b5b');
   addBloodSplat();
+  addClog(`${wep?wep.icon:'👊'} Đánh ${dmg} sát thương!`,'cl-h');
+  updateCombatHUD();
 
-  renderCombatHUD();
+  if(G.combat.hp<=0){zombieDies();return;}
 
-  if (G.combat.hp <= 0) {
-    zombieDies();
-    return;
-  }
+  // cooldown bar
+  const btn=document.getElementById('atk-melee');
+  const fill=document.getElementById('cd-melee');
+  btn.disabled=true;
+  fill.style.transition=`width ${cd*1000}ms linear`;
+  fill.style.width='100%';
 
-  // Cooldown bar
-  let cd_ms = cd * 1000;
-  const btn = document.getElementById('atk-btn');
-  const fill = document.getElementById('cooldown-fill');
-  btn.disabled = true;
-  fill.style.transition = `width ${cd_ms}ms linear`;
-  fill.style.width = '100%';
+  // stam regen
+  if(staminaRegen)clearInterval(staminaRegen);
+  staminaRegen=setInterval(()=>{
+    G.stamina=Math.min(G.maxStamina,G.stamina+G.player.rec*0.4);
+    updateCombatHUD();
+  },500);
 
-  // Stam regen
-  if (staminaRegenInterval) clearInterval(staminaRegenInterval);
-  staminaRegenInterval = setInterval(() => {
-    G.stamina = Math.min(G.maxStamina, G.stamina + G.player.recover * 0.5);
-    renderCombatHUD();
-  }, 500);
-
-  setTimeout(() => {
-    G.combat.atkCooldown = false;
-    btn.disabled = false;
-    fill.style.transition = '';
-    fill.style.width = '0%';
-    if (G.combat && G.combat.phase === 'stunned') {
-      // Still in stun window, schedule recovery
-      combatTimeout = setTimeout(() => {
-        if (G.combat && G.combat.phase === 'stunned') {
-          addCombatLog('Zombie recovered!', 'cl-miss');
-          endStun();
-        }
-      }, 1500);
+  atkCdTimer=setTimeout(()=>{
+    G.combat.atkCd=false;
+    btn.disabled=false;
+    fill.style.transition='';fill.style.width='0%';
+    // give brief attack window again
+    if(G.combat&&G.combat.phase==='stunned'){
+      combatTimer=setTimeout(()=>{if(G.combat&&G.combat.phase==='stunned'){addClog('Zombie hồi phục!','cl-m');endStun();}},2000);
     }
-  }, cd_ms);
+  },cd*1000);
 }
 
-function endStun() {
-  if (!G.combat) return;
-  G.combat.phase = 'melee-idle';
-  G.combat.atkCooldown = false;
-  document.getElementById('tap-zone').style.display = '';
-  document.getElementById('attack-zone').classList.remove('show');
-  document.getElementById('tap-ring').className = 'tap-ring';
-  document.getElementById('tap-icon').textContent = '🛡';
-  const svg = document.getElementById('zombie-svg');
-  if (svg) { svg.className = ''; svg.classList.add('zombie-idle'); }
-  scheduleZombieAttack();
+function doGun(){
+  if(!G.combat||G.combat.phase!=='stunned') return;
+  if(!G.equippedGun||G.ammo<=0){toast('Hết đạn!','warn');return;}
+  const gun=G.equippedGun;
+  const dmg=Math.round(gun.dmg*(0.9+Math.random()*.2)*(1+G.combat.teamBonus));
+  G.ammo--;G.combat.hp=Math.max(0,G.combat.hp-dmg);
+  spawnDmg(dmg,'#56b4f5');
+  addClog(`🔫 Bắn ${dmg} sát thương! Đạn: ${G.ammo}`,'cl-h');
+  document.getElementById('atk-gun-lbl').textContent=`🔫 Bắn (${G.ammo} đạn)`;
+  if(G.ammo<=0) document.getElementById('atk-gun').style.display='none';
+  updateCombatHUD();
+  if(G.combat.hp<=0){zombieDies();return;}
 }
 
-function zombieHitsPlayer() {
-  if (!G.combat) return;
-  const def = G.combat.def;
-  const dmg = Math.round(def.dmg * (0.8 + Math.random() * .4));
-  G.hp = Math.max(0, G.hp - dmg);
-  addCombatLog(`${def.icon} ${def.name} hit you for ${dmg}!`, 'cl-hit');
-  document.getElementById('react-text').classList.remove('show');
-  document.getElementById('tap-ring').className = 'tap-ring';
-  document.getElementById('tap-icon').textContent = '🛡';
-  renderCombatHUD();
-
-  if (G.hp <= 0) { endCombat(false); die('Zombie attack'); return; }
-  scheduleZombieAttack();
+function endStun(){
+  if(!G.combat) return;
+  G.combat.phase='melee-idle';
+  G.combat.atkCd=false;
+  document.getElementById('defend-zone').style.display='';
+  document.getElementById('atk-zone').classList.remove('show');
+  document.getElementById('tap-ring').className='tap-ring';
+  document.getElementById('tap-ico').textContent='🛡';
+  setZAnim('z-idle');
+  scheduleReact();
 }
 
-function zombieDies() {
-  if (!G.combat) return;
-  clearTimeout(combatTimeout);
-  G.combat.phase = 'dead';
-  G.zombiesKilled++;
-  const svg = document.getElementById('zombie-svg');
-  if (svg) { svg.className = ''; svg.classList.add('zombie-dying'); }
-  addCombatLog(`☠ ${G.combat.def.name} eliminated!`, 'cl-kill');
-  document.getElementById('combat-status').textContent = '✓ ZOMBIE KILLED!';
-
-  if (staminaRegenInterval) clearInterval(staminaRegenInterval);
-
-  // Final boss win condition
-  const cell = G.combat.cell;
-  const isWin = cell && cell.finalBoss;
-
-  setTimeout(() => {
+function zombieDies(){
+  if(!G.combat) return;
+  clearCombatTimers();
+  G.combat.phase='dead';G.kills++;
+  setZAnim('z-die');
+  addClog(`☠ ${G.combat.def.name} bị tiêu diệt!`,'cl-k');
+  document.getElementById('c-status').textContent='✓ ZOMBIE ĐÃ CHẾT!';
+  document.getElementById('c-status').className='c-status';
+  const isWin=G.combat.node&&G.combat.node.finalBoss;
+  const node=G.combat.node;
+  if(staminaRegen)clearInterval(staminaRegen);
+  setTimeout(()=>{
     endCombat(true);
-    if (isWin) winGame();
-    else {
+    if(isWin) winGame();
+    else{
       showScreen('game-screen');
-      addEvent(`> ☠ Killed ${G.combat ? G.combat.def.name : 'zombie'}!`, 'ev-danger');
-      renderGame();
+      addLog(`> ☠ Giết ${ZDEFS[node.enemy||'walker'].name}!`,'ev-danger');
+      updateHUD();drawMap();
+      checkZoneUnlock();
     }
-  }, 1200);
+  },1200);
 }
 
-function endCombat(survived) {
-  clearTimeout(combatTimeout);
-  if (staminaRegenInterval) clearInterval(staminaRegenInterval);
-  G.combat = null;
-  document.getElementById('attack-zone').classList.remove('show');
-  document.getElementById('range-zone').classList.remove('show');
-  document.getElementById('tap-zone').style.display = '';
-  document.getElementById('tap-ring').className = 'tap-ring';
-  document.getElementById('react-text') && document.getElementById('react-text').classList.remove('show');
+function endCombat(ok){
+  clearCombatTimers();
+  G.combat=null;
+  document.getElementById('atk-zone').classList.remove('show');
+  document.getElementById('range-overlay').classList.remove('show');
+  document.getElementById('defend-zone').style.display='';
+  document.getElementById('tap-ring').className='tap-ring';
+  const rt=document.getElementById('react-txt');
+  if(rt) rt.classList.remove('on');
 }
 
-// Gun system
-function shootGun() {
-  if (!G.combat || G.combat.phase !== 'range') return;
-  if (!G.equippedGun || G.ammo <= 0) { skipRange(); return; }
-  const gun = G.equippedGun;
-  const dmg = Math.round(gun.dmg * (0.9 + Math.random() * .2) * (1 + G.combat.teamBonus));
-  G.ammo--;
-  G.combat.hp = Math.max(0, G.combat.hp - dmg);
-  addCombatLog(`${gun.icon} Shot for ${dmg}! Ammo: ${G.ammo}`, 'cl-hit');
-  showDmgNumber(dmg, '#3498db');
-  renderCombatHUD();
-  document.getElementById('ammo-label').textContent = `Ammo: ${G.ammo}`;
-
-  if (G.combat.hp <= 0) { zombieDies(); return; }
-  if (G.ammo <= 0) {
-    addCombatLog('Out of ammo — entering melee!', 'cl-miss');
-    setTimeout(skipRange, 600);
-  }
+function clearCombatTimers(){
+  clearTimeout(combatTimer);clearTimeout(reactTimer);clearTimeout(atkCdTimer);
+  if(staminaRegen)clearInterval(staminaRegen);
 }
 
-function skipRange() {
-  document.getElementById('range-zone').classList.remove('show');
-  if (!G.combat) return;
-  G.combat.phase = 'melee-idle';
-  addCombatLog('Entering melee range!', 'cl-hit');
-  scheduleZombieAttack();
+// Range
+function shootGun(){
+  if(!G.combat||G.combat.phase!=='range'||!G.equippedGun||G.ammo<=0){skipRange();return;}
+  const gun=G.equippedGun;
+  const dmg=Math.round(gun.dmg*(0.9+Math.random()*.2)*(1+G.combat.teamBonus));
+  G.ammo--;G.combat.hp=Math.max(0,G.combat.hp-dmg);
+  spawnDmg(dmg,'#56b4f5');
+  addClog(`🔫 Bắn ${dmg} sát thương! Đạn: ${G.ammo}`,'cl-h');
+  document.getElementById('ammo-lbl').textContent=`Đạn: ${G.ammo}`;
+  updateCombatHUD();
+  if(G.combat.hp<=0){zombieDies();return;}
+  if(G.ammo<=0){addClog('Hết đạn — cận chiến!','cl-m');setTimeout(enterMeleePhase,500);}
+}
+function skipRange(){document.getElementById('range-overlay').classList.remove('show');if(G.combat)enterMeleePhase();}
+
+// combat HUD
+function updateCombatHUD(){
+  if(!G.combat) return;
+  const c=G.combat;
+  document.getElementById('c-zname').textContent=c.def.name;
+  document.getElementById('z-hp-b').style.width=(c.hp/c.maxHp*100)+'%';
+  document.getElementById('c-zhp-v').textContent=Math.ceil(c.hp)+' HP';
+  document.getElementById('c-hp-v').textContent=Math.ceil(G.hp);
+  document.getElementById('c-hp-b').style.width=(G.hp/G.maxHp*100)+'%';
+  document.getElementById('c-stam-v').textContent=Math.ceil(G.stamina);
+  document.getElementById('c-stam-b').style.width=(G.stamina/G.maxStamina*100)+'%';
 }
 
-function showDmgNumber(dmg, color) {
-  const arena = document.querySelector('.combat-arena');
-  const el = document.createElement('div');
-  el.className = 'dmg-number';
-  el.style.cssText = `color:${color};top:40%;left:${40+Math.random()*20}%;`;
-  el.textContent = '-' + dmg;
+// Zombie SVG
+function buildZombieSVG(type){
+  const w=document.getElementById('zsvg-wrap');
+  const pal={
+    walker: {skin:'#4a6a3a',cloth:'#1e3a1e',eye:'#cc0000'},
+    crawler:{skin:'#5a5a7a',cloth:'#1a1a2a',eye:'#9900cc'},
+    runner: {skin:'#7a5a3a',cloth:'#2a1a0a',eye:'#ff8800'},
+    brute:  {skin:'#8a2a2a',cloth:'#3a0a0a',eye:'#ff0000'},
+    boss:   {skin:'#6a4a9a',cloth:'#2a0a4a',eye:'#ff00ff'},
+  }[type]||{skin:'#4a6a3a',cloth:'#1e3a1e',eye:'#cc0000'};
+  const scale={walker:1,crawler:.8,runner:1.1,brute:1.3,boss:1.5}[type]||1;
+  const W=Math.round(110*scale),H=Math.round(160*scale);
+  w.innerHTML=`
+  <svg id="zombie-svg" width="${W}" height="${H}" viewBox="0 0 110 160" class="z-idle">
+    <rect x="28" y="105" width="17" height="48" rx="3" fill="${pal.cloth}"/>
+    <rect x="55" y="108" width="17" height="46" rx="3" fill="${pal.cloth}" transform="rotate(4,64,131)"/>
+    <rect x="21" y="147" width="24" height="12" rx="3" fill="#050810"/>
+    <rect x="50" y="149" width="24" height="11" rx="3" fill="#050810"/>
+    <rect x="24" y="62" width="62" height="48" rx="5" fill="${pal.cloth}"/>
+    <rect x="24" y="62" width="62" height="30" rx="5" fill="${pal.cloth}" opacity=".8"/>
+    <rect x="4"  y="65" width="26" height="12" rx="6" fill="${pal.skin}"/>
+    <rect x="80" y="59" width="26" height="12" rx="6" fill="${pal.skin}" transform="rotate(-10,93,65)"/>
+    <ellipse cx="7"  cy="71" rx="8" ry="7" fill="${pal.skin}"/>
+    <ellipse cx="103" cy="62" rx="8" ry="7" fill="${pal.skin}"/>
+    <line x1="2" y1="67" x2="0" y2="61" stroke="#777" stroke-width="2" stroke-linecap="round"/>
+    <line x1="5" y1="65" x2="4" y2="59" stroke="#777" stroke-width="2" stroke-linecap="round"/>
+    <line x1="9" y1="65" x2="9" y2="59" stroke="#777" stroke-width="2" stroke-linecap="round"/>
+    <line x1="97" y1="57" x2="95" y2="51" stroke="#777" stroke-width="2" stroke-linecap="round"/>
+    <line x1="102" y1="56" x2="101" y2="50" stroke="#777" stroke-width="2" stroke-linecap="round"/>
+    <line x1="107" y1="58" x2="108" y2="52" stroke="#777" stroke-width="2" stroke-linecap="round"/>
+    <rect x="29" y="10" width="52" height="56" rx="7" fill="${pal.skin}"/>
+    <rect x="34" y="51" width="42" height="17" rx="4" fill="${pal.skin}"/>
+    <ellipse cx="46" cy="32" rx="7" ry="8" fill="#080a00"/>
+    <ellipse cx="64" cy="32" rx="7" ry="8" fill="#080a00"/>
+    <ellipse cx="46" cy="33" rx="4.5" ry="5.5" fill="${pal.eye}"/>
+    <ellipse cx="64" cy="33" rx="4.5" ry="5.5" fill="${pal.eye}"/>
+    <ellipse cx="47" cy="33" rx="2" ry="2.5" fill="#fff" opacity=".35"/>
+    <ellipse cx="65" cy="33" rx="2" ry="2.5" fill="#fff" opacity=".35"/>
+    <rect x="36" y="55" width="38" height="10" rx="3" fill="#1c0000"/>
+    <rect x="40" y="56" width="5" height="8" rx="1" fill="#c8c8c8"/>
+    <rect x="48" y="56" width="4" height="8" rx="1" fill="#c8c8c8"/>
+    <rect x="56" y="56" width="5" height="8" rx="1" fill="#c8c8c8"/>
+    <rect x="65" y="57" width="4" height="7" rx="1" fill="#b0b0b0"/>
+    <ellipse cx="38" cy="22" rx="4" ry="3" fill="#7a0000" opacity=".55"/>
+    <ellipse cx="68" cy="19" rx="3" ry="2" fill="#7a0000" opacity=".45"/>
+    <line x1="33" y1="40" x2="40" y2="50" stroke="#5a0000" stroke-width="1.5" opacity=".6"/>
+    <rect x="29" y="10" width="13" height="10" rx="3" fill="${pal.cloth}" opacity=".75"/>
+    <rect x="68" y="8"  width="13" height="12" rx="3" fill="${pal.cloth}" opacity=".75"/>
+    ${type==='boss'?`<polygon points="55,0 50,9 60,9" fill="#c084fc" opacity=".8"/>
+    <polygon points="36,6 32,14 40,14" fill="#9040d0" opacity=".7"/>
+    <polygon points="74,6 70,14 78,14" fill="#9040d0" opacity=".7"/>
+    <ellipse cx="46" cy="32" rx="2.5" ry="2.5" fill="#fff" opacity=".9"/>
+    <ellipse cx="64" cy="32" rx="2.5" ry="2.5" fill="#fff" opacity=".9"/>`:''}
+    ${type==='brute'?`<rect x="18" y="59" width="30" height="18" rx="7" fill="${pal.skin}"/>
+    <rect x="62" y="53" width="30" height="18" rx="7" fill="${pal.skin}"/>`:''}
+  </svg>`;
+}
+
+function setZAnim(cls){
+  const svg=document.getElementById('zombie-svg');
+  if(!svg) return;
+  svg.className='';
+  if(cls) svg.classList.add(cls);
+}
+
+function spawnDmg(n,color){
+  const arena=document.querySelector('.combat-scene');
+  const el=document.createElement('div');
+  el.className='dmg-float';
+  el.style.cssText=`color:${color};top:35%;left:${35+Math.random()*25}%;`;
+  el.textContent='-'+n;
   arena.appendChild(el);
-  setTimeout(() => el.remove(), 800);
+  setTimeout(()=>el.remove(),750);
 }
 
-function addBloodSplat() {
-  const bg = document.getElementById('combat-bg');
-  const s = document.createElement('div');
-  s.className = 'blood-splat';
-  s.style.cssText = `width:${60+Math.random()*80}px;height:${60+Math.random()*80}px;left:${Math.random()*80}%;top:${Math.random()*60}%;`;
+function addBloodSplat(){
+  const bg=document.getElementById('cb-bg');
+  const s=document.createElement('div');
+  s.className='splat';
+  s.style.cssText=`width:${50+Math.random()*80}px;height:${50+Math.random()*80}px;left:${Math.random()*80}%;top:${Math.random()*60}%;`;
   bg.appendChild(s);
-  if (bg.children.length > 8) bg.removeChild(bg.children[0]);
+  if(bg.children.length>10) bg.removeChild(bg.children[0]);
 }
 
-function clearCombatLog() {
-  const log = document.getElementById('combat-log');
-  log.innerHTML = '';
+function clearClog(){document.getElementById('clog').innerHTML='';}
+function addClog(txt,cls){
+  const log=document.getElementById('clog');
+  const d=document.createElement('div');
+  d.className='clog-line '+(cls||'');
+  d.textContent=txt;
+  log.appendChild(d);log.scrollTop=log.scrollHeight;
 }
 
-function addCombatLog(text, cls) {
-  const log = document.getElementById('combat-log');
-  const line = document.createElement('div');
-  line.className = 'clog-line ' + (cls || '');
-  line.textContent = text;
-  log.appendChild(line);
-  log.scrollTop = log.scrollHeight;
+// ═══════════════════════════════════════════════════════
+//  EVENT LOG (game screen — stored in memory, shown in panel)
+// ═══════════════════════════════════════════════════════
+let logLines=[];
+function addLog(txt,cls){
+  logLines.push({txt,cls});
+  if(logLines.length>40) logLines.shift();
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 //  DEATH / WIN
-// ═══════════════════════════════════════════════════════════════════════════
-function die(cause) {
-  if (decayInterval) clearInterval(decayInterval);
-  clearTimeout(combatTimeout);
-  G.deathCause = cause;
-  document.getElementById('end-icon').textContent = '💀';
-  document.getElementById('end-title').textContent = 'YOU DIED';
-  document.getElementById('end-title').className = 'end-title dead';
-  document.getElementById('end-cause').textContent = 'Cause: ' + cause;
-  fillEndStats();
-  showScreen('end-screen');
+// ═══════════════════════════════════════════════════════
+function die(cause){
+  if(decayLoop)clearInterval(decayLoop);
+  clearCombatTimers();
+  window.removeEventListener('devicemotion',onMotion);
+  document.getElementById('end-ico').textContent='💀';
+  document.getElementById('end-ttl').textContent='CHẾT RỒI';
+  document.getElementById('end-ttl').className='end-ttl dead';
+  document.getElementById('end-cause').textContent='Nguyên nhân: '+cause;
+  fillEnd();showScreen('end-screen');
 }
-
-function winGame() {
-  if (decayInterval) clearInterval(decayInterval);
-  clearTimeout(combatTimeout);
-  document.getElementById('end-icon').textContent = '🏆';
-  document.getElementById('end-title').textContent = 'SURVIVED';
-  document.getElementById('end-title').className = 'end-title win';
-  document.getElementById('end-cause').textContent = 'The Overlord is slain. You hold the city.';
-  fillEndStats();
-  showScreen('end-screen');
+function winGame(){
+  if(decayLoop)clearInterval(decayLoop);
+  clearCombatTimers();
+  window.removeEventListener('devicemotion',onMotion);
+  document.getElementById('end-ico').textContent='🏆';
+  document.getElementById('end-ttl').textContent='SỐNG SÓT';
+  document.getElementById('end-ttl').className='end-ttl win';
+  document.getElementById('end-cause').textContent='Overlord bị tiêu diệt. Thành phố thuộc về bạn.';
+  fillEnd();showScreen('end-screen');
 }
-
-function fillEndStats() {
-  document.getElementById('end-days').textContent = G.day;
-  document.getElementById('end-kills').textContent = G.zombiesKilled;
-  document.getElementById('end-steps').textContent = G.totalSteps;
-  document.getElementById('end-areas').textContent = G.areasExplored;
-  document.getElementById('end-team').textContent = G.team.length;
+function fillEnd(){
+  document.getElementById('e-days').textContent=G.day;
+  document.getElementById('e-kills').textContent=G.kills;
+  document.getElementById('e-steps').textContent=G.totalSteps;
+  document.getElementById('e-areas').textContent=G.areas;
+  document.getElementById('e-team').textContent=G.team.length;
 }
+function restartGame(){selChar=null;showCharSelect();}
 
-function checkDeath() {
-  if (G.hp <= 0) die('Wounds');
-  if (G.food <= 0) die('Starvation');
-  if (G.water <= 0) die('Dehydration');
-}
-
-function restartGame() {
-  selectedChar = null;
-  showCharSelect();
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 //  TOAST
-// ═══════════════════════════════════════════════════════════════════════════
-let toastTimer = null;
-function toast(msg, type) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = 'toast ' + (type || '') + ' show';
-  if (toastTimer) clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+// ═══════════════════════════════════════════════════════
+let toastT=null;
+function toast(msg,type){
+  const el=document.getElementById('toast');
+  el.textContent=msg;
+  el.className='toast '+(type||'')+' on';
+  if(toastT)clearTimeout(toastT);
+  toastT=setTimeout(()=>el.classList.remove('on'),2400);
 }
 </script>
 </body>
