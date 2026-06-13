@@ -2,1510 +2,1443 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-<title>OUTBREAK WALK</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>DEAD WALK — Zombie Survival</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;700&display=swap');
-:root{
-  --rust:#b3552c; --rust-dark:#7a3a1d; --bone:#e8e1d0;
-  --blood:#8c1f1f; --blood-bright:#e23b3b; --night:#060705;
-  --moss:#3f4d3a; --moss-bright:#7fae5e; --warn:#e0b34a;
-  --steel:#9aa3a8; --font-d:'Bebas Neue','Oswald',sans-serif; --font-b:'Courier New',monospace;
-}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;}
-html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#000;font-family:var(--font-b);color:var(--bone);}
-#app{position:fixed;inset:0;}
+  :root {
+    --bg: #0a0a0a;
+    --bg2: #111;
+    --bg3: #1a1a1a;
+    --panel: #141414;
+    --border: #222;
+    --red: #c0392b;
+    --red2: #e74c3c;
+    --green: #1a6b2a;
+    --green2: #27ae60;
+    --amber: #d4820a;
+    --amber2: #f39c12;
+    --blue: #1a4a7a;
+    --blue2: #2980b9;
+    --purple: #5b2d8a;
+    --purple2: #8e44ad;
+    --text: #ddd;
+    --muted: #666;
+    --danger: #ff3c3c;
+    --hp: #e74c3c;
+    --food: #f39c12;
+    --water: #3498db;
+    --stamina: #2ecc71;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
+  html, body { background: var(--bg); color: var(--text); font-family: 'Courier New', monospace; min-height: 100vh; overflow-x: hidden; }
 
-/* ============ SCREENS ============ */
-.screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  background:linear-gradient(180deg,#0e1109 0%,#060705 100%);text-align:center;padding:24px;z-index:50;overflow-y:auto;}
-.hidden{display:none!important;}
-.title-main{font-family:var(--font-d);letter-spacing:6px;font-size:clamp(38px,10vw,58px);color:var(--bone);
-  text-shadow:0 0 30px rgba(226,59,59,.5),0 0 60px rgba(140,31,31,.3);margin:0;}
-.title-sub{letter-spacing:4px;color:var(--rust);font-size:12px;margin-top:6px;text-transform:uppercase;}
-.lore{max-width:480px;font-size:13px;line-height:1.8;color:#b9b3a3;margin:18px 0;}
-.lore b{color:var(--warn);}
-.btn{font-family:var(--font-d);letter-spacing:3px;font-size:18px;padding:14px 36px;margin:8px;
-  background:linear-gradient(180deg,var(--rust),var(--rust-dark));border:2px solid rgba(232,225,208,.4);
-  color:var(--bone);cursor:pointer;clip-path:polygon(0 0,100% 0,100% 72%,93% 100%,0 100%);
-  box-shadow:0 6px 20px rgba(179,85,44,.35),0 2px 0 #000;transition:transform .08s,box-shadow .08s;}
-.btn:active{transform:translateY(2px);box-shadow:0 2px 8px rgba(179,85,44,.2);}
-.btn.secondary{background:rgba(30,35,25,.9);border-color:rgba(127,174,94,.4);color:var(--moss-bright);}
-.btn.big{font-size:22px;padding:17px 50px;}
-.btn:disabled{opacity:.35;filter:grayscale(1);}
+  /* ── Screens ── */
+  .screen { display: none; min-height: 100vh; flex-direction: column; }
+  .screen.active { display: flex; }
 
-/* title scanlines */
-.title-scene{position:relative;width:100%;max-width:500px;margin-bottom:10px;}
-.title-scene::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(180deg,transparent 0,transparent 3px,rgba(0,0,0,.12) 3px,rgba(0,0,0,.12) 4px);pointer-events:none;}
-.title-art{width:100%;height:160px;position:relative;overflow:hidden;margin-bottom:-2px;}
+  /* ── TITLE ── */
+  #title-screen { align-items: center; justify-content: center; background: var(--bg); }
+  .title-art { text-align: center; margin-bottom: 2rem; }
+  .title-big { font-size: 3rem; font-weight: 900; color: var(--red2); letter-spacing: .15em; text-shadow: 0 0 30px #c0392b66; line-height: 1; }
+  .title-sub { color: var(--muted); font-size: .75rem; letter-spacing: .3em; margin-top: .4rem; }
+  .title-btn { background: var(--red); color: #fff; border: none; padding: 1rem 2.5rem; font-family: inherit; font-size: 1rem; letter-spacing: .2em; cursor: pointer; margin: .5rem; text-transform: uppercase; border-radius: 2px; transition: background .15s; }
+  .title-btn:hover, .title-btn:active { background: var(--red2); }
+  .title-btn.sec { background: var(--bg3); color: var(--muted); border: 1px solid var(--border); }
+  .title-btn.sec:active { background: #222; }
 
-/* class grid */
-#class-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:520px;width:100%;margin:14px 0;}
-@media(max-width:480px){#class-grid{grid-template-columns:1fr;}}
-.class-card{position:relative;background:linear-gradient(160deg,#181c12,#0e100a);border:2px solid var(--rust-dark);
-  padding:14px 12px 12px;text-align:left;cursor:pointer;clip-path:polygon(0 0,100% 0,100% 90%,94% 100%,0 100%);
-  transition:border-color .15s,transform .1s;}
-.class-card:active{transform:scale(.98);}
-.class-card.selected{border-color:var(--warn);box-shadow:0 0 0 1px var(--warn),inset 0 0 30px rgba(224,179,74,.08);}
-.class-icon{width:44px;height:44px;margin-bottom:6px;}
-.class-icon svg{width:100%;height:100%;}
-.class-name{font-family:var(--font-d);font-size:20px;letter-spacing:2px;color:var(--bone);}
-.class-tag{font-size:10px;color:var(--warn);letter-spacing:1px;margin-bottom:6px;}
-.class-desc{font-size:11px;line-height:1.5;color:#a8a294;margin-bottom:8px;min-height:48px;}
-.class-stats{display:flex;flex-direction:column;gap:3px;}
-.cstat{display:flex;align-items:center;gap:6px;font-size:9px;letter-spacing:1px;color:#7a7468;}
-.cstat .cbar{flex:1;height:4px;background:#000;border:1px solid #2a2a1e;}
-.cstat .cfill{height:100%;background:var(--moss-bright);}
-.cstat .cfill.neg{background:var(--blood);}
-.cstat .cn{width:52px;}
-.ci{position:absolute;top:10px;right:12px;font-size:8px;letter-spacing:2px;color:var(--rust);}
+  /* ── CHARACTER SELECT ── */
+  #char-screen { background: var(--bg); padding: 1rem; }
+  .screen-title { font-size: 1rem; letter-spacing: .3em; color: var(--red2); text-align: center; padding: .75rem 0; border-bottom: 1px solid var(--border); margin-bottom: 1rem; text-transform: uppercase; }
+  .char-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-bottom: 1rem; }
+  .char-card { background: var(--bg3); border: 2px solid var(--border); border-radius: 4px; padding: .75rem; cursor: pointer; transition: border-color .15s; position: relative; }
+  .char-card.selected { border-color: var(--red2); }
+  .char-card.selected::after { content: '✓'; position: absolute; top: .4rem; right: .5rem; color: var(--red2); font-size: .9rem; }
+  .char-icon { font-size: 2.2rem; text-align: center; margin-bottom: .4rem; }
+  .char-name { font-size: .85rem; font-weight: 700; color: #fff; text-align: center; margin-bottom: .4rem; letter-spacing: .1em; }
+  .char-desc { font-size: .65rem; color: var(--muted); text-align: center; margin-bottom: .5rem; line-height: 1.4; }
+  .stat-row { display: flex; justify-content: space-between; align-items: center; margin: 2px 0; }
+  .stat-label { font-size: .6rem; color: var(--muted); }
+  .stat-bar { width: 60%; height: 4px; background: var(--bg); border-radius: 2px; overflow: hidden; }
+  .stat-fill { height: 100%; border-radius: 2px; }
+  .s-hp { background: var(--hp); }
+  .s-str { background: var(--red2); }
+  .s-spd { background: var(--stamina); }
+  .s-stam { background: var(--blue2); }
+  .confirm-btn { width: 100%; padding: 1rem; background: var(--red); color: #fff; border: none; font-family: inherit; font-size: .9rem; letter-spacing: .2em; cursor: pointer; border-radius: 2px; text-transform: uppercase; }
+  .confirm-btn:disabled { background: #333; color: var(--muted); cursor: default; }
 
-/* ============ GAME WORLD ============ */
-#game{position:absolute;inset:0;display:none;}
-#game.active{display:block;}
+  /* ── MAIN GAME ── */
+  #game-screen { background: var(--bg); flex-direction: column; }
 
-/* == PHOTOREALISTIC RUNNER CORRIDOR == */
-#world{position:absolute;inset:0;overflow:hidden;background:#000;}
+  /* Top HUD */
+  .hud { background: var(--panel); border-bottom: 1px solid var(--border); padding: .5rem .75rem; display: flex; flex-direction: column; gap: .3rem; }
+  .hud-row { display: flex; align-items: center; gap: .5rem; }
+  .hud-name { font-size: .7rem; letter-spacing: .1em; color: var(--red2); font-weight: 700; }
+  .bar-wrap { flex: 1; height: 6px; background: #222; border-radius: 3px; overflow: hidden; }
+  .bar-inner { height: 100%; border-radius: 3px; transition: width .3s; }
+  .bar-label { font-size: .6rem; color: var(--muted); min-width: 24px; text-align: right; }
 
-/* Sky gradient - procedural day/night */
-#sky-layer{position:absolute;top:0;left:0;width:100%;height:52%;transition:background 4s linear;}
+  /* Step counter */
+  .step-panel { background: var(--bg3); border-bottom: 1px solid var(--border); padding: .4rem .75rem; display: flex; align-items: center; justify-content: space-between; }
+  .step-info { font-size: .7rem; color: var(--muted); }
+  .step-val { color: var(--amber2); font-weight: 700; }
+  .step-btn { background: var(--amber); color: #fff; border: none; font-family: inherit; font-size: .65rem; padding: .3rem .7rem; border-radius: 2px; cursor: pointer; letter-spacing: .1em; text-transform: uppercase; }
+  .step-btn:active { background: var(--amber2); transform: scale(.97); }
 
-/* Sun/moon orbs */
-#sun-orb{position:absolute;width:80px;height:80px;border-radius:50%;
-  background:radial-gradient(circle,#fff8e0 0%,#ffe580 30%,rgba(255,200,80,.2) 70%,transparent 100%);
-  filter:blur(1px);pointer-events:none;transition:all 4s linear;}
-#moon-orb{position:absolute;width:48px;height:48px;border-radius:50%;
-  background:radial-gradient(circle,#dde8f0 0%,rgba(180,200,220,.3) 70%,transparent 100%);
-  pointer-events:none;opacity:0;transition:all 4s linear;}
-.star{position:absolute;border-radius:50%;background:#fff;animation:twinkle 3s ease-in-out infinite;}
-@keyframes twinkle{0%,100%{opacity:.8}50%{opacity:.2}}
+  /* Zone tabs */
+  .zone-tabs { display: flex; border-bottom: 1px solid var(--border); overflow-x: auto; background: var(--panel); }
+  .zone-tab { flex: 0 0 auto; padding: .5rem .9rem; font-size: .65rem; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; letter-spacing: .1em; text-transform: uppercase; transition: color .15s; }
+  .zone-tab.active { color: var(--red2); border-bottom-color: var(--red2); }
+  .zone-tab.locked { opacity: .4; cursor: not-allowed; }
+  .zone-tab.danger-zone { color: #ff6b35; }
+  .zone-tab.danger-zone.active { color: #ff6b35; border-bottom-color: #ff6b35; }
 
-/* Ground — perspective road corridor like ITD2 */
-#ground-layer{position:absolute;bottom:0;left:0;width:100%;height:52%;}
-#road-svg{position:absolute;inset:0;width:100%;height:100%;}
+  /* Map area */
+  .map-area { flex: 1; overflow-y: auto; padding: .75rem; }
+  .zone-header { margin-bottom: .75rem; }
+  .zone-name { font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: .2rem; }
+  .zone-danger-tag { display: inline-block; font-size: .6rem; padding: .2rem .5rem; border-radius: 2px; margin-left: .5rem; letter-spacing: .1em; text-transform: uppercase; vertical-align: middle; }
+  .tag-safe { background: #1a3a1a; color: var(--green2); }
+  .tag-medium { background: #3a2a1a; color: var(--amber2); }
+  .tag-high { background: #3a1a1a; color: var(--red2); }
+  .tag-extreme { background: #2a001a; color: #ff6bff; }
+  .zone-desc { font-size: .72rem; color: var(--muted); line-height: 1.5; margin-bottom: .75rem; }
 
-/* Parallax decoration layers — positioned near horizon, scale outward toward viewer */
-#layer-bg{position:absolute;bottom:48%;left:-20%;width:140%;height:280px;z-index:4;will-change:transform;}
-#layer-mid{position:absolute;bottom:46%;left:-25%;width:150%;height:300px;z-index:6;will-change:transform;}
-#layer-near{position:absolute;bottom:44%;left:-30%;width:160%;height:220px;z-index:8;will-change:transform;}
-#layer-ground-dec{position:absolute;bottom:0;left:-10%;width:120%;height:50%;z-index:9;will-change:transform;}
+  /* Map cells */
+  .map-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .35rem; margin-bottom: .75rem; }
+  .map-cell { background: var(--bg3); border: 1px solid var(--border); border-radius: 3px; padding: .4rem; cursor: pointer; transition: border-color .15s, background .15s; position: relative; min-height: 70px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  .map-cell:active { background: #1e1e1e; }
+  .map-cell.current { border-color: var(--green2); background: #0d1f0d; }
+  .map-cell.explored { border-color: #2a2a2a; opacity: .7; }
+  .map-cell.locked { opacity: .3; cursor: not-allowed; }
+  .map-cell.danger { border-color: #3a1a00; }
+  .map-cell.danger.current { border-color: var(--red2); background: #1f0d0d; }
+  .cell-icon { font-size: 1.4rem; margin-bottom: .2rem; }
+  .cell-name { font-size: .55rem; color: var(--muted); letter-spacing: .05em; }
+  .cell-badge { position: absolute; top: 3px; right: 3px; font-size: .5rem; padding: 1px 4px; border-radius: 2px; }
+  .badge-loot { background: #1a3a1a; color: var(--green2); }
+  .badge-zombie { background: #3a0a0a; color: var(--red2); }
+  .badge-boss { background: #3a0025; color: #ff6bff; }
+  .badge-ally { background: #1a2a3a; color: var(--blue2); }
+  .badge-current { position: absolute; bottom: 3px; left: 3px; width: 6px; height: 6px; background: var(--green2); border-radius: 50%; }
 
-/* Atmospheric fog — the KEY ITD2 signature */
-#fog-layer{position:absolute;inset:0;pointer-events:none;z-index:20;}
+  /* Loot log / event feed */
+  .event-feed { background: var(--panel); border: 1px solid var(--border); border-radius: 3px; padding: .6rem; margin-bottom: .75rem; max-height: 120px; overflow-y: auto; }
+  .event-line { font-size: .68rem; line-height: 1.6; }
+  .ev-info { color: var(--muted); }
+  .ev-loot { color: var(--green2); }
+  .ev-danger { color: var(--red2); }
+  .ev-team { color: var(--blue2); }
+  .ev-warn { color: var(--amber2); }
+  .ev-boss { color: #ff6bff; }
 
-/* Vignette */
-.vignette{position:absolute;inset:0;box-shadow:inset 0 0 200px 80px rgba(0,0,0,.8);pointer-events:none;z-index:22;}
+  /* Team panel */
+  .team-panel { display: flex; gap: .5rem; margin-bottom: .75rem; overflow-x: auto; padding-bottom: .25rem; }
+  .team-card { flex: 0 0 auto; background: var(--bg3); border: 1px solid var(--border); border-radius: 3px; padding: .5rem; min-width: 90px; text-align: center; }
+  .team-card.dead { opacity: .4; filter: grayscale(1); }
+  .team-icon { font-size: 1.4rem; }
+  .team-name { font-size: .6rem; color: var(--muted); margin-top: .2rem; }
+  .team-hp-bar { height: 3px; background: #222; border-radius: 2px; margin-top: .3rem; overflow: hidden; }
+  .team-hp-fill { height: 100%; background: var(--hp); border-radius: 2px; }
 
-/* blood overlay */
-#bloodvignette{position:absolute;inset:0;box-shadow:inset 0 0 120px 40px rgba(120,0,0,0);pointer-events:none;z-index:21;transition:box-shadow .5s;}
-#bloodvignette.danger{box-shadow:inset 0 0 120px 40px rgba(160,0,0,.4);}
+  /* Inventory */
+  .inventory { background: var(--panel); border: 1px solid var(--border); border-radius: 3px; padding: .6rem; margin-bottom: .75rem; }
+  .inv-title { font-size: .65rem; letter-spacing: .2em; color: var(--muted); text-transform: uppercase; margin-bottom: .5rem; }
+  .inv-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .35rem; }
+  .inv-slot { background: var(--bg); border: 1px solid var(--border); border-radius: 2px; padding: .35rem; text-align: center; min-height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; }
+  .inv-slot:active { background: #1e1e1e; }
+  .inv-slot.equipped { border-color: var(--amber2); }
+  .inv-icon { font-size: 1.1rem; }
+  .inv-name { font-size: .5rem; color: var(--muted); margin-top: .15rem; }
+  .inv-count { font-size: .55rem; color: var(--amber2); }
 
-/* rain */
-#rain-layer{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 1.5s;z-index:19;}
-#rain-layer.on{opacity:.65;}
-.raindrop{position:absolute;width:1px;background:linear-gradient(180deg,transparent,rgba(160,185,210,.6));animation:raindrop linear infinite;}
-@keyframes raindrop{0%{transform:translateY(-10vh) rotate(10deg)}100%{transform:translateY(110vh) rotate(10deg)}}
+  /* ── COMBAT ── */
+  #combat-screen { background: #050505; flex-direction: column; overflow: hidden; position: relative; }
+  .combat-bg { position: absolute; inset: 0; overflow: hidden; }
+  .blood-splat { position: absolute; border-radius: 50%; background: radial-gradient(circle, #8b000066, transparent 70%); }
 
-/* screen shake */
-@keyframes shk{0%,100%{transform:translate(0,0)}15%{transform:translate(-5px,4px) rotate(-.3deg)}35%{transform:translate(4px,-5px) rotate(.3deg)}55%{transform:translate(-3px,2px)}75%{transform:translate(3px,-2px)}}
-.shake{animation:shk .28s ease-out;}
+  .combat-hud { padding: .6rem .75rem; background: rgba(0,0,0,.7); border-bottom: 1px solid #300; position: relative; z-index: 10; }
+  .combat-title { font-size: .65rem; letter-spacing: .3em; color: var(--red2); text-transform: uppercase; margin-bottom: .4rem; }
+  .combat-bars { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
 
-/* == ZOMBIE SPRITES == */
-.zombie-sprite{position:absolute;bottom:48%;transform-origin:bottom center;pointer-events:none;z-index:15;}
-.zombie-sprite svg{display:block;width:100%;height:100%;}
-.zombie-sprite.dead{opacity:0;transform:rotate(15deg) scale(.8) !important;transition:opacity .4s,transform .4s;}
-.zombie-sprite.hit-flash svg{filter:brightness(3) saturate(0);}
-.z-hp-bar{position:absolute;top:-10px;left:5%;width:90%;height:4px;background:rgba(0,0,0,.6);border:1px solid rgba(0,0,0,.8);}
-.z-hp-fill{height:100%;background:linear-gradient(90deg,#8c1f1f,#e04a4a);transition:width .12s;}
-.z-type-tag{position:absolute;bottom:calc(100% + 2px);left:50%;transform:translateX(-50%);font-family:var(--font-d);font-size:8px;letter-spacing:1px;padding:1px 5px;white-space:nowrap;background:rgba(6,7,5,.75);}
-.z-type-tag.shambler{color:var(--steel);border:1px solid rgba(154,163,168,.4);}
-.z-type-tag.runner{color:var(--blood-bright);border:1px solid rgba(226,59,59,.5);}
-.z-type-tag.brute{color:var(--warn);border:1px solid rgba(224,179,74,.5);}
-.telegraph-ring{position:absolute;inset:-12px;border:2.5px solid var(--warn);border-radius:50%;opacity:0;animation:telegRing .5s ease-out;}
-@keyframes telegRing{0%{opacity:0;transform:scale(.6)}40%{opacity:.9}100%{opacity:0;transform:scale(1.3)}}
+  /* Combat arena */
+  .combat-arena { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+  .zombie-container { position: relative; display: flex; align-items: center; justify-content: center; }
 
-/* loot sprite */
-.loot-sprite{width:40px;height:40px;position:absolute;bottom:48%;z-index:16;pointer-events:none;animation:lootBob 1.8s ease-in-out infinite;filter:drop-shadow(0 0 10px rgba(224,179,74,.7));}
-@keyframes lootBob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-10px) rotate(3deg)}}
+  /* 2D Zombie SVG */
+  .zombie-svg-wrap { position: relative; }
+  .zombie-svg-wrap svg { display: block; }
 
-/* ============ HANDS (first-person arms) ============ */
-#hands{position:absolute;inset:0;pointer-events:none;z-index:24;}
-.hand{position:absolute;bottom:-20px;width:200px;height:300px;filter:drop-shadow(0 4px 20px rgba(0,0,0,.8));transition:transform .1s ease-out,filter .2s,opacity .2s;}
-.hand.left{left:-25px;transform:rotate(-5deg) translateY(10px);}
-.hand.right{right:-25px;transform:rotate(5deg) scaleX(-1) translateY(10px);}
-.hand svg{width:100%;height:100%;display:block;}
-.hand.swing-l{animation:swL .28s ease-out;}
-.hand.swing-r{animation:swR .28s ease-out;}
-.hand.swing-l.heavy{animation:swLH .5s ease-out;}
-.hand.swing-r.heavy{animation:swRH .5s ease-out;}
-@keyframes swL{0%{transform:rotate(-5deg) translateY(10px)}40%{transform:rotate(-80deg) translate(50px,-70px)}100%{transform:rotate(-5deg) translateY(10px)}}
-@keyframes swR{0%{transform:rotate(5deg) scaleX(-1) translateY(10px)}40%{transform:rotate(80deg) scaleX(-1) translate(50px,-70px)}100%{transform:rotate(5deg) scaleX(-1) translateY(10px)}}
-@keyframes swLH{0%{transform:rotate(-5deg) translateY(10px)}18%{transform:rotate(22deg) translate(-12px,14px)}55%{transform:rotate(-105deg) translate(65px,-95px)}100%{transform:rotate(-5deg) translateY(10px)}}
-@keyframes swRH{0%{transform:rotate(5deg) scaleX(-1) translateY(10px)}18%{transform:rotate(-22deg) scaleX(-1) translate(-12px,14px)}55%{transform:rotate(105deg) scaleX(-1) translate(65px,-95px)}100%{transform:rotate(5deg) scaleX(-1) translateY(10px)}}
-.hand.block-l{transform:rotate(-5deg) translateY(-55px) !important;}
-.hand.block-r{transform:rotate(5deg) scaleX(-1) translateY(-55px) !important;}
-.hand.dim{opacity:.35;filter:grayscale(.8) brightness(.5);}
+  /* Reaction flash */
+  .react-flash { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+  .react-text { font-size: 2rem; font-weight: 900; color: var(--red2); opacity: 0; text-shadow: 0 0 20px var(--red); letter-spacing: .1em; transform: scale(.5); transition: opacity .1s, transform .1s; }
+  .react-text.show { opacity: 1; transform: scale(1.1); }
 
-/* combo */
-#combo{position:absolute;top:44%;left:50%;transform:translate(-50%,-50%) scale(.5);
-  font-family:var(--font-d);font-size:52px;letter-spacing:4px;color:var(--warn);
-  text-shadow:0 0 20px rgba(224,179,74,.8),0 2px 0 #000;opacity:0;z-index:36;pointer-events:none;transition:opacity .12s,transform .12s;}
-#combo.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
-#combo span{font-size:13px;display:block;letter-spacing:8px;color:var(--bone);}
+  /* Reaction window (tap zone) */
+  .tap-zone { width: 100%; min-height: 100px; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; z-index: 20; }
+  .tap-ring { width: 80px; height: 80px; border-radius: 50%; border: 2px solid #333; display: flex; align-items: center; justify-content: center; transition: border-color .1s; }
+  .tap-ring.danger-ring { border-color: var(--red2); animation: pulse-ring 0.5s ease-in-out infinite; }
+  .tap-ring.success-ring { border-color: var(--green2); }
+  @keyframes pulse-ring { 0%,100%{transform:scale(1);box-shadow:0 0 0 0 #c0392b44;} 50%{transform:scale(1.06);box-shadow:0 0 0 12px #c0392b00;} }
+  .tap-icon { font-size: 2rem; }
 
-/* hit / dodge flashes */
-#hitflash{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 60%,rgba(160,20,20,.7),transparent 65%);opacity:0;pointer-events:none;z-index:60;transition:opacity .1s;}
-#hitflash.show{opacity:1;}
-#hitflash.crit{background:radial-gradient(ellipse at 50% 60%,rgba(230,30,30,.9),transparent 55%);}
-#dodgeflash{position:absolute;inset:0;background:rgba(140,180,255,.14);opacity:0;pointer-events:none;z-index:59;transition:opacity .1s;}
-#dodgeflash.show{opacity:1;}
+  /* Attack zone (appears after stun) */
+  .attack-zone { display: none; flex-direction: column; align-items: center; gap: .5rem; padding: .75rem; }
+  .attack-zone.show { display: flex; }
+  .atk-btn { background: var(--red); color: #fff; border: none; font-family: inherit; font-size: .8rem; padding: .7rem 1.5rem; border-radius: 2px; cursor: pointer; letter-spacing: .15em; text-transform: uppercase; position: relative; overflow: hidden; }
+  .atk-btn:disabled { background: #333; color: #555; cursor: not-allowed; }
+  .atk-btn .cooldown-fill { position: absolute; left: 0; top: 0; height: 100%; background: rgba(0,0,0,.4); transition: width linear; }
+  .gun-btn { background: var(--blue); color: #fff; border: none; font-family: inherit; font-size: .8rem; padding: .7rem 1.5rem; border-radius: 2px; cursor: pointer; letter-spacing: .15em; text-transform: uppercase; }
+  .gun-btn:disabled { background: #1a1a2a; color: #444; cursor: not-allowed; }
 
-/* damage numbers */
-.dmgnum{position:absolute;font-family:var(--font-d);font-size:24px;color:var(--bone);
-  text-shadow:2px 2px 0 rgba(0,0,0,.9),0 0 10px rgba(0,0,0,.8);pointer-events:none;z-index:40;animation:dmgfloat .75s ease-out forwards;}
-.dmgnum.crit{color:var(--warn);font-size:34px;text-shadow:0 0 15px rgba(224,179,74,.8),2px 2px 0 #000;}
-.dmgnum.player{color:#ff6060;font-size:28px;}
-@keyframes dmgfloat{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-70px) scale(1.2)}}
+  .combat-log { background: rgba(0,0,0,.7); border-top: 1px solid #300; padding: .5rem .75rem; max-height: 80px; overflow-y: auto; }
+  .clog-line { font-size: .65rem; line-height: 1.6; }
+  .cl-hit { color: var(--red2); }
+  .cl-block { color: var(--green2); }
+  .cl-stun { color: var(--amber2); }
+  .cl-kill { color: #ff6bff; }
+  .cl-miss { color: var(--muted); }
 
-/* ============ SWING ZONES (invisible) ============ */
-#swing-l,#swing-r{position:absolute;bottom:0;width:40%;height:62%;z-index:26;}
-#swing-l{left:0;}
-#swing-r{right:0;}
-#dodge-zone{position:absolute;bottom:0;left:40%;width:20%;height:28%;z-index:26;}
+  /* Zombie health */
+  .zombie-hp-wrap { width: 200px; margin-bottom: .5rem; }
+  .zombie-hp-bar { height: 8px; background: #222; border-radius: 4px; overflow: hidden; }
+  .zombie-hp-fill { height: 100%; background: var(--red2); border-radius: 4px; transition: width .2s; }
+  .zombie-label { font-size: .65rem; color: var(--muted); text-align: center; margin-bottom: .3rem; letter-spacing: .1em; }
 
-/* ============ TOP HUD ============ */
-#hud-top{position:absolute;top:0;left:0;right:0;padding:env(safe-area-inset-top,8px) 12px 0;padding-top:max(env(safe-area-inset-top),10px);z-index:30;
-  display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none;}
-.stat-block{background:linear-gradient(135deg,rgba(6,7,5,.85),rgba(15,18,10,.8));
-  border:1px solid rgba(90,55,30,.6);padding:8px 10px;border-radius:4px;min-width:130px;backdrop-filter:blur(6px);}
-.stat-row{display:flex;align-items:center;gap:6px;margin:2.5px 0;}
-.bar{flex:1;height:7px;background:rgba(0,0,0,.7);border:1px solid rgba(0,0,0,.5);border-radius:2px;overflow:hidden;position:relative;}
-.bar-fill{height:100%;border-radius:1px;transition:width .25s;}
-.bar-fill.hp{background:linear-gradient(90deg,#6a1515,#c83030,#e04a4a);}
-.bar-fill.stam{background:linear-gradient(90deg,#2a3822,#5a9840);}
-.bar-fill.stam.low{background:linear-gradient(90deg,#6a4a10,#c89020);}
-.bar-fill.hunger{background:linear-gradient(90deg,#6a5010,#c89820);}
-.label{width:36px;font-size:9px;letter-spacing:1px;color:#9a9488;}
-.classname-tag{font-family:var(--font-d);font-size:10px;letter-spacing:2px;color:var(--warn);margin-bottom:4px;}
-#limb-status{display:flex;gap:3px;margin-top:5px;flex-wrap:wrap;}
-.limb{font-size:8px;padding:2px 5px;border:1px solid rgba(63,77,58,.6);color:rgba(127,174,94,.7);border-radius:2px;}
-.limb.injured{border-color:rgba(140,31,31,.8);color:var(--blood-bright);background:rgba(140,31,31,.15);}
+  /* Range attack zone */
+  .range-zone { display: none; flex-direction: column; align-items: center; gap: .5rem; }
+  .range-zone.show { display: flex; }
+  .aim-ring { width: 100px; height: 100px; border-radius: 50%; border: 1px dashed var(--blue2); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: border-color .1s, transform .1s; }
+  .aim-ring:active { transform: scale(.95); border-color: var(--blue2); }
+  .aim-center { width: 16px; height: 16px; border-radius: 50%; background: var(--blue2); opacity: .7; }
 
-#distance-panel{background:linear-gradient(135deg,rgba(6,7,5,.85),rgba(15,18,10,.8));
-  border:1px solid rgba(90,55,30,.6);padding:8px 14px;border-radius:4px;text-align:right;backdrop-filter:blur(6px);}
-#dist-val{font-family:var(--font-d);font-size:26px;color:var(--warn);line-height:1;text-shadow:0 0 12px rgba(224,179,74,.4);}
-#dist-label{font-size:8px;letter-spacing:2px;color:#7a7468;}
-#speed-val{font-size:11px;color:var(--moss-bright);margin-top:2px;}
-#time-val{font-size:10px;color:#6a6458;}
+  /* ── GAME OVER / WIN ── */
+  #end-screen { background: var(--bg); align-items: center; justify-content: center; }
+  .end-icon { font-size: 4rem; margin-bottom: 1rem; }
+  .end-title { font-size: 1.8rem; font-weight: 900; letter-spacing: .2em; margin-bottom: .5rem; }
+  .end-title.dead { color: var(--red2); }
+  .end-title.win { color: var(--green2); }
+  .end-cause { font-size: .8rem; color: var(--muted); margin-bottom: 2rem; letter-spacing: .1em; }
+  .end-stats { background: var(--bg3); border: 1px solid var(--border); padding: 1rem 1.5rem; border-radius: 3px; margin-bottom: 2rem; width: 100%; max-width: 300px; }
+  .end-stat-row { display: flex; justify-content: space-between; font-size: .75rem; padding: .3rem 0; border-bottom: 1px solid var(--border); }
+  .end-stat-row:last-child { border-bottom: none; }
 
-/* ============ COMPASS ============ */
-#compass{position:absolute;top:80px;left:50%;transform:translateX(-50%);z-index:30;
-  background:linear-gradient(135deg,rgba(6,7,5,.85),rgba(15,18,10,.8));border:1px solid rgba(90,55,30,.5);border-radius:3px;
-  padding:5px 16px;font-size:11px;letter-spacing:2px;color:var(--warn);pointer-events:none;text-align:center;backdrop-filter:blur(6px);}
-#compass.alert{border-color:rgba(226,59,59,.7);color:var(--blood-bright);animation:alertPulse 1.1s infinite;}
-@keyframes alertPulse{0%,100%{box-shadow:0 0 0 rgba(140,0,0,0)}50%{box-shadow:0 0 20px rgba(200,30,30,.5)}}
-#compass small{display:block;color:#7a7468;font-size:9px;letter-spacing:1px;margin-top:2px;}
+  /* Notification toast */
+  .toast { position: fixed; top: 1rem; left: 50%; transform: translateX(-50%) translateY(-100px); background: #111; border: 1px solid var(--border); border-radius: 3px; padding: .5rem 1rem; font-size: .75rem; z-index: 999; transition: transform .3s; white-space: nowrap; max-width: 90vw; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.warn { border-color: var(--red2); color: var(--red2); }
+  .toast.good { border-color: var(--green2); color: var(--green2); }
+  .toast.info { border-color: var(--blue2); color: var(--blue2); }
 
-/* ============ TOASTS ============ */
-#toasts{position:absolute;top:130px;left:50%;transform:translateX(-50%);z-index:40;
-  display:flex;flex-direction:column;gap:5px;align-items:center;pointer-events:none;width:90%;}
-.toast{background:rgba(6,7,5,.9);border-left:3px solid var(--warn);padding:8px 14px;
-  font-size:11px;letter-spacing:1px;animation:toastIn .25s,toastOut .35s 2.65s forwards;max-width:340px;text-align:center;backdrop-filter:blur(4px);border-radius:0 3px 3px 0;}
-.toast.danger{border-left-color:var(--blood-bright);color:#ff8a8a;}
-.toast.good{border-left-color:var(--moss-bright);color:#aef0a0;}
-.toast.warnt{border-left-color:var(--warn);color:#ffe2a0;}
-@keyframes toastIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
-@keyframes toastOut{to{opacity:0;}}
+  /* Zombie animations */
+  @keyframes zombie-idle { 0%,100%{transform:translateY(0) rotate(-1deg);} 50%{transform:translateY(-4px) rotate(1deg);} }
+  @keyframes zombie-attack { 0%{transform:translateX(0);} 25%{transform:translateX(30px) scale(1.1);} 50%{transform:translateX(-5px);} 100%{transform:translateX(0);} }
+  @keyframes zombie-stun { 0%{transform:translateX(0) rotate(0);} 25%{transform:translateX(-10px) rotate(-8deg);} 50%{transform:translateX(8px) rotate(6deg);} 75%{transform:translateX(-4px) rotate(-3deg);} 100%{transform:translateX(0) rotate(0);} }
+  @keyframes zombie-hit { 0%,100%{opacity:1;filter:brightness(1);} 50%{opacity:.5;filter:brightness(3) saturate(0);} }
+  @keyframes zombie-death { 0%{transform:translateY(0) rotate(0) scaleY(1);opacity:1;} 100%{transform:translateY(60px) rotate(90deg) scaleY(.2);opacity:0;} }
+  @keyframes dmg-float { 0%{opacity:1;transform:translateY(0);} 100%{opacity:0;transform:translateY(-40px);} }
 
-/* ============ BOTTOM HUD ============ */
-#hud-bottom{position:absolute;bottom:0;left:0;right:0;z-index:30;
-  padding:0 12px max(env(safe-area-inset-bottom),12px);display:flex;justify-content:space-between;align-items:flex-end;}
-#weapon-info{background:linear-gradient(135deg,rgba(6,7,5,.85),rgba(15,18,10,.8));border:1px solid rgba(90,55,30,.6);padding:8px 12px;border-radius:4px;pointer-events:auto;backdrop-filter:blur(6px);}
-#weapon-name{font-family:var(--font-d);font-size:15px;color:var(--bone);letter-spacing:1px;}
-#weapon-dur{font-size:10px;color:var(--moss-bright);}
-#weapon-dur.low{color:var(--blood-bright);animation:durPulse 1s infinite;}
-@keyframes durPulse{50%{opacity:.4}}
-#weapon-mode{font-size:8px;color:#5a5448;letter-spacing:1px;margin-top:2px;}
-#action-zone{display:flex;flex-direction:column;align-items:flex-end;gap:6px;pointer-events:auto;}
-.action-row{display:flex;gap:6px;}
-.action-btn{font-family:var(--font-d);font-size:13px;letter-spacing:1px;padding:12px 16px;
-  background:linear-gradient(160deg,rgba(55,35,25,.85),rgba(30,20,14,.9));border:1px solid rgba(179,85,44,.5);color:var(--bone);
-  clip-path:polygon(8% 0,100% 0,100% 100%,0 100%,0 28%);backdrop-filter:blur(4px);transition:transform .08s,background .1s;}
-.action-btn:active{background:rgba(179,85,44,.6);transform:scale(.95);}
-.action-btn.danger{border-color:rgba(226,59,59,.6);color:#ff8a8a;}
-.action-btn.block-btn{border-color:rgba(154,163,168,.5);color:var(--steel);}
-.action-btn.block-btn.active{background:rgba(154,163,168,.25);color:#fff;}
-.action-btn:disabled{opacity:.25;pointer-events:none;}
+  .zombie-idle { animation: zombie-idle 2s ease-in-out infinite; }
+  .zombie-attacking { animation: zombie-attack 0.6s ease-in-out; }
+  .zombie-stunned { animation: zombie-stun 0.5s ease-in-out; filter: brightness(1.5) sepia(.5); }
+  .zombie-hit-anim { animation: zombie-hit 0.3s ease-in-out; }
+  .zombie-dying { animation: zombie-death 0.8s ease-in-out forwards; }
 
-/* ============ INVENTORY ============ */
-#inv-toggle{position:absolute;top:10px;right:12px;z-index:31;}
-#inventory{position:absolute;inset:0;background:rgba(6,7,5,.97);z-index:55;display:flex;flex-direction:column;padding:20px;overflow-y:auto;backdrop-filter:blur(10px);}
-#inventory.hidden{display:none;}
-#inventory h2{font-family:var(--font-d);letter-spacing:3px;color:var(--bone);border-bottom:1px solid rgba(179,85,44,.4);padding-bottom:8px;}
-.inv-section{margin:12px 0;}
-.inv-section h4{color:var(--warn);font-size:10px;letter-spacing:2px;margin:6px 0;}
-.inv-item{display:flex;justify-content:space-between;align-items:center;background:rgba(55,35,25,.3);border:1px solid rgba(90,55,30,.4);padding:8px 10px;margin:4px 0;border-radius:3px;font-size:12px;gap:8px;}
-.inv-item button{font-family:var(--font-d);font-size:10px;background:var(--moss);border:none;color:#0c0e0b;padding:5px 10px;border-radius:2px;}
-.inv-item button:disabled{background:#333;color:#666;}
-.inv-empty{font-size:11px;color:#4a4840;text-align:center;padding:8px;}
+  .dmg-number { position: absolute; font-size: 1.1rem; font-weight: 900; pointer-events: none; animation: dmg-float 0.8s ease-out forwards; }
 
-/* ============ MODAL ============ */
-#modal-overlay{position:absolute;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:65;backdrop-filter:blur(6px);}
-#modal-overlay.hidden{display:none;}
-.modal-box{background:linear-gradient(160deg,#181c12,#0d0f09);border:2px solid var(--rust);padding:26px;max-width:340px;width:88%;text-align:center;clip-path:polygon(0 0,100% 0,100% 90%,94% 100%,0 100%);}
-.modal-box h3{font-family:var(--font-d);letter-spacing:3px;color:var(--blood-bright);margin:0 0 10px;font-size:24px;}
-.modal-box p{font-size:12px;line-height:1.7;color:#cfc8b8;}
+  /* Range mode overlay */
+  .range-overlay { position: absolute; inset: 0; background: rgba(0,30,60,.7); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 25; }
 
-/* Perm screen */
-#perm-warning{font-size:13px;color:#b9b3a3;max-width:420px;line-height:1.7;}
-
-/* GPS prompt (shown in-game at start when sim) */
-#sim-badge{position:absolute;bottom:140px;left:50%;transform:translateX(-50%);
-  z-index:32;background:rgba(6,7,5,.85);border:1px solid rgba(224,179,74,.4);
-  border-radius:4px;padding:8px 18px;font-size:11px;letter-spacing:2px;color:var(--warn);
-  text-align:center;backdrop-filter:blur(4px);display:none;}
-#sim-badge.show{display:block;}
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 </style>
 </head>
 <body>
-<div id="app">
 
-<!-- ===== TITLE ===== -->
-<div id="screen-title" class="screen">
-  <div class="title-scene">
-    <canvas id="title-canvas" class="title-art"></canvas>
+<!-- ═══════════════════════════════════════ TITLE ═══════════════════════════ -->
+<div id="title-screen" class="screen active">
+  <div class="title-art">
+    <div style="font-size:.65rem;letter-spacing:.4em;color:var(--muted);margin-bottom:.8rem;">[ OUTBREAK ZONE — DAY 1 ]</div>
+    <div class="title-big">DEAD WALK</div>
+    <div class="title-sub">REAL-WORLD SURVIVAL</div>
+    <!-- Animated zombie pixel art SVG -->
+    <svg width="180" height="220" viewBox="0 0 180 220" xmlns="http://www.w3.org/2000/svg" style="margin:1.5rem auto;display:block;">
+      <g id="title-zombie" style="animation:zombie-idle 2.5s ease-in-out infinite;transform-origin:90px 110px;">
+        <!-- body -->
+        <rect x="62" y="90" width="56" height="70" rx="4" fill="#2d1a0a"/>
+        <!-- torn shirt -->
+        <rect x="62" y="90" width="56" height="45" rx="4" fill="#1a3a1a"/>
+        <polygon points="62,120 72,135 62,135" fill="#0d0d0d"/>
+        <polygon points="118,118 108,133 118,133" fill="#0d0d0d"/>
+        <!-- head -->
+        <rect x="65" y="50" width="50" height="48" rx="6" fill="#4a3520"/>
+        <!-- eyes (glowing red) -->
+        <ellipse cx="78" cy="68" rx="6" ry="7" fill="#1a0000"/>
+        <ellipse cx="102" cy="68" rx="6" ry="7" fill="#1a0000"/>
+        <ellipse cx="78" cy="69" rx="3.5" ry="4" fill="#cc0000"/>
+        <ellipse cx="102" cy="69" rx="3.5" ry="4" fill="#cc0000"/>
+        <!-- pupils -->
+        <ellipse cx="79" cy="69" rx="1.5" ry="2" fill="#ff4444"/>
+        <ellipse cx="103" cy="69" rx="1.5" ry="2" fill="#ff4444"/>
+        <!-- mouth -->
+        <rect x="72" y="84" width="36" height="8" rx="3" fill="#2a0000"/>
+        <rect x="76" y="85" width="4" height="6" rx="1" fill="#8b0000"/>
+        <rect x="84" y="85" width="4" height="6" rx="1" fill="#8b0000"/>
+        <rect x="96" y="85" width="4" height="6" rx="1" fill="#8b0000"/>
+        <!-- hair patches -->
+        <rect x="65" y="50" width="12" height="8" rx="2" fill="#1a0f00"/>
+        <rect x="90" y="48" width="18" height="10" rx="3" fill="#1a0f00"/>
+        <!-- arms -->
+        <rect x="32" y="92" width="30" height="16" rx="6" fill="#3d2a10"/>
+        <rect x="118" y="88" width="30" height="16" rx="6" fill="#3d2a10" style="transform:rotate(12deg);transform-origin:133px 100px;"/>
+        <!-- hands -->
+        <ellipse cx="36" cy="100" rx="10" ry="9" fill="#4a3520"/>
+        <ellipse cx="143" cy="97" rx="10" ry="9" fill="#4a3520"/>
+        <!-- legs -->
+        <rect x="68" y="155" width="20" height="50" rx="4" fill="#1a1a2a"/>
+        <rect x="92" y="158" width="20" height="48" rx="4" fill="#1a1a2a" style="transform:rotate(5deg);transform-origin:102px 185px;"/>
+        <!-- boots -->
+        <rect x="60" y="195" width="28" height="16" rx="4" fill="#0a0a0a"/>
+        <rect x="88" y="198" width="28" height="14" rx="4" fill="#0a0a0a"/>
+        <!-- blood drips -->
+        <ellipse cx="82" cy="92" rx="3" ry="5" fill="#8b000088"/>
+        <ellipse cx="110" cy="105" rx="2" ry="4" fill="#8b000066"/>
+      </g>
+    </svg>
+    <div style="font-size:.65rem;color:var(--muted);line-height:1.8;max-width:260px;margin:0 auto;">
+      Walk in real life to explore.<br>
+      Find loot. Build your team.<br>
+      Survive the dead.
+    </div>
   </div>
-  <h1 class="title-main">OUTBREAK WALK</h1>
-  <div class="title-sub">GPS · Combat · Survival</div>
-  <p class="lore">The signal's dead. <b>Walk to scavenge.</b> <b>Run to break contact.</b> <b>Fight only when cornered.</b> Your real-world movement drives everything — no buttons to move, only your legs.</p>
-  <button class="btn big" id="btn-start">ENTER THE DEAD ZONE</button>
-  <button class="btn secondary" id="btn-howto">FIELD MANUAL</button>
+  <button class="title-btn" onclick="showCharSelect()">▶ START GAME</button>
+  <button class="title-btn sec" onclick="showHowTo()">? HOW TO PLAY</button>
 </div>
 
-<!-- ===== HOW TO ===== -->
-<div id="screen-howto" class="screen hidden">
-  <h1 class="title-main" style="font-size:32px;">FIELD MANUAL</h1>
-  <p class="lore" style="text-align:left;max-width:430px;">
-    <b>① MOVEMENT</b><br>Your GPS speed drives the world. Walk to scavenge safely. Running builds distance and burns stamina — but escaping a horde requires real running.<br><br>
-    <b>② SWING ZONES</b><br>Tap the left or right half of the screen to swing that hand. Alternating builds a COMBO multiplier. Hold longer for a HEAVY attack — more damage, more stamina.<br><br>
-    <b>③ BLOCK &amp; DODGE</b><br>Hold BLOCK to reduce incoming damage. Tap the small centre-bottom zone to DODGE — perfectly timed on a telegraph, you take zero damage.<br><br>
-    <b>④ TELEGRAPHS</b><br>Zombies flash a warning ring before lunging. Counter, block, or dodge in that window.<br><br>
-    <b>⑤ TYPES</b><br>Shamblers — slow &amp; weak. Runners — fast &amp; relentless. Brutes — heavy HP, shrug light weapons.<br><br>
-    <b>⑥ INJURY</b><br>A hurt arm disables that hand. A hurt leg caps speed &amp; stamina regen — permanently for this run.<br><br>
-    <b>⑦ DESKTOP / NO-GPS MODE</b><br>If GPS isn't available, a simulated walk/run starts automatically — the world moves but no movement buttons are shown.
-  </p>
-  <button class="btn" id="btn-back-title">BACK</button>
+<!-- ═══════════════════════════════════════ CHAR SELECT ═══════════════════ -->
+<div id="char-screen" class="screen">
+  <div class="screen-title">Choose Survivor</div>
+  <div style="flex:1;overflow-y:auto;padding:0 1rem 1rem;">
+    <div class="char-grid" id="char-grid"></div>
+    <button class="confirm-btn" id="confirm-char" onclick="confirmChar()" disabled>Confirm Survivor</button>
+  </div>
 </div>
 
-<!-- ===== CLASS SELECT ===== -->
-<div id="screen-class" class="screen hidden">
-  <h1 class="title-main" style="font-size:32px;">CHOOSE YOUR SURVIVOR</h1>
-  <p class="lore" style="margin:4px 0 10px;">Each background reshapes your stamina, loadout, and how the dead react to you.</p>
-  <div id="class-grid"></div>
-  <button class="btn big" id="btn-class-confirm" disabled>CONFIRM SURVIVOR</button>
-</div>
+<!-- ═══════════════════════════════════════ GAME ════════════════════════════ -->
+<div id="game-screen" class="screen">
+  <!-- Top HUD -->
+  <div class="hud">
+    <div class="hud-row">
+      <span class="hud-name" id="hud-name">MARCUS</span>
+      <span style="font-size:.6rem;color:var(--muted);">HP</span>
+      <div class="bar-wrap"><div class="bar-inner s-hp" id="bar-hp" style="width:100%"></div></div>
+      <span class="bar-label" id="val-hp">100</span>
+      <span style="font-size:.6rem;color:var(--muted);">🍗</span>
+      <div class="bar-wrap"><div class="bar-inner" id="bar-food" style="width:100%;background:var(--food)"></div></div>
+      <span style="font-size:.6rem;color:var(--muted);">💧</span>
+      <div class="bar-wrap"><div class="bar-inner" id="bar-water" style="width:100%;background:var(--water)"></div></div>
+    </div>
+    <div class="hud-row">
+      <span style="font-size:.6rem;color:var(--muted);">STAM</span>
+      <div class="bar-wrap"><div class="bar-inner s-stam" id="bar-stam" style="width:100%"></div></div>
+      <span class="bar-label" id="val-stam">100</span>
+      <span style="font-size:.6rem;color:var(--muted);margin-left:.5rem;">ZONE</span>
+      <span style="font-size:.7rem;color:var(--amber2);font-weight:700;" id="hud-zone">OUTSKIRTS</span>
+      <span style="font-size:.6rem;color:var(--muted);margin-left:.5rem;">DAY</span>
+      <span style="font-size:.7rem;color:#fff;font-weight:700;" id="hud-day">1</span>
+    </div>
+  </div>
 
-<!-- ===== PERMISSIONS ===== -->
-<div id="screen-perm" class="screen hidden">
-  <h1 class="title-main" style="font-size:32px;">GEAR CHECK</h1>
-  <p id="perm-warning">
-    OUTBREAK WALK uses <b>GPS</b> to track your real walking speed. Go outside, hold your phone naturally, and keep the screen on.<br><br>
-    <span style="color:var(--warn)">If GPS is denied or unavailable (desktop/indoor), a simulation will move you through the zone automatically so you can still fight.</span>
-  </p>
-  <button class="btn big" id="btn-grant">GRANT GPS &amp; DROP IN</button>
-  <button class="btn secondary" id="btn-sim">SKIP — AUTO-SIMULATE</button>
-</div>
+  <!-- Step counter -->
+  <div class="step-panel">
+    <div class="step-info">Steps today: <span class="step-val" id="step-count">0</span> / <span id="step-target">200</span></div>
+    <div style="display:flex;gap:.4rem;">
+      <button class="step-btn" onclick="addSteps(50)">+50 Steps</button>
+      <button class="step-btn" style="background:#333;" onclick="advanceDay()">Rest Day</button>
+    </div>
+  </div>
 
-<!-- ===== GAME ===== -->
-<div id="game">
-  <div id="world">
-    <!-- sky -->
-    <div id="sky-layer"></div>
-    <div id="sun-orb"></div>
-    <div id="moon-orb"></div>
-    <div id="stars-layer"></div>
+  <!-- Zone tabs -->
+  <div class="zone-tabs" id="zone-tabs"></div>
 
-    <!-- ground / road -->
-    <div id="ground-layer">
-      <svg id="road-svg" viewBox="0 0 414 300" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-        <!-- asphalt road converging to horizon -->
-        <defs>
-          <linearGradient id="roadGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#2a2e26"/>
-            <stop offset="60%" stop-color="#1a1e16"/>
-            <stop offset="100%" stop-color="#0e100c"/>
-          </linearGradient>
-          <linearGradient id="grassL" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stop-color="#1a2414"/>
-            <stop offset="100%" stop-color="#2a3422"/>
-          </linearGradient>
-          <linearGradient id="grassR" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stop-color="#2a3422"/>
-            <stop offset="100%" stop-color="#1a2414"/>
-          </linearGradient>
-          <linearGradient id="fenceGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#3a3a34"/>
-            <stop offset="100%" stop-color="#1a1a16"/>
-          </linearGradient>
-        </defs>
-        <!-- grass left -->
-        <polygon points="0,0 155,0 207,300 0,300" fill="url(#grassL)"/>
-        <!-- grass right -->
-        <polygon points="259,0 414,0 414,300 207,300" fill="url(#grassR)"/>
-        <!-- road -->
-        <polygon points="155,0 259,0 414,300 0,300" fill="url(#roadGrad)"/>
-        <!-- road crack lines -->
-        <line x1="207" y1="5" x2="207" y2="300" stroke="rgba(60,65,55,.4)" stroke-width="1"/>
-        <!-- centre dashes (perspective) -->
-        <line x1="207" y1="30" x2="202" y2="60" stroke="rgba(120,120,100,.35)" stroke-width="1.5" stroke-dasharray="6,10"/>
-        <line x1="207" y1="70" x2="196" y2="120" stroke="rgba(120,120,100,.30)" stroke-width="2" stroke-dasharray="8,14"/>
-        <line x1="207" y1="130" x2="165" y2="210" stroke="rgba(120,120,100,.25)" stroke-width="2.5" stroke-dasharray="10,18"/>
-        <!-- road edge lines -->
-        <line x1="155" y1="0" x2="0" y2="300" stroke="rgba(180,170,120,.25)" stroke-width="1.5"/>
-        <line x1="259" y1="0" x2="414" y2="300" stroke="rgba(180,170,120,.25)" stroke-width="1.5"/>
-        <!-- gravel / dirt edge texture -->
-        <polygon points="150,0 155,0 0,300 0,295" fill="rgba(100,90,60,.3)"/>
-        <polygon points="259,0 265,0 414,295 414,300" fill="rgba(100,90,60,.3)"/>
-      </svg>
+  <!-- Map area -->
+  <div class="map-area">
+    <div class="zone-header">
+      <div>
+        <span class="zone-name" id="zone-title">OUTSKIRTS</span>
+        <span class="zone-danger-tag tag-safe" id="zone-danger-tag">SAFE</span>
+      </div>
+      <div class="zone-desc" id="zone-desc">Suburban outskirts. Sparse zombie activity. Good for early looting.</div>
     </div>
 
-    <!-- parallax layers -->
-    <div id="layer-bg"></div>
-    <div id="layer-mid"></div>
-    <div id="layer-near"></div>
-    <div id="layer-ground-dec"></div>
+    <!-- Team -->
+    <div style="font-size:.6rem;letter-spacing:.2em;color:var(--muted);text-transform:uppercase;margin-bottom:.4rem;">Team</div>
+    <div class="team-panel" id="team-panel"></div>
 
-    <!-- zombies & loot rendered here -->
-    <div id="viewport" style="position:absolute;inset:0;z-index:15;"></div>
+    <!-- Map cells -->
+    <div style="font-size:.6rem;letter-spacing:.2em;color:var(--muted);text-transform:uppercase;margin-bottom:.4rem;">Locations</div>
+    <div class="map-grid" id="map-grid"></div>
 
-    <!-- atmosphere -->
-    <canvas id="fog-canvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:20;"></canvas>
-    <div id="bloodvignette"></div>
-    <div class="vignette"></div>
-    <div id="rain-layer"></div>
+    <!-- Event feed -->
+    <div class="event-feed" id="event-feed">
+      <div class="event-line ev-info">> Woke up. The city is silent.</div>
+      <div class="event-line ev-info">> Walk to explore new locations.</div>
+    </div>
+
+    <!-- Inventory -->
+    <div class="inventory">
+      <div class="inv-title">Inventory <span id="inv-count-label" style="color:var(--amber2);">(0/8)</span></div>
+      <div class="inv-grid" id="inv-grid"></div>
+    </div>
+
+    <div style="height:1rem;"></div>
   </div>
+</div>
 
-  <div id="hitflash"></div>
-  <div id="dodgeflash"></div>
-  <div id="combo"></div>
+<!-- ═══════════════════════════════════════ COMBAT ══════════════════════════ -->
+<div id="combat-screen" class="screen">
+  <div class="combat-bg" id="combat-bg"></div>
 
-  <!-- Hands -->
-  <div id="hands">
-    <div class="hand left" id="hand-l"></div>
-    <div class="hand right" id="hand-r"></div>
-  </div>
-
-  <!-- tap zones -->
-  <div id="swing-l"></div>
-  <div id="swing-r"></div>
-  <div id="dodge-zone"></div>
-
-  <!-- TOP HUD -->
-  <div id="hud-top">
-    <div class="stat-block">
-      <div class="classname-tag" id="class-tag">Survivor</div>
-      <div class="stat-row"><span class="label">HP</span><div class="bar"><div class="bar-fill hp" id="bar-hp" style="width:100%"></div></div></div>
-      <div class="stat-row"><span class="label">STAM</span><div class="bar"><div class="bar-fill stam" id="bar-stam" style="width:100%"></div></div></div>
-      <div class="stat-row"><span class="label">FOOD</span><div class="bar"><div class="bar-fill hunger" id="bar-food" style="width:100%"></div></div></div>
-      <div class="stat-row"><span class="label">H2O</span><div class="bar"><div class="bar-fill hunger" id="bar-water" style="width:100%"></div></div></div>
-      <div id="limb-status">
-        <span class="limb" id="limb-arml">L</span><span class="limb" id="limb-armr">R</span>
-        <span class="limb" id="limb-legl">LL</span><span class="limb" id="limb-legr">RL</span>
+  <!-- Combat HUD -->
+  <div class="combat-hud">
+    <div class="combat-title">⚠ COMBAT</div>
+    <div class="combat-bars">
+      <div>
+        <div style="font-size:.6rem;color:var(--muted);margin-bottom:2px;">YOU <span id="c-hp-val">100</span></div>
+        <div class="bar-wrap" style="height:8px;"><div class="bar-inner s-hp" id="c-bar-hp" style="width:100%"></div></div>
+        <div style="font-size:.6rem;color:var(--muted);margin-top:2px;">STAM <span id="c-stam-val">100</span></div>
+        <div class="bar-wrap" style="height:5px;"><div class="bar-inner s-stam" id="c-bar-stam" style="width:100%"></div></div>
+      </div>
+      <div>
+        <div class="zombie-label" id="zombie-name-label">WALKER</div>
+        <div class="zombie-hp-wrap">
+          <div class="zombie-hp-bar"><div class="zombie-hp-fill" id="zombie-hp-bar" style="width:100%"></div></div>
+        </div>
+        <div style="font-size:.6rem;color:var(--muted);text-align:center;" id="zombie-hp-val">60 HP</div>
       </div>
     </div>
-    <div id="distance-panel">
-      <div id="dist-val">0</div>
-      <div id="dist-label">METERS</div>
-      <div id="speed-val">idle</div>
-      <div id="time-val">06:00</div>
-    </div>
+    <!-- Status -->
+    <div style="font-size:.65rem;color:var(--amber2);margin-top:.3rem;" id="combat-status">Watch for attack!</div>
   </div>
 
-  <div id="compass">— WASTELAND —<small id="compass-sub">Scavenging mode</small></div>
-  <div id="toasts"></div>
-
-  <!-- BOTTOM HUD -->
-  <div id="hud-bottom">
-    <div id="weapon-info">
-      <div id="weapon-name">Bare Hands</div>
-      <div id="weapon-dur">—</div>
-      <div id="weapon-mode">Tap L/R · Hold = heavy</div>
-    </div>
-    <div id="action-zone">
-      <div class="action-row">
-        <button class="action-btn block-btn" id="btn-block">BLOCK</button>
-        <button class="action-btn danger" id="btn-gun" disabled>FIRE</button>
+  <!-- Arena -->
+  <div class="combat-arena">
+    <!-- Range attack zone (appears before melee) -->
+    <div class="range-zone" id="range-zone">
+      <div style="font-size:.7rem;color:var(--blue2);letter-spacing:.2em;">AIM &amp; FIRE</div>
+      <div class="aim-ring" onclick="shootGun()">
+        <div class="aim-center"></div>
       </div>
-      <button class="action-btn" id="btn-pickup" disabled>LOOT</button>
+      <div style="font-size:.65rem;color:var(--muted);" id="ammo-label">Ammo: 0</div>
+      <button style="background:transparent;border:1px solid #333;color:var(--muted);font-family:inherit;font-size:.65rem;padding:.3rem .8rem;border-radius:2px;cursor:pointer;" onclick="skipRange()">Skip → Melee</button>
+    </div>
+
+    <!-- Zombie SVG -->
+    <div class="zombie-svg-wrap" id="zombie-wrap">
+      <div class="react-flash"><div class="react-text" id="react-text">REACT!</div></div>
+    </div>
+
+    <!-- Tap zone (react to defend) -->
+    <div class="tap-zone" id="tap-zone" onclick="tapDefend()">
+      <div class="tap-ring" id="tap-ring">
+        <div class="tap-icon" id="tap-icon">🛡</div>
+      </div>
+    </div>
+
+    <!-- Attack zone (after stun) -->
+    <div class="attack-zone" id="attack-zone">
+      <div style="font-size:.7rem;color:var(--amber2);letter-spacing:.2em;">STUNNED! ATTACK!</div>
+      <button class="atk-btn" id="atk-btn" onclick="meleeAttack()">
+        <div class="cooldown-fill" id="cooldown-fill" style="width:0%"></div>
+        <span id="atk-label">⚔ STRIKE</span>
+      </button>
+      <div style="font-size:.65rem;color:var(--muted);" id="weapon-label">Fists</div>
     </div>
   </div>
 
-  <button class="action-btn" id="inv-toggle" style="position:absolute;top:10px;right:12px;z-index:31;">PACK</button>
-
-  <!-- sim badge -->
-  <div id="sim-badge">⚠ GPS unavailable — auto-simulate active</div>
-
-  <!-- Inventory -->
-  <div id="inventory" class="hidden">
-    <h2>SURVIVOR PACK</h2>
-    <div style="font-size:10px;color:var(--warn);letter-spacing:2px;margin-bottom:10px;" id="inv-class-banner">—</div>
-    <div class="inv-section"><h4>LEFT HAND</h4><div id="inv-left" class="inv-empty">Bare hand</div></div>
-    <div class="inv-section"><h4>RIGHT HAND</h4><div id="inv-right" class="inv-empty">Bare hand</div></div>
-    <div class="inv-section"><h4>MELEE WEAPONS</h4><div id="inv-melee" class="inv-empty">None</div></div>
-    <div class="inv-section"><h4>FIREARM</h4><div id="inv-gun" class="inv-empty">None</div></div>
-    <div class="inv-section"><h4>SUPPLIES</h4><div id="inv-supplies" class="inv-empty">Empty</div></div>
-    <button class="btn secondary" id="inv-close">CLOSE</button>
-  </div>
-
-  <!-- Modal -->
-  <div id="modal-overlay" class="hidden">
-    <div class="modal-box">
-      <h3 id="modal-title">???</h3>
-      <p id="modal-text">...</p>
-      <div id="modal-actions" style="margin-top:16px;"></div>
-    </div>
+  <!-- Combat log -->
+  <div class="combat-log" id="combat-log">
+    <div class="clog-line cl-hit">Combat started!</div>
   </div>
 </div>
+
+<!-- ═══════════════════════════════════════ END ═════════════════════════════ -->
+<div id="end-screen" class="screen">
+  <div class="end-icon" id="end-icon">💀</div>
+  <div class="end-title" id="end-title">YOU DIED</div>
+  <div class="end-cause" id="end-cause">Cause: Zombie Attack</div>
+  <div class="end-stats">
+    <div class="end-stat-row"><span>Days Survived</span><span id="end-days">0</span></div>
+    <div class="end-stat-row"><span>Zombies Killed</span><span id="end-kills">0</span></div>
+    <div class="end-stat-row"><span>Steps Walked</span><span id="end-steps">0</span></div>
+    <div class="end-stat-row"><span>Areas Explored</span><span id="end-areas">0</span></div>
+    <div class="end-stat-row"><span>Team Recruited</span><span id="end-team">0</span></div>
+  </div>
+  <button class="title-btn" onclick="restartGame()">↺ PLAY AGAIN</button>
 </div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
 
 <script>
-/* =====================================================================
-   OUTBREAK WALK v3 — Into the Dead 2-inspired visual overhaul
-   Movement = real GPS or auto-simulation (no movement buttons)
-   Combat = tap L/R screen halves for melee
-===================================================================== */
-const $ = id => document.getElementById(id);
+// ═══════════════════════════════════════════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════════════════════════════════════════
 
-// =====================================================================
-// CLASS DEFINITIONS
-// =====================================================================
-const CLASSES = {
-  scavenger:{id:'scavenger',name:'The Scavenger',tag:'Light feet, sharp eyes',
-    icon:`<svg viewBox="0 0 60 60"><circle cx="30" cy="30" r="26" fill="#2b3322" stroke="#7fae5e" stroke-width="2"/><path d="M18,38 L30,16 L42,38 Z" fill="#7fae5e"/><circle cx="30" cy="30" r="4" fill="#0c0e0b"/></svg>`,
-    desc:'Built for distance. Finds supplies faster, runs longer, but hits soft.',
-    stats:{hp:90,stamina:120,staminaRegen:1.25,dmgMult:.85,durMult:.8,lootBonus:1.3,noise:.85},
-    bars:[['HP',-1],['STAMINA',1],['DAMAGE',-1],['DUR',-.5],['LOOT',1]],
-    startKit:{melee:'knife',supplies:{food:1,water:1,bandage:0}}},
-  brawler:{id:'brawler',name:'The Brawler',tag:'Hits first, hits hardest',
-    icon:`<svg viewBox="0 0 60 60"><circle cx="30" cy="30" r="26" fill="#3a2118" stroke="#e23b3b" stroke-width="2"/><rect x="14" y="24" width="32" height="14" rx="3" fill="#e8e1d0"/></svg>`,
-    desc:'Bonus melee damage and HP, but burns stamina fast — bad combos with running.',
-    stats:{hp:120,stamina:85,staminaRegen:.85,dmgMult:1.3,durMult:1.0,lootBonus:.95,noise:1.15},
-    bars:[['HP',1],['STAMINA',-1],['DAMAGE',1],['DUR',0],['LOOT',0]],
-    startKit:{melee:'knuckles',supplies:{food:0,water:1,bandage:1}}},
-  medic:{id:'medic',name:'The Medic',tag:'Patches up, plans ahead',
-    icon:`<svg viewBox="0 0 60 60"><circle cx="30" cy="30" r="26" fill="#1a2a2a" stroke="#e0b34a" stroke-width="2"/><rect x="26" y="14" width="8" height="32" fill="#e0b34a"/><rect x="14" y="26" width="32" height="8" fill="#e0b34a"/></svg>`,
-    desc:'Bandages heal more, supplies stretch further. Survival favours avoidance.',
-    stats:{hp:100,stamina:100,staminaRegen:1.0,dmgMult:.95,durMult:1.0,lootBonus:1.0,healMult:1.6,hungerMult:.75},
-    bars:[['HP',0],['STAMINA',0],['DAMAGE',0],['HEALING',1],['SUPPLY',1]],
-    startKit:{melee:'machete',supplies:{food:1,water:1,bandage:2}}},
-  veteran:{id:'veteran',name:'The Veteran',tag:'Cold blood, steady hands',
-    icon:`<svg viewBox="0 0 60 60"><circle cx="30" cy="30" r="26" fill="#2a2a2a" stroke="#9aa3a8" stroke-width="2"/><rect x="20" y="20" width="20" height="20" fill="#9aa3a8" transform="rotate(45 30 30)"/></svg>`,
-    desc:'Starts with a sidearm. Maintains composure under fire. Carries less food.',
-    stats:{hp:105,stamina:100,staminaRegen:1.0,dmgMult:1.05,durMult:1.1,lootBonus:1.0,emotionMult:.7},
-    bars:[['HP',0],['COMPOSURE',1],['DAMAGE',0],['DUR',0],['RATIONS',-1]],
-    startKit:{melee:'shortsword',gun:'pistol',supplies:{food:0,water:0,bandage:1}}},
-};
-
-// =====================================================================
-// WEAPON / ZOMBIE / ITEM DATA
-// =====================================================================
-const MELEE_WEAPONS = [
-  {id:'knife',name:'Kitchen Knife',dur:30,dmg:8,hands:1},
-  {id:'machete',name:'Machete',dur:45,dmg:18,hands:1},
-  {id:'knuckles',name:'Brass Knuckles',dur:60,dmg:6,hands:1},
-  {id:'shortsword',name:'Shortsword',dur:40,dmg:16,hands:1},
-  {id:'sword',name:'Longsword',dur:35,dmg:22,hands:2},
-  {id:'spear',name:'Pipe Spear',dur:38,dmg:20,hands:2,reach:true},
-  {id:'shield',name:'Riot Shield',dur:70,dmg:4,hands:1,block:true},
-  {id:'doublesword',name:'Twin Blades',dur:32,dmg:14,hands:2,dual:true},
+const CHARACTERS = [
+  { id:'marcus', name:'MARCUS', icon:'🪖', desc:'Ex-soldier. Slow but hits like a truck.', hp:120, str:9, spd:5, stam:7, recover:5, cooldown:2.0, special:'Combat medkit' },
+  { id:'yuki',   name:'YUKI',   icon:'🏹', desc:'Scout. Fast, nimble, quick stamina recovery.', hp:80, str:6, spd:9, stam:9, recover:8, cooldown:1.2, special:'Silent movement' },
+  { id:'nova',   name:'NOVA',   icon:'🔬', desc:'Scientist. Crafts items, decent combat.', hp:90, str:6, spd:7, stam:8, recover:7, cooldown:1.5, special:'Craft meds' },
+  { id:'rook',   name:'ROOK',   icon:'🪓', desc:'Lumberjack. High damage, medium speed.', hp:110, str:8, spd:6, stam:6, recover:6, cooldown:1.7, special:'Axe mastery' },
 ];
-const GUNS = [
-  {id:'pistol',name:'Service Pistol',maxAmmo:7,dmg:35},
-  {id:'revolver',name:'Snub Revolver',maxAmmo:5,dmg:40},
+
+const ALLIES = [
+  { id:'jin',   name:'JIN',   icon:'🧔', desc:'Old guard.', hp:90, str:7, spd:6, stam:7, recover:5, cooldown:1.8, dead:false },
+  { id:'mara',  name:'MARA',  icon:'👩', desc:'Nurse.', hp:70, str:5, spd:8, stam:9, recover:9, cooldown:1.3, dead:false },
+  { id:'duke',  name:'DUKE',  icon:'👴', desc:'Hunter.', hp:100, str:8, spd:5, stam:6, recover:6, cooldown:2.0, dead:false },
 ];
-const FOOD_ITEMS = ['Canned Beans','Energy Bar','Jerky Strips','Stale Bread'];
-const WATER_ITEMS = ['Water Bottle','Juice Box','Canteen'];
-const ZTYPES = {
-  shambler:{name:'Shambler',hpMin:24,hpMax:38,dmgMin:5,dmgMax:11,atkSpeed:2600,color:'#3a4432',tagClass:'shambler'},
-  runner:  {name:'Runner',  hpMin:18,hpMax:28,dmgMin:6,dmgMax:13,atkSpeed:1500,color:'#4a3828',tagClass:'runner'},
-  brute:   {name:'Brute',   hpMin:55,hpMax:75,dmgMin:12,dmgMax:22,atkSpeed:3200,color:'#384428',tagClass:'brute',durDmgMult:1.6},
+
+const ZONES = [
+  {
+    id:'outskirts', name:'OUTSKIRTS', danger:'SAFE', dangerClass:'tag-safe', steps:200,
+    desc:'Suburban outskirts. Sparse zombie activity. Good for early looting.',
+    unlockZombies:0, color:'#1a3a1a',
+    cells:[
+      { id:'house1', icon:'🏠', name:'Old House', loots:['bandage','canned food','knife'], zombie:null, badge:'loot', explored:false },
+      { id:'garage', icon:'🏚', name:'Garage', loots:['wrench','gasoline','pipe'], zombie:'walker', badge:'zombie', explored:false },
+      { id:'park',   icon:'🌳', name:'Park', loots:['water bottle','berries','rope'], zombie:null, badge:'loot', explored:false },
+      { id:'ally1',  icon:'👣', name:'Survivor?', loots:['canned food'], zombie:null, badge:'ally', allyId:'jin', explored:false },
+    ]
+  },
+  {
+    id:'suburbs', name:'SUBURBS', danger:'MEDIUM', dangerClass:'tag-medium', steps:400,
+    desc:'Denser housing. More supplies but zombies patrol in packs.',
+    unlockZombies:2, color:'#3a2a0a',
+    cells:[
+      { id:'store',   icon:'🏪', name:'Store', loots:['pistol','ammo','food x3'], zombie:'crawler', badge:'zombie', explored:false },
+      { id:'school',  icon:'🏫', name:'School', loots:['backpack','medkit','axe'], zombie:'runner', badge:'zombie', explored:false },
+      { id:'clinic',  icon:'🏥', name:'Clinic', loots:['medkit x2','bandage x3','water x2'], zombie:'walker', badge:'loot', explored:false },
+      { id:'ally2',   icon:'⛺', name:'Camp', loots:['water','ammo'], zombie:null, badge:'ally', allyId:'mara', explored:false },
+    ]
+  },
+  {
+    id:'downtown', name:'DOWNTOWN', danger:'HIGH', dangerClass:'tag-high', steps:600,
+    desc:'City center. Zombie hordes. Rich loot if you survive.',
+    unlockZombies:5, color:'#3a1a0a',
+    cells:[
+      { id:'bank',     icon:'🏦', name:'Bank', loots:['shotgun','ammo x5','medkit'], zombie:'brute', badge:'zombie', explored:false },
+      { id:'hotel',    icon:'🏨', name:'Hotel', loots:['food x5','water x5','rifle'], zombie:'runner', badge:'zombie', explored:false },
+      { id:'police',   icon:'🚔', name:'Police HQ', loots:['pistol x2','ammo x10','vest'], zombie:'brute', badge:'zombie', explored:false },
+      { id:'ally3',    icon:'🔦', name:'Hideout', loots:['ammo x3','food'], zombie:null, badge:'ally', allyId:'duke', explored:false },
+    ]
+  },
+  {
+    id:'hospital', name:'HOSPITAL', danger:'EXTREME', dangerClass:'tag-extreme', steps:900,
+    desc:'Patient zero ground zero. Boss zombie lairs. Greatest loot.',
+    unlockZombies:8, color:'#2a000a',
+    cells:[
+      { id:'icu',      icon:'🏥', name:'ICU', loots:['medkit x5','stim','antibiotics'], zombie:'boss', badge:'boss', explored:false },
+      { id:'morgue',   icon:'💀', name:'Morgue', loots:['hazmat','antidote'], zombie:'boss', badge:'boss', explored:false },
+      { id:'roof',     icon:'🔭', name:'Rooftop', loots:['sniper','ammo x20'], zombie:'boss', badge:'boss', explored:false },
+      { id:'bunker',   icon:'🔐', name:'Bunker', loots:[], zombie:'boss', badge:'boss', explored:false, finalBoss:true },
+    ]
+  }
+];
+
+const ZOMBIES = {
+  walker:  { name:'WALKER',  hp:60,  dmg:15, react:1800, score:10, icon:'🧟' },
+  crawler: { name:'CRAWLER', hp:45,  dmg:8,  react:1400, score:8,  icon:'🧟' },
+  runner:  { name:'RUNNER',  hp:80,  dmg:25, react:900,  score:20, icon:'🏃' },
+  brute:   { name:'BRUTE',   hp:150, dmg:40, react:700,  score:40, icon:'🧟‍♂️' },
+  boss:    { name:'OVERLORD',hp:300, dmg:55, react:600,  score:100,icon:'☠️' },
 };
 
-// =====================================================================
-// GAME STATE
-// =====================================================================
-const state = {
-  hp:100,maxHp:100,stamina:100,maxStamina:100,food:100,water:100,
-  distance:0,speed:0,mode:'explore',
-  limbs:{armL:true,armR:true,legL:true,legR:true},
-  hands:{left:null,right:null},meleeBag:[],gun:null,supplies:{food:0,water:0,bandage:0},
-  nearbyLoot:null,lootProgress:0,threatTimer:0,twoHanded:false,
-  lastGPS:null,usingSim:false,simSpeedTarget:0,simPhase:0,
-  emotionHeat:0,cls:null,comboCount:0,comboTimer:0,lastHand:null,
-  blocking:false,dodging:false,
-  gameTime:6*60,weather:'clear',weatherTimer:0,
-  scrollOffset:0,
+const WEAPONS = {
+  'knife':   { icon:'🔪', dmg:20, cd:1.2, type:'melee' },
+  'pipe':    { icon:'🔧', dmg:15, cd:1.0, type:'melee' },
+  'wrench':  { icon:'🔩', dmg:18, cd:1.1, type:'melee' },
+  'axe':     { icon:'🪓', dmg:35, cd:2.0, type:'melee' },
+  'pistol':  { icon:'🔫', dmg:30, ammo:6,  type:'gun' },
+  'shotgun': { icon:'🔫', dmg:70, ammo:4,  type:'gun' },
+  'rifle':   { icon:'🔫', dmg:50, ammo:8,  type:'gun' },
+  'sniper':  { icon:'🎯', dmg:90, ammo:3,  type:'gun' },
 };
 
-// =====================================================================
-// UTIL
-// =====================================================================
-function toast(msg,type=''){
-  const t=document.createElement('div');
-  t.className='toast'+(type?' '+type:'');t.textContent=msg;
-  $('toasts').appendChild(t);
-  setTimeout(()=>t.remove(),3100);
+const CONSUMABLES = {
+  'bandage':     { icon:'🩹', effect:'hp+20', label:'+20 HP' },
+  'medkit':      { icon:'🧰', effect:'hp+60', label:'+60 HP' },
+  'medkit x2':   { icon:'🧰', effect:'hp+60', label:'+60 HP', count:2 },
+  'medkit x5':   { icon:'🧰', effect:'hp+60', label:'+60 HP', count:5 },
+  'canned food': { icon:'🥫', effect:'food+40', label:'+40 Food' },
+  'food x3':     { icon:'🍱', effect:'food+40', label:'+40 Food', count:3 },
+  'food x5':     { icon:'🍱', effect:'food+40', label:'+40 Food', count:5 },
+  'water bottle':{ icon:'💧', effect:'water+50', label:'+50 Water' },
+  'water':       { icon:'💧', effect:'water+50', label:'+50 Water' },
+  'water x2':    { icon:'💧', effect:'water+50', label:'+50 Water', count:2 },
+  'water x5':    { icon:'💧', effect:'water+50', label:'+50 Water', count:5 },
+  'berries':     { icon:'🫐', effect:'food+15', label:'+15 Food' },
+  'stim':        { icon:'💉', effect:'stam+100', label:'+100 Stamina' },
+  'antidote':    { icon:'🧪', effect:'hp+40', label:'+40 HP' },
+  'antibiotics': { icon:'💊', effect:'hp+30', label:'+30 HP' },
+  'hazmat':      { icon:'🥼', effect:'armor', label:'Armor' },
+  'backpack':    { icon:'🎒', effect:'slots+4', label:'+4 Slots' },
+  'vest':        { icon:'🦺', effect:'armor', label:'Armor' },
+  'ammo':        { icon:'🔸', effect:'ammo+6',  label:'+6 Ammo' },
+  'ammo x3':     { icon:'🔸', effect:'ammo+6',  label:'+6 Ammo', count:3 },
+  'ammo x5':     { icon:'🔸', effect:'ammo+6',  label:'+6 Ammo', count:5 },
+  'ammo x10':    { icon:'🔸', effect:'ammo+6',  label:'+6 Ammo', count:10 },
+  'ammo x20':    { icon:'🔸', effect:'ammo+6',  label:'+6 Ammo', count:20 },
+  'rope':        { icon:'🪢', effect:null, label:'Craft material' },
+  'gasoline':    { icon:'⛽', effect:null, label:'Craft material' },
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════════════════════
+let G = {
+  player: null,
+  hp: 100, maxHp: 100,
+  food: 80, water: 80,
+  stamina: 100, maxStamina: 100,
+  day: 1,
+  steps: 0,
+  stepTarget: 200,
+  totalSteps: 0,
+  currentZone: 0,
+  currentCell: null,
+  team: [],
+  inventory: [],
+  maxSlots: 8,
+  equippedWeapon: null,
+  equippedGun: null,
+  ammo: 0,
+  zombiesKilled: 0,
+  areasExplored: 0,
+  unlockedZones: 1,
+  deathCause: '',
+  // combat state
+  combat: null,
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  SCREENS
+// ═══════════════════════════════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
 }
-function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
-function rnd(a,b){return a+Math.random()*(b-a);}
-function pick(arr){return arr[Math.floor(Math.random()*arr.length)];}
-function shakeScreen(){
-  const w=$('world');w.classList.remove('shake');void w.offsetWidth;w.classList.add('shake');
-  setTimeout(()=>w.classList.remove('shake'),320);
+function showCharSelect() {
+  renderCharGrid();
+  showScreen('char-screen');
 }
-function dmgNumber(text,x,y,opts={}){
-  const el=document.createElement('div');
-  el.className='dmgnum'+(opts.crit?' crit':'')+(opts.player?' player':'');
-  el.textContent=text;el.style.left=x+'px';el.style.top=y+'px';
-  $('viewport').appendChild(el);
-  setTimeout(()=>el.remove(),800);
+function showHowTo() {
+  alert('HOW TO PLAY:\n\n📍 Walk in real life → tap "+50 Steps" for every 50 real steps\n\n🗺 Explore locations in each zone\n\n⚔ COMBAT:\n  • Watch for the REACT! flash\n  • Tap the shield to defend\n  • Stunned zombie = Attack window!\n  • Guns: aim & shoot before melee range\n\n📦 Loot weapons, food, water\n\n👥 Recruit allies to conquer dangerous zones\n\n💀 Survive: manage HP, Food, Water, Stamina');
 }
 
-// =====================================================================
-// SCREEN NAV
-// =====================================================================
-$('btn-start').onclick=()=>{$('screen-title').classList.add('hidden');buildClassSelect();$('screen-class').classList.remove('hidden');};
-$('btn-howto').onclick=()=>{$('screen-title').classList.add('hidden');$('screen-howto').classList.remove('hidden');};
-$('btn-back-title').onclick=()=>{$('screen-howto').classList.add('hidden');$('screen-title').classList.remove('hidden');};
-
-// =====================================================================
-// TITLE CANVAS — atmospheric dead-zone silhouette
-// =====================================================================
-function drawTitleCanvas(){
-  const cv=$('title-canvas'),ctx=cv.getContext('2d');
-  const W=cv.offsetWidth||380,H=cv.offsetHeight||160;
-  cv.width=W;cv.height=H;
-  // sky gradient
-  const sky=ctx.createLinearGradient(0,0,0,H);
-  sky.addColorStop(0,'#1a0d08');sky.addColorStop(.5,'#2a1a10');sky.addColorStop(1,'#0e0c09');
-  ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
-  // blood moon
-  ctx.beginPath();ctx.arc(W*.78,H*.2,18,0,Math.PI*2);
-  const mg=ctx.createRadialGradient(W*.78,H*.2,2,W*.78,H*.2,22);
-  mg.addColorStop(0,'rgba(255,140,40,.9)');mg.addColorStop(.5,'rgba(200,60,20,.6)');mg.addColorStop(1,'rgba(120,20,20,0)');
-  ctx.fillStyle=mg;ctx.fill();
-  // silhouette building skyline
-  ctx.fillStyle='#0a0c08';
-  [[0,.4,.12,.58],[.05,.3,.14,.6],[.15,.5,.08,.6],[.22,.35,.1,.6],[.32,.48,.12,.6],
-   [.44,.3,.1,.6],[.54,.42,.08,.6],[.62,.28,.12,.6],[.75,.45,.1,.6],[.85,.35,.08,.6]].forEach(([x,h,w,y])=>{
-    ctx.fillRect(x*W,h*H,w*W,(y-h)*H);
-  });
-  // dead tree silhouettes
-  function drawTree(x,y,h,spread){
-    ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,y-h);
-    ctx.strokeStyle='#0e100c';ctx.lineWidth=3;ctx.stroke();
-    for(let i=0;i<5;i++){
-      const bx=x+Math.sin(i*1.3)*spread*(i/5);const by=y-h*(0.3+i*0.12);
-      ctx.beginPath();ctx.moveTo(x,by);ctx.lineTo(bx,by-20*Math.random());
-      ctx.lineWidth=2-i*.3;ctx.stroke();
-    }
-  }
-  drawTree(W*.08,H*.62,60,30);drawTree(W*.2,H*.6,40,20);
-  drawTree(W*.88,H*.62,55,25);drawTree(W*.96,H*.6,35,18);
-  // zombie silhouettes walking toward viewer
-  function drawZombie(x,y,s,tilt){
-    ctx.save();ctx.translate(x,y);ctx.rotate(tilt);ctx.scale(s,s);
-    ctx.fillStyle='#0c0e0a';
-    ctx.fillRect(-6,-60,12,40);// torso
-    ctx.beginPath();ctx.arc(0,-66,10,0,Math.PI*2);ctx.fill();// head
-    ctx.fillRect(-10,-20,8,35);ctx.fillRect(2,-20,8,35);// legs
-    ctx.fillRect(-18,-56,6,30);ctx.fillRect(12,-56,6,30);// arms stretched out
-    ctx.restore();
-  }
-  drawZombie(W*.3,H*.9,1.2,-.05);
-  drawZombie(W*.5,H*.95,1.6,.03);
-  drawZombie(W*.65,H*.88,1.0,-.03);
-  drawZombie(W*.14,H*.92,0.9,.02);
-  // fog at bottom
-  const fg=ctx.createLinearGradient(0,H*.65,0,H);
-  fg.addColorStop(0,'rgba(6,7,5,0)');fg.addColorStop(1,'rgba(6,7,5,.85)');
-  ctx.fillStyle=fg;ctx.fillRect(0,H*.65,W,H*.35);
-}
-window.addEventListener('load',()=>{setTimeout(drawTitleCanvas,50);});
-window.addEventListener('resize',drawTitleCanvas);
-
-// =====================================================================
-// CLASS SELECT
-// =====================================================================
-function buildClassSelect(){
-  const grid=$('class-grid');grid.innerHTML='';
-  Object.values(CLASSES).forEach(cls=>{
-    const card=document.createElement('div');card.className='class-card';card.dataset.id=cls.id;
-    const bars=cls.bars.map(([l,v])=>{
-      const p=50+v*35;const c2=v<0?'neg':'';
-      return `<div class="cstat"><span class="cn">${l}</span><div class="cbar"><div class="cfill ${c2}" style="width:${p}%"></div></div></div>`;
-    }).join('');
-    card.innerHTML=`<div class="ci">${cls.tag.toUpperCase()}</div><div class="class-icon">${cls.icon}</div>
-      <div class="class-name">${cls.name}</div><div class="class-tag">${cls.tag}</div>
-      <div class="class-desc">${cls.desc}</div><div class="class-stats">${bars}</div>`;
-    card.onclick=()=>{
-      grid.querySelectorAll('.class-card').forEach(c=>c.classList.remove('selected'));
-      card.classList.add('selected');state.cls=cls;$('btn-class-confirm').disabled=false;
+// ═══════════════════════════════════════════════════════════════════════════
+//  CHARACTER SELECT
+// ═══════════════════════════════════════════════════════════════════════════
+let selectedChar = null;
+function renderCharGrid() {
+  const grid = document.getElementById('char-grid');
+  grid.innerHTML = '';
+  CHARACTERS.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'char-card';
+    div.innerHTML = `
+      <div class="char-icon">${c.icon}</div>
+      <div class="char-name">${c.name}</div>
+      <div class="char-desc">${c.desc}</div>
+      <div class="stat-row"><span class="stat-label">HP</span><div class="stat-bar"><div class="stat-fill s-hp" style="width:${c.hp/1.2}%"></div></div></div>
+      <div class="stat-row"><span class="stat-label">STR</span><div class="stat-bar"><div class="stat-fill s-str" style="width:${c.str*10}%"></div></div></div>
+      <div class="stat-row"><span class="stat-label">SPD</span><div class="stat-bar"><div class="stat-fill s-spd" style="width:${c.spd*10}%"></div></div></div>
+      <div class="stat-row"><span class="stat-label">STAM</span><div class="stat-bar"><div class="stat-fill s-stam" style="width:${c.stam*10}%"></div></div></div>
+      <div style="font-size:.58rem;color:#666;margin-top:.4rem;text-align:center;">✦ ${c.special}</div>
+    `;
+    div.onclick = () => {
+      selectedChar = c;
+      document.querySelectorAll('.char-card').forEach(x => x.classList.remove('selected'));
+      div.classList.add('selected');
+      document.getElementById('confirm-char').disabled = false;
     };
-    grid.appendChild(card);
+    grid.appendChild(div);
   });
 }
-$('btn-class-confirm').onclick=()=>{
-  if(!state.cls)return;applyClass(state.cls);
-  $('screen-class').classList.add('hidden');$('screen-perm').classList.remove('hidden');
-};
-function applyClass(cls){
-  const s=cls.stats;
-  state.maxHp=s.hp;state.hp=s.hp;state.stamina=s.stamina;state.maxStamina=s.stamina;
-  $('class-tag').textContent=cls.name;
-  if(cls.startKit.melee){
-    const w={...MELEE_WEAPONS.find(m=>m.id===cls.startKit.melee)};
-    w.dur=Math.round(w.dur*(s.durMult||1));
-    state.meleeBag.push(w);autoEquip(w,true);
-  }
-  if(cls.startKit.gun){
-    const g={...GUNS.find(g=>g.id===cls.startKit.gun)};g.ammo=g.maxAmmo;state.gun=g;
-  }
-  const sk=cls.startKit.supplies||{};
-  state.supplies.food+=(sk.food||0);state.supplies.water+=(sk.water||0);state.supplies.bandage+=(sk.bandage||0);
+
+function confirmChar() {
+  G.player = selectedChar;
+  G.hp = G.maxHp = selectedChar.hp;
+  G.stamina = G.maxStamina = selectedChar.stam * 10;
+  startGame();
 }
 
-// =====================================================================
-// PERMISSIONS
-// =====================================================================
-$('btn-grant').onclick=async()=>{
-  let gotGPS=false;
-  if('geolocation' in navigator){
-    try{
-      await new Promise((res,rej)=>{
-        navigator.geolocation.getCurrentPosition(p=>{gotGPS=true;res(p);},rej,{enableHighAccuracy:true,timeout:6000});
+// ═══════════════════════════════════════════════════════════════════════════
+//  GAME INIT
+// ═══════════════════════════════════════════════════════════════════════════
+function startGame() {
+  G.food = 80; G.water = 80;
+  G.day = 1; G.steps = 0; G.totalSteps = 0;
+  G.currentZone = 0; G.currentCell = null;
+  G.team = []; G.inventory = []; G.equippedWeapon = null; G.equippedGun = null; G.ammo = 0;
+  G.zombiesKilled = 0; G.areasExplored = 0; G.unlockedZones = 1; G.maxSlots = 8;
+  // reset zone explored state
+  ZONES.forEach(z => z.cells.forEach(c => c.explored = false));
+  renderGame();
+  showScreen('game-screen');
+  startDecayLoop();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  RENDER GAME
+// ═══════════════════════════════════════════════════════════════════════════
+function renderGame() {
+  const p = G.player;
+  document.getElementById('hud-name').textContent = p.name;
+  document.getElementById('bar-hp').style.width = (G.hp / G.maxHp * 100) + '%';
+  document.getElementById('val-hp').textContent = Math.ceil(G.hp);
+  document.getElementById('bar-food').style.width = G.food + '%';
+  document.getElementById('bar-water').style.width = G.water + '%';
+  document.getElementById('bar-stam').style.width = (G.stamina / G.maxStamina * 100) + '%';
+  document.getElementById('val-stam').textContent = Math.ceil(G.stamina);
+  document.getElementById('hud-day').textContent = G.day;
+  document.getElementById('step-count').textContent = G.steps;
+  document.getElementById('step-target').textContent = G.stepTarget;
+
+  const zone = ZONES[G.currentZone];
+  document.getElementById('hud-zone').textContent = zone.name;
+  renderZoneTabs();
+  renderZoneHeader();
+  renderMap();
+  renderTeam();
+  renderInventory();
+}
+
+function renderZoneTabs() {
+  const tabs = document.getElementById('zone-tabs');
+  tabs.innerHTML = '';
+  ZONES.forEach((z, i) => {
+    const tab = document.createElement('div');
+    tab.className = 'zone-tab' + (i === G.currentZone ? ' active' : '') + (i >= G.unlockedZones ? ' locked' : '') + (z.danger === 'HIGH' || z.danger === 'EXTREME' ? ' danger-zone' : '');
+    tab.textContent = z.name;
+    tab.onclick = () => { if (i < G.unlockedZones) { G.currentZone = i; renderGame(); } else toast('⚠ Clear more zones to unlock!', 'warn'); };
+    tabs.appendChild(tab);
+  });
+}
+
+function renderZoneHeader() {
+  const z = ZONES[G.currentZone];
+  document.getElementById('zone-title').textContent = z.name;
+  const tag = document.getElementById('zone-danger-tag');
+  tag.textContent = z.danger;
+  tag.className = 'zone-danger-tag ' + z.dangerClass;
+  document.getElementById('zone-desc').textContent = z.desc;
+}
+
+function renderMap() {
+  const grid = document.getElementById('map-grid');
+  grid.innerHTML = '';
+  const zone = ZONES[G.currentZone];
+  zone.cells.forEach(cell => {
+    const div = document.createElement('div');
+    const isCurrent = G.currentCell === cell.id;
+    div.className = 'map-cell' + (cell.explored ? ' explored' : '') + (isCurrent ? ' current' : '') + (cell.zombie ? ' danger' : '');
+    if (isCurrent && cell.zombie) div.classList.add('danger');
+
+    let badgeHtml = '';
+    if (!cell.explored) {
+      if (cell.badge === 'loot') badgeHtml = '<span class="cell-badge badge-loot">LOOT</span>';
+      else if (cell.badge === 'zombie') badgeHtml = '<span class="cell-badge badge-zombie">⚠</span>';
+      else if (cell.badge === 'boss') badgeHtml = '<span class="cell-badge badge-boss">BOSS</span>';
+      else if (cell.badge === 'ally') badgeHtml = '<span class="cell-badge badge-ally">ALLY</span>';
+    }
+
+    div.innerHTML = `
+      ${badgeHtml}
+      ${isCurrent ? '<div class="badge-current"></div>' : ''}
+      <div class="cell-icon">${cell.icon}</div>
+      <div class="cell-name">${cell.name}</div>
+    `;
+    div.onclick = () => exploreCell(cell);
+    grid.appendChild(div);
+  });
+}
+
+function renderTeam() {
+  const panel = document.getElementById('team-panel');
+  panel.innerHTML = '';
+  // Player card
+  const pc = document.createElement('div');
+  pc.className = 'team-card';
+  pc.innerHTML = `<div class="team-icon">${G.player.icon}</div><div class="team-name">${G.player.name}</div><div class="team-hp-bar"><div class="team-hp-fill" style="width:${G.hp/G.maxHp*100}%"></div></div>`;
+  panel.appendChild(pc);
+  G.team.forEach(a => {
+    const ac = document.createElement('div');
+    ac.className = 'team-card' + (a.dead ? ' dead' : '');
+    ac.innerHTML = `<div class="team-icon">${a.icon}</div><div class="team-name">${a.name}</div><div class="team-hp-bar"><div class="team-hp-fill" style="width:${a.hp/(a.maxHp||90)*100}%"></div></div>`;
+    panel.appendChild(ac);
+  });
+  if (G.team.length === 0) {
+    const hint = document.createElement('div');
+    hint.style.cssText = 'font-size:.65rem;color:var(--muted);padding:.5rem;align-self:center;';
+    hint.textContent = 'No teammates yet.';
+    panel.appendChild(hint);
+  }
+}
+
+function renderInventory() {
+  const grid = document.getElementById('inv-grid');
+  grid.innerHTML = '';
+  document.getElementById('inv-count-label').textContent = `(${G.inventory.length}/${G.maxSlots})`;
+  for (let i = 0; i < G.maxSlots; i++) {
+    const slot = document.createElement('div');
+    slot.className = 'inv-slot';
+    const item = G.inventory[i];
+    if (item) {
+      const isEquipped = item === G.equippedWeapon || item === G.equippedGun;
+      if (isEquipped) slot.classList.add('equipped');
+      slot.innerHTML = `<div class="inv-icon">${item.icon}</div><div class="inv-name">${item.name}</div>${item.count > 1 ? `<div class="inv-count">×${item.count}</div>` : ''}`;
+      slot.onclick = () => useItem(i);
+    } else {
+      slot.innerHTML = `<div style="color:#333;font-size:1rem;">+</div>`;
+    }
+    grid.appendChild(slot);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  STEPS / DAY
+// ═══════════════════════════════════════════════════════════════════════════
+function addSteps(n) {
+  if (G.stamina <= 10) { toast('Too exhausted to move!', 'warn'); return; }
+  G.steps += n;
+  G.totalSteps += n;
+  G.stamina = Math.max(0, G.stamina - n * 0.05 * (10 - G.player.spd) / 5);
+  G.stepTarget = ZONES[G.currentZone].steps;
+
+  // Check zone unlock
+  const totalExplored = ZONES[G.currentZone].cells.filter(c => c.explored).length;
+  if (G.steps >= G.stepTarget) {
+    if (G.currentZone + 1 < ZONES.length && G.unlockedZones <= G.currentZone + 1) {
+      if (totalExplored >= 2) {
+        G.unlockedZones = G.currentZone + 2;
+        addEvent(`> 🗺 ${ZONES[G.currentZone + 1].name} is now accessible!`, 'ev-team');
+        toast('New zone unlocked!', 'good');
+      }
+    }
+  }
+  renderGame();
+}
+
+function advanceDay() {
+  G.day++;
+  G.steps = 0;
+  G.stepTarget = ZONES[G.currentZone].steps;
+  G.food = Math.max(0, G.food - 12);
+  G.water = Math.max(0, G.water - 18);
+  G.stamina = Math.min(G.maxStamina, G.stamina + 30 + G.player.recover * 3);
+  addEvent(`> 🌅 Day ${G.day} begins.`, 'ev-info');
+  if (G.food < 20) addEvent('> ⚠ Critically low on food!', 'ev-warn');
+  if (G.water < 20) addEvent('> ⚠ Critically low on water!', 'ev-warn');
+  checkDeath();
+  renderGame();
+}
+
+let decayInterval = null;
+function startDecayLoop() {
+  if (decayInterval) clearInterval(decayInterval);
+  decayInterval = setInterval(() => {
+    G.food = Math.max(0, G.food - 0.3);
+    G.water = Math.max(0, G.water - 0.4);
+    renderGame();
+    if (G.food <= 0) die('Starvation');
+    if (G.water <= 0) die('Dehydration');
+  }, 10000);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  EXPLORE
+// ═══════════════════════════════════════════════════════════════════════════
+function exploreCell(cell) {
+  const zone = ZONES[G.currentZone];
+  // Check step requirement
+  const cellIndex = zone.cells.indexOf(cell);
+  const stepNeeded = Math.floor(zone.steps * (cellIndex + 1) / (zone.cells.length + 1));
+  if (G.steps < stepNeeded && !cell.explored) {
+    toast(`Need ${stepNeeded} steps to reach here`, 'warn');
+    return;
+  }
+
+  G.currentCell = cell.id;
+
+  if (!cell.explored) {
+    G.areasExplored++;
+    cell.explored = true;
+
+    // Ally encounter
+    if (cell.allyId) {
+      const ally = ALLIES.find(a => a.id === cell.allyId);
+      if (ally && !G.team.find(t => t.id === ally.id)) {
+        const allyLive = { ...ally, maxHp: ally.hp, dead: false };
+        G.team.push(allyLive);
+        addEvent(`> 👥 ${ally.name} joins your team!`, 'ev-team');
+        toast(`${ally.name} joined!`, 'good');
+      }
+    }
+
+    // Loot
+    if (cell.loots && cell.loots.length > 0) {
+      cell.loots.forEach(lootName => {
+        const baseKey = lootName.replace(/ x\d+$/, '');
+        const wep = WEAPONS[baseKey];
+        const con = CONSUMABLES[lootName] || CONSUMABLES[baseKey];
+        if (wep && G.inventory.length < G.maxSlots) {
+          const wepItem = { name: baseKey, icon: wep.icon, type: wep.type, dmg: wep.dmg, cd: wep.cd || 0, ammo: wep.ammo || 0 };
+          G.inventory.push(wepItem);
+          addEvent(`> 📦 Found ${wepItem.icon} ${baseKey}!`, 'ev-loot');
+        } else if (con) {
+          const count = con.count || 1;
+          for (let c = 0; c < count && G.inventory.length < G.maxSlots; c++) {
+            G.inventory.push({ name: lootName.replace(/ x\d+$/, ''), icon: con.icon, type: 'consumable', effect: con.effect, label: con.label, count: 1 });
+          }
+          addEvent(`> 📦 Found ${con.icon} ${lootName}!`, 'ev-loot');
+        }
       });
-    }catch(e){gotGPS=false;}
-  }
-  if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){
-    try{await DeviceOrientationEvent.requestPermission();}catch(e){}
-  }
-  startGame(gotGPS);
-};
-$('btn-sim').onclick=()=>startGame(false);
-
-function startGame(useGPS){
-  $('screen-perm').classList.add('hidden');
-  $('game').classList.add('active');
-  state.usingSim=!useGPS;
-  if(useGPS)initGPS();else{
-    $('sim-badge').classList.add('show');
-    setTimeout(()=>$('sim-badge').classList.remove('show'),5000);
-    state.simSpeedTarget=1.4;// auto slow walk
-  }
-  initOrientation();
-  buildParallaxWorld();
-  buildClouds();
-  buildStars();
-  buildFogCanvas();
-  spawnLoot();
-  $('btn-gun').disabled=!(state.gun&&state.gun.ammo>0);
-  renderHands();updateWeaponInfo();updateLimbUI();
-  if(useGPS)toast('GPS locked. Walk to scavenge the dead zone.','good');
-  else toast('Auto-sim active. Fight incoming hordes!','warnt');
-  lastFrameTime=performance.now();
-  requestAnimationFrame(loop);
-}
-
-// =====================================================================
-// GPS
-// =====================================================================
-function haversine(la1,lo1,la2,lo2){
-  const R=6371000,r=d=>d*Math.PI/180;
-  const dLa=r(la2-la1),dLo=r(lo2-lo1);
-  const a=Math.sin(dLa/2)**2+Math.cos(r(la1))*Math.cos(r(la2))*Math.sin(dLo/2)**2;
-  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-}
-function initGPS(){
-  navigator.geolocation.watchPosition(pos=>{
-    const{latitude:la,longitude:lo,speed:sp}=pos.coords;
-    if(state.lastGPS){
-      const d=haversine(state.lastGPS.lat,state.lastGPS.lon,la,lo);
-      if(d<50&&d>0.3)addDistance(d);
     }
-    state.speed=(sp!=null&&sp>=0)?sp:state.speed;
-    state.lastGPS={lat:la,lon:lo};
-  },()=>{
-    toast('GPS lost — switching to auto-sim.','danger');
-    state.usingSim=true;state.simSpeedTarget=1.4;
-  },{enableHighAccuracy:true,maximumAge:1000,timeout:8000});
-}
-function initOrientation(){
-  window.addEventListener('deviceorientation',e=>{if(e.alpha!=null)heading=e.alpha;});
-}
-let heading=0;
 
-function addDistance(meters){
-  const cs=state.cls.stats;
-  const legOk=state.limbs.legL&&state.limbs.legR?1:.55;
-  state.distance+=meters;
-  $('dist-val').textContent=Math.floor(state.distance);
-  state.scrollOffset+=meters;
-  scrollParallax();
-  state.lootProgress+=meters;checkLootArrival();
-  const noise=cs.noise||1;
-  if(state.speed>2.5)state.threatTimer+=meters*1.8*noise;
-  else state.threatTimer+=meters*0.6*noise;
-  checkThreatTrigger();
-  if(state.speed>2.2){
-    const drain=meters*(1.2/legOk)/(cs.staminaRegen||1)*0.75;
-    state.stamina=clamp(state.stamina-drain,0,state.maxStamina);
-  }
-  const hm=cs.hungerMult||1;
-  state.food=clamp(state.food-meters*.018*hm,0,100);
-  state.water=clamp(state.water-meters*.026*hm,0,100);
-  state.gameTime=(state.gameTime+meters*1.8)%1440;
-}
-
-// =====================================================================
-// PARALLAX WORLD BUILDING (ITD2-style corridor)
-// =====================================================================
-function buildParallaxWorld(){
-  // bg: distant dead-forest silhouettes
-  let bg='';
-  for(let i=0;i<28;i++){
-    const x=i*220+rnd(0,60),h=rnd(120,260),w=rnd(30,60);
-    bg+=`<div style="position:absolute;bottom:0;left:${x}px;width:${w}px;height:${h}px;
-      background:linear-gradient(180deg,#1c2218 0%,#101408 100%);
-      clip-path:polygon(0 100%,12% 0,30% 18%,50% 4%,70% 16%,88% 2%,100% 100%);
-      opacity:.75;"></div>`;
-    // dead tree variants
-    bg+=treeHTML(i*220+rnd(30,160),rnd(80,140),i%3);
-  }
-  $('layer-bg').innerHTML=bg;
-
-  // mid: wrecked cars, fences, poles
-  let mid='';
-  for(let i=0;i<18;i++){
-    const x=i*340+rnd(0,80);
-    mid+=pick([carHTML,signHTML,fenceHTML])(x);
-  }
-  $('layer-mid').innerHTML=mid;
-
-  // near: large fence posts, brush, debris
-  let near='';
-  for(let i=0;i<16;i++){
-    const x=i*280+rnd(0,60);
-    near+=`<div style="position:absolute;bottom:0;left:${x}px;width:${rnd(18,32)}px;height:${rnd(90,200)}px;
-      background:linear-gradient(180deg,#1e2219,#0e1009);border-radius:3px 3px 0 0;opacity:.9;"></div>`;
-    near+=`<div style="position:absolute;bottom:0;left:${x+18}px;width:${rnd(60,120)}px;height:${rnd(35,70)}px;
-      background:linear-gradient(135deg,#1a2016,#0e1008);
-      clip-path:polygon(0 100%,10% 0,50% 30%,90% 0,100% 100%);opacity:.8;"></div>`;
-  }
-  $('layer-near').innerHTML=near;
-
-  // ground decoration: cracks, debris on road
-  let gdec='';
-  for(let i=0;i<30;i++){
-    const x=i*280+rnd(0,100);
-    gdec+=`<div style="position:absolute;bottom:${rnd(5,40)}%;left:${x}px;
-      width:${rnd(40,90)}px;height:${rnd(8,18)}px;background:rgba(10,11,8,.6);
-      border-radius:2px;transform:rotate(${rnd(-15,15)}deg);"></div>`;
-  }
-  $('layer-ground-dec').innerHTML=gdec;
-}
-function treeHTML(x,h,type){
-  const colors=['#161a12','#1a1e14','#1c2016'];const c=colors[type%3];
-  return `<div style="position:absolute;bottom:0;left:${x}px;width:${rnd(12,22)}px;height:${h}px;
-    background:${c};border-radius:3px 3px 0 0;"></div>
-    <div style="position:absolute;bottom:${h*.55}px;left:${x-rnd(15,30)}px;width:${rnd(50,80)}px;height:${rnd(35,60)}px;
-    background:${c};clip-path:polygon(0 100%,50% 0,100% 100%);"></div>`;
-}
-function carHTML(x){
-  return `<div style="position:absolute;bottom:0;left:${x}px;width:110px;height:44px;
-    background:linear-gradient(135deg,#3a3228,#2a241c);border-radius:8px 12px 4px 4px;
-    box-shadow:inset 0 -10px 0 rgba(0,0,0,.4);">
-    <div style="position:absolute;top:-18px;left:16px;width:64px;height:20px;background:#2e2822;border-radius:8px 8px 0 0;"></div>
-    <div style="position:absolute;top:-8px;left:22px;width:50px;height:12px;background:rgba(80,90,100,.15);border-radius:3px;"></div>
-    </div>`;
-}
-function signHTML(x){
-  return `<div style="position:absolute;bottom:0;left:${x}px;width:8px;height:${rnd(70,110)}px;background:#3a3028;"></div>
-    <div style="position:absolute;bottom:${rnd(50,90)}px;left:${x-14}px;width:36px;height:22px;background:var(--rust-dark);border:2px solid #222;border-radius:2px;
-    display:flex;align-items:center;justify-content:center;font-size:8px;color:#e8e1d0;font-family:var(--font-d);letter-spacing:1px;">DEAD END</div>`;
-}
-function fenceHTML(x){
-  let f='';
-  for(let i=0;i<5;i++){
-    f+=`<div style="position:absolute;bottom:0;left:${x+i*20}px;width:5px;height:${rnd(60,90)}px;background:linear-gradient(180deg,#4a4038,#1e1a14);"></div>`;
-  }
-  f+=`<div style="position:absolute;bottom:${rnd(30,55)}px;left:${x}px;width:88px;height:5px;background:linear-gradient(90deg,#4a4038,#2a2820);"></div>`;
-  return f;
-}
-function buildClouds(){
-  // handled in sky update
-}
-function buildStars(){
-  const sl=$('stars-layer')||document.createElement('div');
-  sl.id='stars-layer';sl.style.cssText='position:absolute;inset:0;pointer-events:none;';
-  let html='';
-  for(let i=0;i<80;i++){
-    const s=rnd(.5,2.5),delay=rnd(0,4);
-    html+=`<div class="star" style="left:${rnd(0,100)}%;top:${rnd(0,60)}%;width:${s}px;height:${s}px;opacity:0;animation-delay:${delay}s;"></div>`;
-  }
-  sl.innerHTML=html;
-  if(!$('stars-layer'))$('sky-layer').parentNode.insertBefore(sl,$('sky-layer').nextSibling);
-}
-
-// Fog canvas — volumetric atmospheric effect
-let fogCtx;
-function buildFogCanvas(){
-  const cv=$('fog-canvas');
-  cv.width=window.innerWidth;cv.height=window.innerHeight;
-  fogCtx=cv.getContext('2d');
-  window.addEventListener('resize',()=>{cv.width=window.innerWidth;cv.height=window.innerHeight;});
-}
-let fogOffset=0;
-function renderFog(dt){
-  if(!fogCtx)return;
-  const W=fogCtx.canvas.width,H=fogCtx.canvas.height;
-  fogCtx.clearRect(0,0,W,H);
-  // determine fog density from time and weather
-  const isNight=state.gameTime<360||state.gameTime>=1260;
-  const isRain=state.weather==='rain';
-  const density=isNight?.88:(isRain?.75:.62);
-  const fogColor=isNight?'6,8,14':(isRain?'14,18,20':'10,12,8');
-  fogOffset+=dt*18;
-
-  // layered horizontal fog bands converging at horizon
-  for(let layer=0;layer<4;layer++){
-    const yBase=H*(0.42+layer*.06);
-    const alpha=(density-.1*layer)*(0.3+layer*.15);
-    const xOff=Math.sin(fogOffset*.001+layer)*(W*.08);
-    const grd=fogCtx.createLinearGradient(0,yBase-40,0,yBase+80+layer*60);
-    grd.addColorStop(0,`rgba(${fogColor},0)`);
-    grd.addColorStop(.4,`rgba(${fogColor},${alpha.toFixed(2)})`);
-    grd.addColorStop(1,`rgba(${fogColor},${(alpha*.5).toFixed(2)})`);
-    fogCtx.fillStyle=grd;
-    fogCtx.beginPath();
-    fogCtx.moveTo(-xOff,yBase-40);
-    for(let x=0;x<=W;x+=W/8){
-      fogCtx.lineTo(x-xOff,yBase+Math.sin(x*.003+fogOffset*.002+layer)*20-layer*5);
+    // Zombie encounter
+    if (cell.zombie) {
+      const teamSize = G.team.filter(t => !t.dead).length;
+      const needed = zone.unlockZombies;
+      if (G.zombiesKilled < needed && teamSize < Math.ceil(needed / 3)) {
+        addEvent(`> ⚠ Too dangerous here. Need more team/kills first.`, 'ev-warn');
+        toast('Build your team first!', 'warn');
+        cell.explored = false;
+        G.areasExplored = Math.max(0, G.areasExplored - 1);
+        renderGame();
+        return;
+      }
+      renderGame();
+      setTimeout(() => startCombat(cell.zombie, cell), 400);
+      return;
     }
-    fogCtx.lineTo(W+Math.abs(xOff),yBase+200);fogCtx.lineTo(-Math.abs(xOff),yBase+200);fogCtx.closePath();
-    fogCtx.fill();
+  } else {
+    addEvent(`> 👁 ${cell.name} — already explored.`, 'ev-info');
+  }
+  renderGame();
+}
+
+function addEvent(text, cls) {
+  const feed = document.getElementById('event-feed');
+  const line = document.createElement('div');
+  line.className = 'event-line ' + (cls || 'ev-info');
+  line.textContent = text;
+  feed.appendChild(line);
+  feed.scrollTop = feed.scrollHeight;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  USE ITEM
+// ═══════════════════════════════════════════════════════════════════════════
+function useItem(idx) {
+  const item = G.inventory[idx];
+  if (!item) return;
+
+  if (item.type === 'melee') {
+    G.equippedWeapon = item;
+    toast(`${item.icon} ${item.name} equipped!`, 'good');
+    renderGame();
+    return;
+  }
+  if (item.type === 'gun') {
+    G.equippedGun = item;
+    G.ammo += item.ammo;
+    G.inventory.splice(idx, 1);
+    toast(`${item.icon} ${item.name} equipped! (${item.ammo} ammo)`, 'good');
+    renderGame();
+    return;
+  }
+  if (item.type === 'consumable') {
+    applyEffect(item.effect);
+    toast(`${item.icon} ${item.label}`, 'good');
+    G.inventory.splice(idx, 1);
+    renderGame();
+  }
+}
+
+function applyEffect(eff) {
+  if (!eff) return;
+  if (eff.startsWith('hp+')) G.hp = Math.min(G.maxHp, G.hp + parseInt(eff.slice(3)));
+  if (eff.startsWith('food+')) G.food = Math.min(100, G.food + parseInt(eff.slice(5)));
+  if (eff.startsWith('water+')) G.water = Math.min(100, G.water + parseInt(eff.slice(6)));
+  if (eff.startsWith('stam+')) G.stamina = Math.min(G.maxStamina, G.stamina + parseInt(eff.slice(5)));
+  if (eff.startsWith('ammo+')) G.ammo += parseInt(eff.slice(5));
+  if (eff.startsWith('slots+')) G.maxSlots += parseInt(eff.slice(6));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  COMBAT
+// ═══════════════════════════════════════════════════════════════════════════
+let combatTimeout = null;
+let reactTimeout = null;
+let cooldownInterval = null;
+let staminaRegenInterval = null;
+
+function startCombat(zombieType, cell) {
+  const zDef = ZOMBIES[zombieType];
+  G.combat = {
+    type: zombieType,
+    def: zDef,
+    hp: zDef.hp,
+    maxHp: zDef.hp,
+    phase: 'range', // range → melee-idle → reacting → stunned → melee-idle
+    stunned: false,
+    blocked: false,
+    atkCooldown: false,
+    cell: cell,
+    teamBonus: G.team.filter(t => !t.dead).length * 0.15,
+  };
+  if (G.equippedGun && G.ammo > 0) {
+    G.combat.phase = 'range';
+    document.getElementById('range-zone').classList.add('show');
+    document.getElementById('ammo-label').textContent = `Ammo: ${G.ammo}`;
+  } else {
+    G.combat.phase = 'melee-idle';
+    document.getElementById('range-zone').classList.remove('show');
   }
 
-  // horizon veil
-  const hveil=fogCtx.createLinearGradient(0,H*.38,0,H*.56);
-  hveil.addColorStop(0,`rgba(${fogColor},${(density*.6).toFixed(2)})`);
-  hveil.addColorStop(1,'rgba('+fogColor+',0)');
-  fogCtx.fillStyle=hveil;fogCtx.fillRect(0,H*.38,W,H*.18);
+  renderCombatHUD();
+  renderZombieSVG(zombieType);
+  clearCombatLog();
+  addCombatLog(`${zDef.icon} ${zDef.name} appears!`, 'cl-hit');
+  if (G.equippedGun && G.ammo > 0) {
+    addCombatLog('Range! Shoot before it closes in.', 'cl-hit');
+    document.getElementById('combat-status').textContent = 'Aim and fire!';
+  } else {
+    addCombatLog('Entering melee range!', 'cl-hit');
+    scheduleZombieAttack();
+  }
+
+  document.getElementById('attack-zone').classList.remove('show');
+  document.getElementById('tap-ring').className = 'tap-ring';
+  document.getElementById('tap-icon').textContent = '🛡';
+  document.getElementById('react-text').classList.remove('show');
+
+  showScreen('combat-screen');
+  if (combatTimeout) clearTimeout(combatTimeout);
 }
 
-// Forward-zoom parallax: objects grow from the horizon (top of their layer)
-// simulating running toward them. Each layer scales at a different rate.
-// We oscillate the scale with a sawtooth so it resets seamlessly.
-function scrollParallax(){
-  const s = state.scrollOffset;
-  const W = window.innerWidth;
-  const horizonY = window.innerHeight * 0.48; // where road meets sky
-
-  // Sawtooth cycle: every CYCLE_DIST meters the zoom resets, creating an
-  // "infinite corridor" effect without objects leaving the screen permanently.
-  const CYCLE = 80; // meters per full zoom cycle
-
-  // bg layer: slow zoom, subtle lateral drift for parallax depth
-  const bgPhase = (s % CYCLE) / CYCLE;         // 0..1
-  const bgScale = 1 + bgPhase * 0.35;
-  const bgDrift  = Math.sin(s * 0.08) * 22;   // gentle side-drift
-  $('layer-bg').style.transformOrigin = `${W/2 + bgDrift}px ${horizonY}px`;
-  $('layer-bg').style.transform = `scale(${bgScale.toFixed(4)}) translateX(${bgDrift}px)`;
-
-  // mid layer: faster zoom
-  const midPhase = (s % CYCLE) / CYCLE;
-  const midScale = 1 + midPhase * 0.65;
-  const midDrift  = Math.sin(s * 0.12 + 1) * 38;
-  $('layer-mid').style.transformOrigin = `${W/2 + midDrift}px ${horizonY}px`;
-  $('layer-mid').style.transform = `scale(${midScale.toFixed(4)}) translateX(${midDrift}px)`;
-
-  // near layer: fast zoom, strong drift — creates sense of rushing past
-  const nearPhase = (s % CYCLE) / CYCLE;
-  const nearScale = 1 + nearPhase * 1.1;
-  const nearDrift  = Math.sin(s * 0.18 + 2) * 60;
-  $('layer-near').style.transformOrigin = `${W/2 + nearDrift}px ${horizonY}px`;
-  $('layer-near').style.transform = `scale(${nearScale.toFixed(4)}) translateX(${nearDrift}px)`;
-
-  // ground decorations: strongest zoom, tiles toward viewer
-  const gdPhase = (s % CYCLE) / CYCLE;
-  const gdScale = 1 + gdPhase * 1.8;
-  $('layer-ground-dec').style.transformOrigin = `${W/2}px 0px`;
-  $('layer-ground-dec').style.transform = `scale(${gdScale.toFixed(4)})`;
+function renderCombatHUD() {
+  const c = G.combat;
+  document.getElementById('zombie-name-label').textContent = c.def.name;
+  document.getElementById('zombie-hp-bar').style.width = (c.hp / c.maxHp * 100) + '%';
+  document.getElementById('zombie-hp-val').textContent = Math.ceil(c.hp) + ' HP';
+  document.getElementById('c-hp-val').textContent = Math.ceil(G.hp);
+  document.getElementById('c-bar-hp').style.width = (G.hp / G.maxHp * 100) + '%';
+  document.getElementById('c-stam-val').textContent = Math.ceil(G.stamina);
+  document.getElementById('c-bar-stam').style.width = (G.stamina / G.maxStamina * 100) + '%';
+  if (G.equippedWeapon) {
+    document.getElementById('weapon-label').textContent = `${G.equippedWeapon.icon} ${G.equippedWeapon.name}`;
+  } else {
+    document.getElementById('weapon-label').textContent = 'Fists (weak)';
+  }
+  document.getElementById('atk-btn').disabled = false;
+  document.getElementById('cooldown-fill').style.width = '0%';
 }
 
-// Animate zombies approaching: scale them up over time during combat
-function updateZombieApproach(dt){
-  if(state.mode !== 'combat') return;
-  activeZombies.forEach(z => {
-    if(z.dead) return;
-    // grow the sprite toward viewer
-    z.approachScale = Math.min((z.approachScale||1) + dt * 0.08, 2.4);
-    const sc = z.approachScale;
-    // also drift slightly left/right for menace
-    z.approachX = (z.approachX||0) + Math.sin(performance.now()*0.001 + z.maxHp) * 0.3;
-    z.el.style.transform = `scale(${sc.toFixed(3)}) translateX(${z.approachX.toFixed(1)}px)`;
-    // when very close (large), apply lunge shake
-    if(sc > 2.1 && !z._lungeTriggered){
-      z._lungeTriggered = true;
-      z.el.style.filter = 'brightness(1.2)';
+function renderZombieSVG(type) {
+  const wrap = document.getElementById('zombie-wrap');
+  const colors = {
+    walker:  { body: '#2d3a1a', skin: '#5a7a3a', eye: '#cc0000' },
+    crawler: { body: '#1a1a2a', skin: '#4a4a6a', eye: '#8800cc' },
+    runner:  { body: '#2a1a0a', skin: '#7a5a3a', eye: '#ff8800' },
+    brute:   { body: '#3a0a0a', skin: '#7a2a2a', eye: '#ff0000' },
+    boss:    { body: '#1a0a2a', skin: '#5a3a7a', eye: '#ff00ff' },
+  };
+  const scale = { walker: 1, crawler: .8, runner: 1.1, brute: 1.3, boss: 1.5 }[type] || 1;
+  const c = colors[type] || colors.walker;
+  const s = scale;
+  const w = Math.round(120 * s), h = Math.round(160 * s);
+
+  wrap.innerHTML = `
+    <div class="react-flash"><div class="react-text" id="react-text">REACT!</div></div>
+    <svg id="zombie-svg" width="${w}" height="${h}" viewBox="0 0 120 160" class="zombie-idle">
+      <!-- legs -->
+      <rect x="38" y="110" width="18" height="45" rx="4" fill="${c.body}"/>
+      <rect x="64" y="113" width="18" height="43" rx="4" fill="${c.body}" transform="rotate(5,73,135)"/>
+      <rect x="30" y="148" width="26" height="12" rx="3" fill="#0a0a0a"/>
+      <rect x="58" y="150" width="26" height="11" rx="3" fill="#0a0a0a"/>
+      <!-- body -->
+      <rect x="30" y="65" width="60" height="50" rx="5" fill="${c.body}"/>
+      <!-- chest -->
+      <rect x="30" y="65" width="60" height="32" rx="5" fill="${c.body}" opacity=".7"/>
+      <!-- arms -->
+      <rect x="8" y="68" width="28" height="14" rx="7" fill="${c.skin}"/>
+      <rect x="84" y="62" width="28" height="14" rx="7" fill="${c.skin}" transform="rotate(-10,98,69)"/>
+      <!-- clawed hands -->
+      <ellipse cx="11" cy="75" rx="9" ry="8" fill="${c.skin}"/>
+      <ellipse cx="109" cy="66" rx="9" ry="8" fill="${c.skin}"/>
+      <!-- fingers -->
+      <line x1="5" y1="70" x2="2" y2="64" stroke="#888" stroke-width="2" stroke-linecap="round"/>
+      <line x1="9" y1="68" x2="7" y2="62" stroke="#888" stroke-width="2" stroke-linecap="round"/>
+      <line x1="13" y1="68" x2="12" y2="62" stroke="#888" stroke-width="2" stroke-linecap="round"/>
+      <line x1="103" y1="61" x2="101" y2="55" stroke="#888" stroke-width="2" stroke-linecap="round"/>
+      <line x1="108" y1="60" x2="107" y2="54" stroke="#888" stroke-width="2" stroke-linecap="round"/>
+      <line x1="113" y1="62" x2="113" y2="56" stroke="#888" stroke-width="2" stroke-linecap="round"/>
+      <!-- head -->
+      <rect x="33" y="12" width="54" height="58" rx="8" fill="${c.skin}"/>
+      <!-- jaw -->
+      <rect x="38" y="55" width="44" height="18" rx="4" fill="${c.skin}" opacity=".8"/>
+      <!-- eyes -->
+      <ellipse cx="50" cy="36" rx="8" ry="9" fill="#0a0000"/>
+      <ellipse cx="70" cy="36" rx="8" ry="9" fill="#0a0000"/>
+      <ellipse cx="50" cy="37" rx="5" ry="6" fill="${c.eye}"/>
+      <ellipse cx="70" cy="37" rx="5" ry="6" fill="${c.eye}"/>
+      <ellipse cx="51" cy="37" rx="2" ry="3" fill="#fff" opacity=".4"/>
+      <ellipse cx="71" cy="37" rx="2" ry="3" fill="#fff" opacity=".4"/>
+      <!-- mouth / teeth -->
+      <rect x="42" y="58" width="36" height="10" rx="3" fill="#2a0000"/>
+      <rect x="46" y="59" width="5" height="8" rx="1" fill="#ccc"/>
+      <rect x="55" y="59" width="4" height="8" rx="1" fill="#ccc"/>
+      <rect x="63" y="59" width="5" height="8" rx="1" fill="#ccc"/>
+      <rect x="72" y="60" width="4" height="7" rx="1" fill="#bbb"/>
+      <!-- wounds / rot -->
+      <ellipse cx="52" cy="24" rx="4" ry="3" fill="#8b0000" opacity=".6"/>
+      <ellipse cx="72" cy="22" rx="3" ry="2" fill="#8b0000" opacity=".5"/>
+      <line x1="40" y1="42" x2="48" y2="50" stroke="#5a0000" stroke-width="1.5" opacity=".7"/>
+      <!-- hair (sparse) -->
+      <rect x="33" y="12" width="14" height="10" rx="3" fill="${c.body}" opacity=".8"/>
+      <rect x="73" y="10" width="14" height="12" rx="3" fill="${c.body}" opacity=".8"/>
+      ${type === 'boss' ? `
+        <polygon points="60,0 55,10 65,10" fill="#ff00ff" opacity=".7"/>
+        <polygon points="40,8 36,16 44,16" fill="#aa00aa" opacity=".7"/>
+        <polygon points="80,8 76,16 84,16" fill="#aa00aa" opacity=".7"/>
+        <ellipse cx="50" cy="36" rx="3" ry="3" fill="#fff" opacity=".8"/>
+        <ellipse cx="70" cy="36" rx="3" ry="3" fill="#fff" opacity=".8"/>
+      ` : ''}
+      ${type === 'brute' ? `
+        <rect x="24" y="62" width="36" height="20" rx="8" fill="${c.skin}"/>
+        <rect x="60" y="56" width="36" height="20" rx="8" fill="${c.skin}"/>
+      ` : ''}
+    </svg>
+  `;
+}
+
+function scheduleZombieAttack() {
+  if (!G.combat) return;
+  G.combat.phase = 'melee-idle';
+  document.getElementById('combat-status').textContent = 'Watch for attack...';
+  const delay = G.combat.def.react + Math.random() * 600;
+  combatTimeout = setTimeout(triggerZombieReact, delay);
+}
+
+function triggerZombieReact() {
+  if (!G.combat) return;
+  G.combat.phase = 'reacting';
+  G.combat.blocked = false;
+  document.getElementById('combat-status').textContent = '⚠ REACT NOW!';
+
+  const ring = document.getElementById('tap-ring');
+  ring.className = 'tap-ring danger-ring';
+  document.getElementById('tap-icon').textContent = '⚡';
+
+  const rt = document.getElementById('react-text');
+  rt.classList.add('show');
+
+  const svg = document.getElementById('zombie-svg');
+  if (svg) { svg.className = ''; svg.classList.add('zombie-attacking'); }
+
+  combatTimeout = setTimeout(() => {
+    if (!G.combat || G.combat.phase !== 'reacting') return;
+    // Player missed the react window
+    zombieHitsPlayer();
+  }, 1200);
+}
+
+function tapDefend() {
+  if (!G.combat) return;
+  if (G.combat.phase !== 'reacting') {
+    // accidental tap
+    return;
+  }
+  clearTimeout(combatTimeout);
+  G.combat.phase = 'stunned';
+  G.combat.blocked = true;
+
+  const ring = document.getElementById('tap-ring');
+  ring.className = 'tap-ring success-ring';
+  document.getElementById('tap-icon').textContent = '🛡';
+  document.getElementById('react-text').classList.remove('show');
+  document.getElementById('combat-status').textContent = '✓ BLOCKED! ATTACK NOW!';
+
+  const svg = document.getElementById('zombie-svg');
+  if (svg) { svg.className = ''; svg.classList.add('zombie-stunned'); }
+
+  addCombatLog('You blocked the attack!', 'cl-block');
+  addCombatLog('Zombie is STUNNED — Attack!', 'cl-stun');
+
+  document.getElementById('tap-zone').style.display = 'none';
+  document.getElementById('attack-zone').classList.add('show');
+
+  // Stun window: if player doesn't attack in time, zombie recovers
+  combatTimeout = setTimeout(() => {
+    if (!G.combat || G.combat.phase !== 'stunned') return;
+    addCombatLog('Zombie recovered!', 'cl-miss');
+    endStun();
+  }, 3500);
+}
+
+function meleeAttack() {
+  if (!G.combat || G.combat.phase !== 'stunned') return;
+  if (G.combat.atkCooldown) return;
+  if (G.stamina < 5) { addCombatLog('Too exhausted!', 'cl-miss'); return; }
+
+  clearTimeout(combatTimeout);
+  G.combat.atkCooldown = true;
+
+  const wep = G.equippedWeapon;
+  const baseDmg = wep ? wep.dmg : 8;
+  const strMult = G.player.str / 5;
+  const teamBonus = 1 + G.combat.teamBonus;
+  const dmg = Math.round(baseDmg * strMult * teamBonus * (0.85 + Math.random() * .3));
+  const cd = wep ? (wep.cd + (10 - G.player.str) * 0.1) : 1.5;
+  const stamCost = wep ? 10 + (cd * 3) : 8;
+
+  G.combat.hp = Math.max(0, G.combat.hp - dmg);
+  G.stamina = Math.max(0, G.stamina - stamCost);
+
+  // Hit animation
+  const svg = document.getElementById('zombie-svg');
+  if (svg) { svg.className = ''; svg.classList.add('zombie-hit-anim'); }
+
+  // Floating damage number
+  showDmgNumber(dmg, '#ff4444');
+  addCombatLog(`${wep ? wep.icon : '👊'} Hit for ${dmg} dmg!`, 'cl-hit');
+
+  // Blood splat
+  addBloodSplat();
+
+  renderCombatHUD();
+
+  if (G.combat.hp <= 0) {
+    zombieDies();
+    return;
+  }
+
+  // Cooldown bar
+  let cd_ms = cd * 1000;
+  const btn = document.getElementById('atk-btn');
+  const fill = document.getElementById('cooldown-fill');
+  btn.disabled = true;
+  fill.style.transition = `width ${cd_ms}ms linear`;
+  fill.style.width = '100%';
+
+  // Stam regen
+  if (staminaRegenInterval) clearInterval(staminaRegenInterval);
+  staminaRegenInterval = setInterval(() => {
+    G.stamina = Math.min(G.maxStamina, G.stamina + G.player.recover * 0.5);
+    renderCombatHUD();
+  }, 500);
+
+  setTimeout(() => {
+    G.combat.atkCooldown = false;
+    btn.disabled = false;
+    fill.style.transition = '';
+    fill.style.width = '0%';
+    if (G.combat && G.combat.phase === 'stunned') {
+      // Still in stun window, schedule recovery
+      combatTimeout = setTimeout(() => {
+        if (G.combat && G.combat.phase === 'stunned') {
+          addCombatLog('Zombie recovered!', 'cl-miss');
+          endStun();
+        }
+      }, 1500);
     }
-  });
+  }, cd_ms);
 }
 
-// =====================================================================
-// DAY / NIGHT + WEATHER
-// =====================================================================
-function updateDayNight(){
-  const t=state.gameTime;
-  let skyTop,skyBot,ambScale;
-  if(t<360||t>=1320){skyTop='#000204';skyBot='#060708';ambScale=.32;}
-  else if(t<480){const p=(t-360)/120;skyTop=lerpColor('#000204','#1a0d08',p);skyBot=lerpColor('#060708','#2a1208',p);ambScale=.32+p*.35;}
-  else if(t<1080){skyTop='#2a3a5a';skyBot='#4a5a3a';ambScale=.82+Math.sin((t-480)/600*Math.PI)*.12;}
-  else{const p=(t-1080)/240;skyTop=lerpColor('#2a3a5a','#000204',p);skyBot=lerpColor('#4a5a3a','#060708',p);ambScale=.82-p*.5;}
-  $('sky-layer').style.background=`linear-gradient(180deg,${skyTop} 0%,${skyBot} 100%)`;
-  document.getElementById('world').style.filter=`brightness(${ambScale.toFixed(2)})`;
-
-  const isNight=t<360||t>=1260;
-  $('stars-layer').style.opacity=isNight?.9:(t<480?(t-360)/120*.9:0);
-  $('moon-orb').style.opacity=isNight?.8:0;
-
-  const sunEl=$('sun-orb');
-  if(t>=360&&t<1140){
-    const prog=(t-360)/780;
-    sunEl.style.opacity=Math.sin(prog*Math.PI).toFixed(2);
-    sunEl.style.left=(18+prog*64)+'%';sunEl.style.top=(H*.12-Math.sin(prog*Math.PI)*H*.18)+'px';
-  }else{sunEl.style.opacity='0';}
-
-  const hh=Math.floor(t/60).toString().padStart(2,'0');
-  const mm=Math.floor(t%60).toString().padStart(2,'0');
-  $('time-val').textContent=`${hh}:${mm}`;
+function endStun() {
+  if (!G.combat) return;
+  G.combat.phase = 'melee-idle';
+  G.combat.atkCooldown = false;
+  document.getElementById('tap-zone').style.display = '';
+  document.getElementById('attack-zone').classList.remove('show');
+  document.getElementById('tap-ring').className = 'tap-ring';
+  document.getElementById('tap-icon').textContent = '🛡';
+  const svg = document.getElementById('zombie-svg');
+  if (svg) { svg.className = ''; svg.classList.add('zombie-idle'); }
+  scheduleZombieAttack();
 }
-const H=window.innerHeight;
-function lerpColor(a,b,t){
-  const p=s=>parseInt(s,16);
-  const r1=p(a.slice(1,3)),g1=p(a.slice(3,5)),b1=p(a.slice(5,7));
-  const r2=p(b.slice(1,3)),g2=p(b.slice(3,5)),b2=p(b.slice(5,7));
-  const lr=Math.round(r1+(r2-r1)*t),lg=Math.round(g1+(g2-g1)*t),lb=Math.round(b1+(b2-b1)*t);
-  return `#${lr.toString(16).padStart(2,'0')}${lg.toString(16).padStart(2,'0')}${lb.toString(16).padStart(2,'0')}`;
+
+function zombieHitsPlayer() {
+  if (!G.combat) return;
+  const def = G.combat.def;
+  const dmg = Math.round(def.dmg * (0.8 + Math.random() * .4));
+  G.hp = Math.max(0, G.hp - dmg);
+  addCombatLog(`${def.icon} ${def.name} hit you for ${dmg}!`, 'cl-hit');
+  document.getElementById('react-text').classList.remove('show');
+  document.getElementById('tap-ring').className = 'tap-ring';
+  document.getElementById('tap-icon').textContent = '🛡';
+  renderCombatHUD();
+
+  if (G.hp <= 0) { endCombat(false); die('Zombie attack'); return; }
+  scheduleZombieAttack();
 }
-function updateWeather(dt){
-  state.weatherTimer-=dt;
-  if(state.weatherTimer<=0){
-    state.weatherTimer=rnd(90,200);
-    if(state.weather==='clear'&&Math.random()<.28){
-      state.weather='rain';buildRain();$('rain-layer').classList.add('on');
-      toast('Rain — visibility dropping.','warnt');
-    }else if(state.weather==='rain'){
-      state.weather='clear';$('rain-layer').classList.remove('on');
-      toast('Rain clears.','');
+
+function zombieDies() {
+  if (!G.combat) return;
+  clearTimeout(combatTimeout);
+  G.combat.phase = 'dead';
+  G.zombiesKilled++;
+  const svg = document.getElementById('zombie-svg');
+  if (svg) { svg.className = ''; svg.classList.add('zombie-dying'); }
+  addCombatLog(`☠ ${G.combat.def.name} eliminated!`, 'cl-kill');
+  document.getElementById('combat-status').textContent = '✓ ZOMBIE KILLED!';
+
+  if (staminaRegenInterval) clearInterval(staminaRegenInterval);
+
+  // Final boss win condition
+  const cell = G.combat.cell;
+  const isWin = cell && cell.finalBoss;
+
+  setTimeout(() => {
+    endCombat(true);
+    if (isWin) winGame();
+    else {
+      showScreen('game-screen');
+      addEvent(`> ☠ Killed ${G.combat ? G.combat.def.name : 'zombie'}!`, 'ev-danger');
+      renderGame();
     }
-  }
-}
-function buildRain(){
-  const r=$('rain-layer');if(r.dataset.built)return;
-  let html='';
-  for(let i=0;i<70;i++){
-    const l=rnd(0,100),dur=rnd(.4,1),del=rnd(0,1),h=rnd(40,80);
-    html+=`<div class="raindrop" style="left:${l}%;height:${h}px;animation-duration:${dur}s;animation-delay:${del}s;"></div>`;
-  }
-  r.innerHTML=html;r.dataset.built='1';
+  }, 1200);
 }
 
-// =====================================================================
-// HANDS
-// =====================================================================
-function handSVG(weapon,flipped=false){
-  const skin='#c09070',vein='#8a5a3a',sleeve='#3a3028';
-  let wSVG='';
-  if(weapon){
-    switch(weapon.id){
-      case 'knife':    wSVG=`<polygon points="70,-30 84,-30 80,80 68,80" fill="#c0c0b8"/><rect x="68" y="75" width="16" height="28" fill="#5a3820"/>`;break;
-      case 'machete':  wSVG=`<polygon points="55,-50 88,-50 83,95 60,95" fill="#a8a8a0" stroke="#888" stroke-width="1"/><rect x="58" y="90" width="26" height="35" fill="#3a2818"/>`;break;
-      case 'knuckles': wSVG=`<rect x="32" y="55" width="76" height="26" rx="6" fill="#c8c8c0" stroke="#888" stroke-width="1.5"/>`;break;
-      case 'shortsword':wSVG=`<polygon points="62,-40 84,-40 80,100 65,100" fill="#d0d0c8"/><rect x="63" y="96" width="20" height="34" fill="#4a3020"/>`;break;
-      case 'sword':    wSVG=`<polygon points="55,-70 88,-70 84,120 58,120" fill="#d8d8d0"/><rect x="58" y="116" width="24" height="40" fill="#3a2818"/>`;break;
-      case 'spear':    wSVG=`<rect x="66" y="-100" width="10" height="260" fill="#7a5030"/><polygon points="60,-100 78,-100 69,-135" fill="#c0c0b8"/>`;break;
-      case 'shield':   wSVG=`<rect x="8" y="-20" width="110" height="150" rx="18" fill="#5a4a30" stroke="#2a2018" stroke-width="5"/>
-        <line x1="63" y1="-20" x2="63" y2="130" stroke="rgba(0,0,0,.3)" stroke-width="2"/>`;break;
-      case 'doublesword':wSVG=`<polygon points="38,-40 56,-40 52,100 40,100" fill="#d0d0c8"/><polygon points="72,-40 90,-40 86,100 74,100" fill="#d0d0c8"/>`;break;
-      default:break;
-    }
-  }
-  return `<svg viewBox="-50 -80 260 380" xmlns="http://www.w3.org/2000/svg">
-    ${wSVG}
-    <rect x="30" y="160" width="90" height="90" rx="12" fill="${sleeve}"/>
-    <path d="M55,80 C35,150 40,210 60,280 L110,280 C115,200 120,150 108,80 Z" fill="${skin}" stroke="${vein}" stroke-width="1.5"/>
-    <ellipse cx="82" cy="72" rx="36" ry="20" fill="${skin}" stroke="${vein}" stroke-width="1"/>
-    <path d="M55,120 Q82,128 110,120" stroke="${vein}" stroke-width="1" fill="none" opacity=".5"/>
-  </svg>`;
-}
-function renderHands(){
-  $('hand-l').innerHTML=handSVG(state.hands.left);
-  $('hand-r').innerHTML=handSVG(state.hands.right,true);
-  $('hand-l').classList.toggle('dim',!state.limbs.armL);
-  $('hand-r').classList.toggle('dim',!state.limbs.armR);
+function endCombat(survived) {
+  clearTimeout(combatTimeout);
+  if (staminaRegenInterval) clearInterval(staminaRegenInterval);
+  G.combat = null;
+  document.getElementById('attack-zone').classList.remove('show');
+  document.getElementById('range-zone').classList.remove('show');
+  document.getElementById('tap-zone').style.display = '';
+  document.getElementById('tap-ring').className = 'tap-ring';
+  document.getElementById('react-text') && document.getElementById('react-text').classList.remove('show');
 }
 
-// =====================================================================
-// ZOMBIE SVG (silhouette-style with detail)
-// =====================================================================
-function zombieSVG(type,typeKey){
-  const c=type.color;
-  const lt=lighten(c,25),dk=darken(c,20);
-  const isRunner=typeKey==='runner',isBrute=typeKey==='brute';
-  const w=isBrute?70:isRunner?48:56;
-  const h=isBrute?130:isRunner?100:118;
-  // different silhouettes per type
-  const armPose=isRunner?
-    `<rect x="${w*.05}" y="${h*.25}" width="${w*.16}" height="${h*.38}" rx="4" fill="${c}" transform="rotate(-25,${w*.13},${h*.25})"/>
-     <rect x="${w*.76}" y="${h*.25}" width="${w*.16}" height="${h*.38}" rx="4" fill="${c}" transform="rotate(40,${w*.84},${h*.25})"/>`:
-    `<rect x="${w*.02}" y="${h*.26}" width="${w*.16}" height="${h*.35}" rx="4" fill="${c}"/>
-     <rect x="${w*.82}" y="${h*.26}" width="${w*.16}" height="${h*.35}" rx="4" fill="${c}"/>`;
-  return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
-    <ellipse cx="${w/2}" cy="${h*.14}" rx="${w*.22}" ry="${h*.13}" fill="${lt}"/>
-    <rect x="${w*.2}" y="${h*.25}" width="${w*.6}" height="${h*.4}" rx="4" fill="${c}"/>
-    ${armPose}
-    <rect x="${w*.2}" y="${h*.62}" width="${w*.25}" height="${h*.35}" rx="4" fill="${dk}"/>
-    <rect x="${w*.55}" y="${h*.62}" width="${w*.25}" height="${h*.35}" rx="4" fill="${dk}"/>
-    <circle cx="${w*.36}" cy="${h*.12}" r="${w*.08}" fill="#6a1010"/>
-    <circle cx="${w*.64}" cy="${h*.12}" r="${w*.08}" fill="#6a1010"/>
-    <path d="M${w*.32},${h*.21} Q${w/2},${h*.26} ${w*.68},${h*.21}" stroke="#3a0808" stroke-width="1.5" fill="none"/>
-    ${isBrute?`<rect x="${w*.18}" y="${h*.25}" width="${w*.64}" height="${h*.4}" rx="5" fill="none" stroke="${lt}" stroke-width="1.5" opacity=".4"/>`:''}
-  </svg>`;
-}
-function lighten(hex,a){return shadeColor(hex,a);}
-function darken(hex,a){return shadeColor(hex,-a);}
-function shadeColor(hex,p){
-  const f=parseInt(hex.slice(1),16),t=p<0?0:255,pa=Math.abs(p)/100;
-  const R=f>>16,G=(f>>8)&0xff,B=f&0xff;
-  return `#${(0x1000000+(Math.round((t-R)*pa)+R)*0x10000+(Math.round((t-G)*pa)+G)*0x100+(Math.round((t-B)*pa)+B)).toString(16).slice(1)}`;
-}
+// Gun system
+function shootGun() {
+  if (!G.combat || G.combat.phase !== 'range') return;
+  if (!G.equippedGun || G.ammo <= 0) { skipRange(); return; }
+  const gun = G.equippedGun;
+  const dmg = Math.round(gun.dmg * (0.9 + Math.random() * .2) * (1 + G.combat.teamBonus));
+  G.ammo--;
+  G.combat.hp = Math.max(0, G.combat.hp - dmg);
+  addCombatLog(`${gun.icon} Shot for ${dmg}! Ammo: ${G.ammo}`, 'cl-hit');
+  showDmgNumber(dmg, '#3498db');
+  renderCombatHUD();
+  document.getElementById('ammo-label').textContent = `Ammo: ${G.ammo}`;
 
-// =====================================================================
-// LOOT SPAWNING
-// =====================================================================
-function spawnLoot(){
-  const roll=Math.random();
-  let type,dist;
-  if(roll<.45){type='supply';dist=rnd(12,55);}
-  else if(roll<.8){type='melee';dist=rnd(35,110);}
-  else{type='gun';dist=rnd(140,380);}
-  dist/=(state.cls.stats.lootBonus||1);
-  state.nearbyLoot={type,distAway:dist};state.lootProgress=0;
-  const icon=type==='supply'?'🥫':type==='melee'?'🔪':'🔫';
-  $('compass-sub').textContent=`${icon} Marker ~${Math.round(dist)}m`;
-}
-function checkLootArrival(){
-  if(!state.nearbyLoot)return;
-  if(state.lootProgress>=state.nearbyLoot.distAway){
-    $('btn-pickup').disabled=false;
-    $('compass-sub').textContent='📍 At marker — tap LOOT';
-  }
-}
-$('btn-pickup').onclick=()=>{
-  if(!state.nearbyLoot||$('btn-pickup').disabled)return;
-  resolveLoot(state.nearbyLoot.type);$('btn-pickup').disabled=true;spawnLoot();
-};
-function resolveLoot(type){
-  const cs=state.cls.stats;
-  if(type==='supply'){
-    if(Math.random()<.55){state.supplies.food++;state.food=clamp(state.food+rnd(15,28),0,100);toast(`Found ${pick(FOOD_ITEMS)}.`,'good');}
-    else if(Math.random()<.7){state.supplies.water++;state.water=clamp(state.water+rnd(15,28),0,100);toast(`Found ${pick(WATER_ITEMS)}.`,'good');}
-    else{state.supplies.bandage++;toast('Found a Bandage.','good');}
-  }else if(type==='melee'){
-    const w={...pick(MELEE_WEAPONS)};w.dur=Math.round(w.dur*(cs.durMult||1));
-    state.meleeBag.push(w);toast(`Scavenged: ${w.name}`,'good');autoEquip(w);
-  }else{
-    if(state.gun){state.gun.ammo=clamp(state.gun.ammo+3,0,state.gun.maxAmmo+3);toast('Extra ammo found.','good');}
-    else{const g={...pick(GUNS)};g.ammo=g.maxAmmo;state.gun=g;toast(`FIREARM: ${g.name} (${g.ammo} rounds)`,'danger');$('btn-gun').disabled=false;}
-  }
-  renderInventory();
-}
-function autoEquip(weapon,silent=false){
-  if(weapon.hands===2){
-    if(!state.hands.left&&!state.hands.right){state.hands.left=weapon;state.hands.right=weapon;state.twoHanded=true;if(!silent)toast(`Equipped ${weapon.name} (2H)`);}
-  }else{
-    if(!state.hands.left){state.hands.left=weapon;if(!silent)toast(`${weapon.name} → Left hand`);}
-    else if(!state.hands.right){state.hands.right=weapon;if(!silent)toast(`${weapon.name} → Right hand`);}
-  }
-  renderHands();updateWeaponInfo();
-}
-
-// =====================================================================
-// HORDE / ZOMBIES
-// =====================================================================
-let activeZombies=[],zombieTimers=[];
-function checkThreatTrigger(){
-  if(state.mode!=='explore')return;
-  if(state.threatTimer>rnd(70,160)){triggerHorde();state.threatTimer=0;}
-}
-function triggerHorde(){
-  const isNight=state.gameTime<360||state.gameTime>=1260;
-  let pool=['shambler','shambler','runner'];
-  if(state.distance>250)pool.push('runner','brute');
-  if(isNight)pool.push('runner','brute');
-  const count=Math.floor(rnd(2,5));
-  activeZombies=[];
-  for(let i=0;i<count;i++){
-    const tKey=pick(pool),t=ZTYPES[tKey];
-    const maxHp=Math.floor(rnd(t.hpMin,t.hpMax));
-    const el=document.createElement('div');
-    el.className='zombie-sprite';
-    // size by type (perspective: start medium, grow as approach)
-    const baseW=tKey==='brute'?90:tKey==='runner'?65:75;
-    const baseH=tKey==='brute'?140:tKey==='runner'?105:118;
-    el.style.width=baseW+'px';el.style.height=baseH+'px';
-    el.style.left=(12+i*24+rnd(-3,3))+'%';
-    el.innerHTML=`<div class="z-type-tag ${t.tagClass}">${t.name}</div>
-      <div class="z-hp-bar"><div class="z-hp-fill" style="width:100%"></div></div>
-      ${zombieSVG(t,tKey)}`;
-    $('viewport').appendChild(el);
-    const zobj={el,tKey,type:t,hp:maxHp,maxHp,attackCooldown:rnd(700,1500),telegraphing:false,
-      approachScale:0.18, approachX:0, _lungeTriggered:false};
-    // start tiny at the horizon
-    el.style.transform = 'scale(0.18)';
-    el.style.transformOrigin = 'bottom center';
-    activeZombies.push(zobj);
-  }
-  state.mode='combat';
-  toast(`⚠ HORDE — ${count} closing in!`,'danger');
-  $('compass').classList.add('alert');
-  $('compass-sub').textContent=`🧟 ${count} HOSTILES`;
-  $('btn-gun').disabled=!(state.gun&&state.gun.ammo>0);
-  scheduleZombieAttacks();
-}
-function scheduleZombieAttacks(){
-  clearZombieTimers();
-  activeZombies.forEach((z,i)=>{
-    const t=setTimeout(()=>telegraphAttack(z),z.attackCooldown/(1+i*.2));
-    zombieTimers.push(t);
-  });
-}
-function clearZombieTimers(){zombieTimers.forEach(t=>clearTimeout(t));zombieTimers=[];}
-function telegraphAttack(z){
-  if(state.mode!=='combat'||!activeZombies.includes(z))return;
-  z.telegraphing=true;
-  const ring=document.createElement('div');ring.className='telegraph-ring';
-  z.el.appendChild(ring);setTimeout(()=>ring.remove(),550);
-  const t=setTimeout(()=>resolveZombieLunge(z),520);zombieTimers.push(t);
-}
-function resolveZombieLunge(z){
-  z.telegraphing=false;
-  if(state.mode!=='combat'||!activeZombies.includes(z))return;
-  let dmg=rnd(z.type.dmgMin,z.type.dmgMax);let outcome='hit';
-  if(state.dodging){outcome='dodge';}
-  else if(state.blocking){
-    const hasShield=(state.hands.left&&state.hands.left.block)||(state.hands.right&&state.hands.right.block)||state.twoHanded;
-    dmg*=(1-(hasShield?.78:.45));outcome='block';
-    const w=state.hands.left||state.hands.right;
-    if(w){w.dur-=1;if(w.dur<=0)breakWeapon(w);updateWeaponInfo();}
-  }
-  if(outcome==='dodge'){
-    $('dodgeflash').classList.add('show');setTimeout(()=>$('dodgeflash').classList.remove('show'),160);
-    toast(`Dodged the ${z.type.name}!`,'good');
-  }else{
-    flashHit(dmg>state.maxHp*.14);shakeScreen();
-    state.hp=clamp(state.hp-dmg,0,state.maxHp);
-    dmgNumber('-'+Math.round(dmg),rnd(38,62)+'%',rnd(38,54)+'%',{player:true});
-    if(outcome==='block')toast(`Blocked! -${Math.round(dmg)} HP`,'warnt');
-    else toast(`${z.type.name} hits you! -${Math.round(dmg)} HP`,'danger');
-    const limbRisk=clamp((state.emotionHeat-18)*.01+(outcome==='hit'?.04:0),0,.38);
-    if(Math.random()<limbRisk)injureRandomLimb();
-    $('bloodvignette').classList.toggle('danger',state.hp<state.maxHp*.4);
-    if(state.hp<=0)return gameOver();
-  }
-  if(activeZombies.includes(z)){
-    z.attackCooldown=z.type.atkSpeed*rnd(.8,1.2);
-    const t=setTimeout(()=>telegraphAttack(z),z.attackCooldown);zombieTimers.push(t);
+  if (G.combat.hp <= 0) { zombieDies(); return; }
+  if (G.ammo <= 0) {
+    addCombatLog('Out of ammo — entering melee!', 'cl-miss');
+    setTimeout(skipRange, 600);
   }
 }
 
-// =====================================================================
-// PLAYER COMBAT
-// =====================================================================
-const HOLD_MS=370;
-let holdStart={left:0,right:0};
-function startHold(side){if(state.mode!=='combat')return;holdStart[side]=performance.now();}
-function endHold(side){if(state.mode!=='combat')return;resolveSwing(side,performance.now()-holdStart[side]>=HOLD_MS);}
-
-function resolveSwing(side,heavy){
-  if(state.mode!=='combat')return;
-  const armOk=state.limbs[side==='left'?'armL':'armR'];
-  if(!armOk){toast('Arm too injured!','danger');return;}
-  const hand=side==='left'?state.hands.left:state.hands.right;
-  const cs=state.cls.stats;
-  const stamCost=heavy?15:6;
-  if(state.stamina<stamCost){toast('Too exhausted!','danger');return;}
-  state.stamina=clamp(state.stamina-stamCost,0,state.maxStamina);
-
-  // animate hand
-  const eId='hand-'+(side==='left'?'l':'r');
-  // Always remove as individual tokens — no spaces allowed in classList tokens
-  $(eId).classList.remove('swing-l','swing-r','heavy');
-  void $(eId).offsetWidth;
-  $(eId).classList.add(side==='left'?'swing-l':'swing-r');
-  if(heavy) $(eId).classList.add('heavy');
-  const _removeSwing=()=>{ $(eId).classList.remove('swing-l','swing-r','heavy'); };
-  setTimeout(_removeSwing, heavy?520:290);
-
-  if(activeZombies.length===0)return;
-
-  // combo
-  const now=performance.now();
-  if(state.lastHand&&state.lastHand!==side&&now-state.comboTimer<850){
-    state.comboCount=Math.min(state.comboCount+1,9);
-  }else if(now-state.comboTimer>=850){state.comboCount=0;}
-  state.lastHand=side;state.comboTimer=now;
-  const cM=1+state.comboCount*.12;
-
-  let target=activeZombies.find(z=>z.telegraphing)||activeZombies[0];
-  let dmg=(hand?hand.dmg:4)*(cs.dmgMult||1)*cM*(heavy?1.65:1);
-  const isCrit=Math.random()<(.05+state.comboCount*.03);
-  if(isCrit)dmg*=1.85;
-  if(target.telegraphing){dmg*=1.45;target.telegraphing=false;toast('Counter-hit!','good');}
-
-  target.hp-=dmg;
-  target.el.classList.add('hit-flash');setTimeout(()=>target.el.classList.remove('hit-flash'),100);
-  const fp=clamp(target.hp/target.maxHp*100,0,100);
-  target.el.querySelector('.z-hp-fill').style.width=fp+'%';
-  dmgNumber(Math.round(dmg)+(isCrit?'!!':''),rnd(32,68)+'%',rnd(28,52)+'%',{crit:isCrit});
-  if(isCrit)shakeScreen();
-
-  if(state.comboCount>0){
-    const c=$('combo');c.innerHTML=`x${state.comboCount+1}<span>COMBO</span>`;
-    c.classList.add('show');clearTimeout(c._t);c._t=setTimeout(()=>c.classList.remove('show'),750);
-  }
-  if(hand){
-    hand.dur-=(heavy?2.5:1)*(target.type.durDmgMult||1);
-    if(hand.dur<=0)breakWeapon(hand);
-    updateWeaponInfo();
-  }
-  state.emotionHeat+=(heavy?10:5)*(cs.emotionMult||1);
-
-  if(target.hp<=0){
-    target.el.classList.add('dead');setTimeout(()=>target.el.remove(),450);
-    activeZombies=activeZombies.filter(z=>z!==target);
-    toast(`${target.type.name} down!`,'good');
-    if(activeZombies.length===0)endCombat(true);
-  }
-}
-function breakWeapon(w){
-  toast(`${w.name} broke!`,'danger');
-  if(state.twoHanded){state.hands.left=null;state.hands.right=null;state.twoHanded=false;}
-  else if(state.hands.left===w)state.hands.left=null;
-  else if(state.hands.right===w)state.hands.right=null;
-  renderHands();
-}
-function injureRandomLimb(){
-  const healthy=Object.entries(state.limbs).filter(([,v])=>v).map(([k])=>k);
-  if(!healthy.length)return;
-  const limb=pick(healthy);state.limbs[limb]=false;
-  const names={armL:'LEFT ARM',armR:'RIGHT ARM',legL:'LEFT LEG',legR:'RIGHT LEG'};
-  toast(`⚠ ${names[limb]} INJURED`,'danger');
-  if(limb==='armL'){if(state.twoHanded){state.hands.left=null;state.hands.right=null;state.twoHanded=false;}else state.hands.left=null;}
-  if(limb==='armR'){if(state.twoHanded){state.hands.left=null;state.hands.right=null;state.twoHanded=false;}else state.hands.right=null;}
-  renderHands();updateLimbUI();updateWeaponInfo();
-}
-function flashHit(crit){
-  const fl=$('hitflash');fl.classList.toggle('crit',!!crit);fl.classList.add('show');
-  setTimeout(()=>fl.classList.remove('show'),160);
-}
-function endCombat(survived){
-  state.mode='explore';state.emotionHeat=Math.max(0,state.emotionHeat-28);
-  state.comboCount=0;$('combo').classList.remove('show');
-  $('btn-gun').disabled=true;$('compass').classList.remove('alert');
-  $('bloodvignette').classList.remove('danger');
-  $('compass-sub').textContent='Area clear — scavenging.';
-  clearZombieTimers();
-  if(survived)toast('Horde cleared. Keep moving.','good');
-}
-function tryBreakContact(meters){
-  if(state.mode==='combat'&&state.speed>2.2){
-    state.emotionHeat=Math.max(0,state.emotionHeat-meters*2);
-    if(Math.random()<meters*.018){
-      activeZombies.forEach(z=>z.el.remove());activeZombies=[];endCombat(true);
-      toast('Broke contact — escaped the horde!','good');
-    }
-  }
+function skipRange() {
+  document.getElementById('range-zone').classList.remove('show');
+  if (!G.combat) return;
+  G.combat.phase = 'melee-idle';
+  addCombatLog('Entering melee range!', 'cl-hit');
+  scheduleZombieAttack();
 }
 
-// =====================================================================
-// BLOCK / DODGE
-// =====================================================================
-const btnBlock=$('btn-block');
-function setBlocking(on){
-  state.blocking=on;btnBlock.classList.toggle('active',on);
-  $('hand-l').classList.toggle('block-l',on);
-  $('hand-r').classList.toggle('block-r',on);
-}
-btnBlock.addEventListener('touchstart',e=>{e.preventDefault();setBlocking(true);},{passive:false});
-btnBlock.addEventListener('touchend',e=>{e.preventDefault();setBlocking(false);},{passive:false});
-btnBlock.addEventListener('mousedown',()=>setBlocking(true));
-btnBlock.addEventListener('mouseup',()=>setBlocking(false));
-btnBlock.addEventListener('mouseleave',()=>setBlocking(false));
-
-$('dodge-zone').addEventListener('touchstart',e=>{e.preventDefault();doDodge();},{passive:false});
-$('dodge-zone').addEventListener('mousedown',()=>doDodge());
-function doDodge(){
-  if(state.mode!=='combat')return;
-  if(state.stamina<8){toast('Too exhausted to dodge!','danger');return;}
-  state.stamina=clamp(state.stamina-8,0,state.maxStamina);
-  state.dodging=true;
-  $('viewport').style.transition='transform .1s';
-  $('viewport').style.transform=`translateX(${rnd(-1,1)>0?35:-35}px)`;
-  setTimeout(()=>{$('viewport').style.transform='';state.dodging=false;},270);
+function showDmgNumber(dmg, color) {
+  const arena = document.querySelector('.combat-arena');
+  const el = document.createElement('div');
+  el.className = 'dmg-number';
+  el.style.cssText = `color:${color};top:40%;left:${40+Math.random()*20}%;`;
+  el.textContent = '-' + dmg;
+  arena.appendChild(el);
+  setTimeout(() => el.remove(), 800);
 }
 
-// =====================================================================
-// GUN
-// =====================================================================
-$('btn-gun').onclick=()=>{
-  if(!state.gun||state.gun.ammo<=0||state.mode!=='combat')return;
-  state.gun.ammo--;
-  if(activeZombies.length>0){
-    const target=activeZombies.find(z=>z.telegraphing)||activeZombies[0];
-    target.hp-=state.gun.dmg;
-    target.el.classList.add('hit-flash');setTimeout(()=>target.el.classList.remove('hit-flash'),120);
-    const fp=clamp(target.hp/target.maxHp*100,0,100);
-    target.el.querySelector('.z-hp-fill').style.width=fp+'%';
-    dmgNumber(state.gun.dmg,rnd(35,65)+'%',rnd(28,50)+'%',{crit:true});
-    shakeScreen();
-    toast(`BANG — ${state.gun.ammo} rounds left.`,'danger');
-    if(target.hp<=0){target.el.classList.add('dead');setTimeout(()=>target.el.remove(),400);
-      activeZombies=activeZombies.filter(z=>z!==target);if(activeZombies.length===0)endCombat(true);}
-  }
-  if(state.gun.ammo<=0)$('btn-gun').disabled=true;
-  renderInventory();
-};
-
-// =====================================================================
-// SWING ZONE TOUCH INPUT
-// =====================================================================
-['touchstart','mousedown'].forEach(ev=>{
-  $('swing-l').addEventListener(ev,e=>{if(ev==='touchstart')e.preventDefault();startHold('left');},{passive:false});
-  $('swing-r').addEventListener(ev,e=>{if(ev==='touchstart')e.preventDefault();startHold('right');},{passive:false});
-});
-['touchend','mouseup'].forEach(ev=>{
-  $('swing-l').addEventListener(ev,e=>{if(ev==='touchend')e.preventDefault();endHold('left');},{passive:false});
-  $('swing-r').addEventListener(ev,e=>{if(ev==='touchend')e.preventDefault();endHold('right');},{passive:false});
-});
-
-// =====================================================================
-// INVENTORY UI
-// =====================================================================
-$('inv-toggle').onclick=()=>{renderInventory();$('inventory').classList.remove('hidden');};
-$('inv-close').onclick=()=>$('inventory').classList.add('hidden');
-function renderInventory(){
-  $('inv-class-banner').textContent=state.cls?`${state.cls.name} — ${state.cls.tag}`:'';
-  $('inv-left').innerHTML=state.hands.left?itemRow(state.hands.left,'left'):`<div class="inv-empty">Bare hand</div>`;
-  $('inv-right').innerHTML=state.hands.right?itemRow(state.hands.right,'right'):`<div class="inv-empty">Bare hand</div>`;
-  $('inv-melee').innerHTML=state.meleeBag.length===0?`<div class="inv-empty">None</div>`:
-    state.meleeBag.map((w,i)=>`<div class="inv-item"><span>${w.name} (dur ${Math.round(w.dur)})</span><button onclick="equipFromBag(${i})">EQUIP</button></div>`).join('');
-  $('inv-gun').innerHTML=state.gun?`<div class="inv-item"><span>${state.gun.name}</span><span>${state.gun.ammo}/${state.gun.maxAmmo}</span></div>`:`<div class="inv-empty">None</div>`;
-  const s=state.supplies;
-  $('inv-supplies').innerHTML=(s.food+s.water+s.bandage===0)?`<div class="inv-empty">Empty</div>`:`
-    <div class="inv-item"><span>Food rations</span><span>${s.food} <button onclick="useFood()" ${s.food<=0?'disabled':''}>EAT</button></span></div>
-    <div class="inv-item"><span>Water</span><span>${s.water} <button onclick="useWater()" ${s.water<=0?'disabled':''}>DRINK</button></span></div>
-    <div class="inv-item"><span>Bandages</span><span>${s.bandage} <button onclick="useBandage()" ${s.bandage<=0?'disabled':''}>USE</button></span></div>`;
-}
-function itemRow(w,side){return `<div class="inv-item"><span>${w.name} (dur ${Math.round(w.dur)})</span><button onclick="unequip('${side}')">UNEQUIP</button></div>`;}
-window.unequip=side=>{const w=state.hands[side];if(!w)return;if(state.twoHanded){state.hands.left=null;state.hands.right=null;state.twoHanded=false;}else state.hands[side]=null;if(!state.meleeBag.includes(w))state.meleeBag.push(w);renderHands();updateWeaponInfo();renderInventory();};
-window.equipFromBag=i=>{const w=state.meleeBag[i];if(w.hands===2){if(state.hands.left||state.hands.right){toast('Free both hands first.','danger');return;}state.hands.left=w;state.hands.right=w;state.twoHanded=true;}else{if(!state.limbs.armL&&!state.limbs.armR){toast('Both arms injured.','danger');return;}if(!state.hands.left&&state.limbs.armL)state.hands.left=w;else if(!state.hands.right&&state.limbs.armR)state.hands.right=w;else{toast('Both hands full.','danger');return;}}state.meleeBag.splice(i,1);renderHands();updateWeaponInfo();renderInventory();};
-window.useFood=()=>{state.supplies.food--;state.food=clamp(state.food+26,0,100);renderInventory();toast('Ate rations.','good');};
-window.useWater=()=>{state.supplies.water--;state.water=clamp(state.water+26,0,100);renderInventory();toast('Drank water.','good');};
-window.useBandage=()=>{const h=32*(state.cls.stats.healMult||1);state.supplies.bandage--;state.hp=clamp(state.hp+h,0,state.maxHp);renderInventory();toast(`Bandaged wounds. HP +${Math.round(h)}.`,'good');};
-
-// =====================================================================
-// HUD UPDATES
-// =====================================================================
-function updateWeaponInfo(){
-  const l=state.hands.left,r=state.hands.right;
-  let name,dur,mode;
-  if(state.twoHanded&&l){name=l.name+' (2H)';dur=l.dur;mode='Two-handed · Tap=light · Hold=heavy';}
-  else if(l&&r){name=`${l.name} / ${r.name}`;dur=Math.min(l.dur,r.dur);mode='Tap L/R · Hold=heavy';}
-  else if(l){name=l.name+' (L)';dur=l.dur;mode='Tap L/R · Hold=heavy';}
-  else if(r){name=r.name+' (R)';dur=r.dur;mode='Tap L/R · Hold=heavy';}
-  else{name='Bare Hands';dur=null;mode='Tap L/R · Hold=heavy';}
-  $('weapon-name').textContent=name;
-  const de=$('weapon-dur');
-  if(dur!=null){de.textContent=`DUR: ${Math.round(dur)}`;de.classList.toggle('low',dur<10);}
-  else{de.textContent='—';de.classList.remove('low');}
-  $('weapon-mode').textContent=mode;
-}
-function updateLimbUI(){
-  $('limb-arml').classList.toggle('injured',!state.limbs.armL);
-  $('limb-armr').classList.toggle('injured',!state.limbs.armR);
-  $('limb-legl').classList.toggle('injured',!state.limbs.legL);
-  $('limb-legr').classList.toggle('injured',!state.limbs.legR);
+function addBloodSplat() {
+  const bg = document.getElementById('combat-bg');
+  const s = document.createElement('div');
+  s.className = 'blood-splat';
+  s.style.cssText = `width:${60+Math.random()*80}px;height:${60+Math.random()*80}px;left:${Math.random()*80}%;top:${Math.random()*60}%;`;
+  bg.appendChild(s);
+  if (bg.children.length > 8) bg.removeChild(bg.children[0]);
 }
 
-// =====================================================================
-// GAME OVER
-// =====================================================================
-function gameOver(){
-  state.mode='dead';clearZombieTimers();
-  $('modal-overlay').classList.remove('hidden');
-  $('modal-title').textContent='YOU DIED';
-  $('modal-text').textContent=`${state.cls.name} — ${Math.floor(state.distance)}m survived before the dead caught up.`;
-  $('modal-actions').innerHTML=`<button class="btn big" onclick="location.reload()">RESTART</button>`;
+function clearCombatLog() {
+  const log = document.getElementById('combat-log');
+  log.innerHTML = '';
 }
 
-// =====================================================================
-// MAIN LOOP
-// =====================================================================
-let lastFrameTime=performance.now();
-function loop(ts){
-  const dt=(ts-lastFrameTime)/1000;lastFrameTime=ts;
-  if(state.mode==='dead')return;
+function addCombatLog(text, cls) {
+  const log = document.getElementById('combat-log');
+  const line = document.createElement('div');
+  line.className = 'clog-line ' + (cls || '');
+  line.textContent = text;
+  log.appendChild(line);
+  log.scrollTop = log.scrollHeight;
+}
 
-  // auto-sim movement: gentle oscillating walk speed
-  if(state.usingSim){
-    state.simPhase+=dt*.4;
-    state.simSpeedTarget=1.2+Math.sin(state.simPhase)*.5;
-    if(state.mode==='combat')state.simSpeedTarget=3.2;// run when fighting
-    state.speed+=(state.simSpeedTarget-state.speed)*.04;
-    const m=state.speed*dt;if(m>.001)addDistance(m);
-  }
+// ═══════════════════════════════════════════════════════════════════════════
+//  DEATH / WIN
+// ═══════════════════════════════════════════════════════════════════════════
+function die(cause) {
+  if (decayInterval) clearInterval(decayInterval);
+  clearTimeout(combatTimeout);
+  G.deathCause = cause;
+  document.getElementById('end-icon').textContent = '💀';
+  document.getElementById('end-title').textContent = 'YOU DIED';
+  document.getElementById('end-title').className = 'end-title dead';
+  document.getElementById('end-cause').textContent = 'Cause: ' + cause;
+  fillEndStats();
+  showScreen('end-screen');
+}
 
-  // stamina regen when walking or idle
-  const legOk=state.limbs.legL&&state.limbs.legR?1:.4;
-  if(state.speed<2.0){
-    state.stamina=clamp(state.stamina+dt*4.5*legOk*(state.cls.stats.staminaRegen||1),0,state.maxStamina);
-  }
+function winGame() {
+  if (decayInterval) clearInterval(decayInterval);
+  clearTimeout(combatTimeout);
+  document.getElementById('end-icon').textContent = '🏆';
+  document.getElementById('end-title').textContent = 'SURVIVED';
+  document.getElementById('end-title').className = 'end-title win';
+  document.getElementById('end-cause').textContent = 'The Overlord is slain. You hold the city.';
+  fillEndStats();
+  showScreen('end-screen');
+}
 
-  // hunger/thirst damage
-  if(state.food<=0||state.water<=0)state.hp=clamp(state.hp-dt*1.4,0,state.maxHp);
-  if(state.hp<=0)return gameOver();
+function fillEndStats() {
+  document.getElementById('end-days').textContent = G.day;
+  document.getElementById('end-kills').textContent = G.zombiesKilled;
+  document.getElementById('end-steps').textContent = G.totalSteps;
+  document.getElementById('end-areas').textContent = G.areasExplored;
+  document.getElementById('end-team').textContent = G.team.length;
+}
 
-  if(state.mode!=='combat')state.emotionHeat=Math.max(0,state.emotionHeat-dt*2);
-  tryBreakContact(state.speed*dt);
-  updateZombieApproach(dt);
-  updateDayNight();
-  updateWeather(dt);
-  renderFog(dt);
+function checkDeath() {
+  if (G.hp <= 0) die('Wounds');
+  if (G.food <= 0) die('Starvation');
+  if (G.water <= 0) die('Dehydration');
+}
 
-  const kmh=state.speed*3.6;
-  $('speed-val').textContent=kmh<1?'idle':kmh<6.5?`${kmh.toFixed(1)} km/h walk`:`${kmh.toFixed(1)} km/h RUN`;
-  $('speed-val').style.color=kmh>=6.5?'var(--blood-bright)':'var(--moss-bright)';
+function restartGame() {
+  selectedChar = null;
+  showCharSelect();
+}
 
-  $('bar-hp').style.width=(state.hp/state.maxHp*100)+'%';
-  const sp=state.stamina/state.maxStamina*100;
-  $('bar-stam').style.width=sp+'%';
-  $('bar-stam').classList.toggle('low',sp<25);
-  $('bar-food').style.width=state.food+'%';
-  $('bar-water').style.width=state.water+'%';
-
-  requestAnimationFrame(loop);
+// ═══════════════════════════════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════════════════════════════
+let toastTimer = null;
+function toast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast ' + (type || '') + ' show';
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
 }
 </script>
 </body>
