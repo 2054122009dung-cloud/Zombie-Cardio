@@ -1,15 +1,16 @@
-    // --- State & Classes ---
+// --- State & Classes ---
     let player = {
         hp: 100, maxHp: 100, dmg: 10, scrap: 0,
-        headshotMult: 3.0, startDistance: 20, turretLevel: 0,
-        weapon: 'ranged' // Added weapon state
+        headshotMult: 3.0, startDistance: 10, turretLevel: 0, 
+        weapon: 'ranged'
     };
 
+    // ĐÃ CẬP NHẬT: Tăng 50% tốc độ cho Walker, Tank, Spitter. Giữ nguyên Sprinter.
     const ZOMBIE_CLASSES = [
-        { name: "Walker", head: "🧟", body: "🦺", legs: "👖", hpMult: 1, speed: 1.0, dmgMult: 1, behavior: 'normal' },
-        { name: "Sprinter", head: "🧛", body: "👕", legs: "🩳", hpMult: 0.6, speed: 2.5, dmgMult: 0.8, behavior: 'dodge' },
-        { name: "Tank", head: "👹", body: "🧥", legs: "👖", hpMult: 3.5, speed: 0.5, dmgMult: 2, behavior: 'tank' },
-        { name: "Spitter", head: "👽", body: "🥼", legs: "👖", hpMult: 0.9, speed: 0.7, dmgMult: 1.5, behavior: 'ranged' }
+        { name: "Walker", head: "🧟", body: "🦺", legs: "👖", hpMult: 1, speed: 1.5, dmgMult: 1, behavior: 'normal' },   // 1.0 -> 1.5
+        { name: "Sprinter", head: "🧛", body: "👕", legs: "🩳", hpMult: 0.6, speed: 2.5, dmgMult: 0.8, behavior: 'dodge' }, // Giữ nguyên
+        { name: "Tank", head: "👹", body: "🧥", legs: "👖", hpMult: 3.5, speed: 0.75, dmgMult: 2, behavior: 'tank' }, // 0.5 -> 0.75
+        { name: "Spitter", head: "👽", body: "🥼", legs: "👖", hpMult: 0.9, speed: 1.05, dmgMult: 1.5, behavior: 'ranged' } // 0.7 -> 1.05
     ];
 
     let activeZombies = [];
@@ -80,12 +81,12 @@
         waveInProgress = true;
         elWaveTxt.innerText = waveNum;
         
-        let hordeSize = 3 + Math.floor(waveNum * 1.5); // Slow meta progression
+        let hordeSize = 3 + Math.floor(waveNum * 1.5);
         activeZombies = [];
         elZombiesLayer.innerHTML = ''; 
 
         for(let i=0; i < hordeSize; i++) {
-            let distanceOffset = Math.random() * 5; 
+            let distanceOffset = Math.random() * 2; 
             spawnSingleZombie(i, player.startDistance + distanceOffset);
         }
         updateUI();
@@ -114,7 +115,7 @@
             distance: startDist, speed: type.speed,
             attackCooldown: 1.0 + Math.random(), timeAlive: Math.random() * 10,
             isLunging: false, lungeTimer: 0, lungeCooldown: 2.0 + Math.random() * 2,
-            baseLeft: 30 + Math.random() * 40, 
+            baseLeft: 40 + Math.random() * 20, 
             isDead: false, element: null
         };
 
@@ -145,7 +146,7 @@
             zombiesAlive++;
             z.timeAlive += 0.05;
 
-            let attackRange = z.type.behavior === 'ranged' ? 8 : 1.5;
+            let attackRange = z.type.behavior === 'ranged' ? 8 : 1.0;
             let tickSpeed = z.speed * 0.04; 
 
             if (z.distance > attackRange) {
@@ -158,7 +159,7 @@
                     }
                 } else {
                     z.lungeCooldown -= 0.05;
-                    if (z.lungeCooldown <= 0 && z.distance < 12) {
+                    if (z.lungeCooldown <= 0 && z.distance < 6) {
                         z.isLunging = true;
                         z.lungeTimer = 0.5; 
                     }
@@ -169,13 +170,13 @@
                 z.attackCooldown -= 0.05;
                 if (z.attackCooldown <= 0) {
                     zombieAttack(z);
-                    z.attackCooldown = 1.5;
+                    z.attackCooldown = 1.5; // Reset cooldown đòn đánh tiếp theo
                 }
             }
 
-            let distanceRatio = Math.max(0, z.distance / 20);
-            let scale = 0.15 + Math.pow(1 - distanceRatio, 3) * 1.4; 
-            let topPos = 40 + (1 - distanceRatio) * 60; 
+            let distanceRatio = Math.max(0, z.distance / 10);
+            let scale = 0.4 + Math.pow(1 - distanceRatio, 3) * 1.2; 
+            let topPos = 60 + (1 - distanceRatio) * 40; 
             
             let leftOffset = z.baseLeft;
             let lungeSwayMult = z.isLunging ? 3 : 1;
@@ -215,7 +216,7 @@
     function hitLegs(e, id) { 
         e.stopPropagation(); 
         let z = activeZombies.find(z => z.id === id);
-        if(z && z.speed > 0.2 && player.weapon !== 'melee') { // Only slow if ranged to balance melee
+        if(z && z.speed > 0.2 && player.weapon !== 'melee') { 
             z.speed *= 0.7; 
             createFloatingText(e.clientX, e.clientY - 30, "SLOWED!", "#00ffff");
         }
@@ -228,13 +229,12 @@
         let z = activeZombies.find(z => z.id === id);
         if (!z || z.isDead) return;
 
-        // Weapon check logic
         if (player.weapon === 'melee') {
-            if (z.distance > 8) { // Target is too far for melee
+            if (z.distance > 1) { 
                 createFloatingText(x, y, "TOO FAR!", "#ffcc00");
                 return;
             }
-            amount *= 3; // Melee is highly lethal when close
+            amount *= 3; 
         }
 
         z.element.classList.remove('damage-flash');
@@ -261,26 +261,36 @@
         z.element.style.display = 'none'; 
         
         let baseLoot = 5 * Math.pow(1.15, currentWave);
-        let distBonus = z.distance > 15 ? 5 : (z.distance > 8 ? 2 : 0);
+        let distBonus = z.distance > 8 ? 5 : (z.distance > 4 ? 2 : 0);
         player.scrap += Math.floor(baseLoot + distBonus);
     }
 
+    // ĐÃ SỬA: Thêm cơ chế hoãn sát thương (Wind-up Delay) để người chơi có thể hủy đòn đánh của zombie bằng cách giết chúng trước.
     function zombieAttack(z) {
-        player.hp -= z.dmg;
-        
-        const container = document.getElementById('game-container');
-        container.classList.remove('shake');
-        void container.offsetWidth;
-        container.classList.add('shake');
-        
-        const arena = document.getElementById('arena');
-        arena.style.boxShadow = "inset 0 0 100px rgba(255,0,0,0.8)";
-        setTimeout(() => arena.style.boxShadow = "", 200);
+        // Tạm thời kích hoạt hiệu ứng CSS báo hiệu chuẩn bị cắn (nếu bạn muốn viết thêm class CSS)
+        z.element.classList.add('zombie-biting'); 
 
-        createFloatingText(window.innerWidth / 2, window.innerHeight / 3, "HIT!", "var(--blood-red)");
-        
-        if (player.hp <= 0) die();
-        updateUI();
+        // Hoãn đòn đánh đi 200 mili-giây (0.2 giây)
+        setTimeout(() => {
+            // KIỂM TRA QUAN TRỌNG: Nếu trong 0.2 giây này zombie đã bị người chơi giết, hủy đòn cắn!
+            if (z.isDead || isDead || !waveInProgress) return;
+
+            player.hp -= z.dmg;
+            
+            const container = document.getElementById('game-container');
+            container.classList.remove('shake');
+            void container.offsetWidth;
+            container.classList.add('shake');
+            
+            const arena = document.getElementById('arena');
+            arena.style.boxShadow = "inset 0 0 100px rgba(255,0,0,0.8)";
+            setTimeout(() => arena.style.boxShadow = "", 200);
+
+            createFloatingText(window.innerWidth / 2, window.innerHeight / 3, "HIT!", "var(--blood-red)");
+            
+            if (player.hp <= 0) die();
+            updateUI();
+        }, 200); 
     }
 
     // --- Skills & Weapons ---
@@ -294,12 +304,10 @@
             setTimeout(() => arena.style.boxShadow = "", 300);
             createFloatingText(window.innerWidth / 2, window.innerHeight / 2, "BOOM!", "#ff9800");
 
-            // NERFED Grenade: Less base damage, slightly lower scaling
             let aoeDmg = 25 + (player.dmg * 1.2); 
             activeZombies.forEach(z => {
                 if(!z.isDead) {
                     let rect = z.element.getBoundingClientRect();
-                    // Process hit directly to avoid melee distance checks on AoE
                     z.hp -= aoeDmg;
                     createFloatingText(rect.left + 50, rect.top + 50, `-${Math.floor(aoeDmg)}`, "#ff9800");
                     const fill = document.getElementById(`hp-fill-${z.id}`);
@@ -307,7 +315,6 @@
                     if (z.hp <= 0) killZombie(z);
                 }
             });
-            // NERFED Grenade: Cost scales faster to prevent spam
             costs.grenade = Math.floor(costs.grenade * 1.5); 
             updateUI();
         }
@@ -317,10 +324,8 @@
         let target = activeZombies.filter(z => !z.isDead).sort((a,b) => a.distance - b.distance)[0];
         if(target) {
             let rect = target.element.getBoundingClientRect();
-            // BUFFED Turret: More base damage
             let turretDmg = 15 * player.turretLevel; 
             
-            // Bypass melee range check by adjusting health directly like grenade, or simulate a normal attack
             target.hp -= turretDmg;
             createFloatingText(rect.left + 20, rect.top + 20, "Pew!", "#ffcc00");
             
@@ -422,7 +427,6 @@
         costTxts.heal.innerText = `${costs.heal} Scrap`;
     }
 
-    // --- Floating Text Render (FIXED/COMPLETED) ---
     function createFloatingText(x, y, text, color) {
         let el = document.createElement('div');
         el.className = 'hit-text';
@@ -432,6 +436,5 @@
         el.innerText = text;
         document.body.appendChild(el);
         
-        // Remove element after animation
         setTimeout(() => el.remove(), 800);
     }
