@@ -1,0 +1,320 @@
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+        :root {
+            --bg-color: #050505;
+            --text-color: #e0e0e0;
+            --zombie-green: #4caf50;
+            --blood-red: #ff2a2a;
+            --loot-gold: #ffcc00;
+            --panel-bg: #111111;
+            --ui-border: #333;
+        }
+
+        body {
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle at center, #1a1a24 0%, #000 100%);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            user-select: none;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+
+        /* CRT Scanline Overlay */
+        body::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 100;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 600px;
+            height: 95vh;
+            background-color: var(--panel-bg);
+            border: 2px solid #222;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 50px rgba(255, 42, 42, 0.1), inset 0 0 20px rgba(0,0,0,1);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* --- Header & Stats --- */
+        #header {
+            background: linear-gradient(to bottom, #111, #0a0a0a);
+            padding: 15px;
+            text-align: center;
+            border-bottom: 3px solid #2a0000;
+            position: relative;
+            z-index: 5;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.8);
+        }
+
+        #header h1 {
+            margin: 0 0 10px 0;
+            color: var(--blood-red);
+            font-size: 26px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 0 10px rgba(255, 42, 42, 0.6);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            font-size: 15px;
+            font-weight: bold;
+        }
+
+        .stat-box {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+            border: 1px solid #333;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+        }
+
+        #weapon-display {
+            border-color: #ff9800;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        #weapon-display:hover {
+            background: rgba(255, 152, 0, 0.2);
+            box-shadow: 0 0 10px rgba(255, 152, 0, 0.4);
+        }
+
+        #loot-display { color: var(--loot-gold); text-shadow: 0 0 8px rgba(255, 204, 0, 0.4); }
+
+        /* --- Arena (POV) --- */
+        #arena {
+            flex-grow: 1;
+            position: relative;
+            background: linear-gradient(180deg, #050508 0%, #171d17 50%, #202b20 100%);
+            overflow: hidden;
+            border-bottom: 3px solid #000;
+        }
+
+        #arena::after {
+            content: "";
+            position: absolute;
+            bottom: 0; left: -50%; right: -50%; height: 50%;
+            background-image: 
+                linear-gradient(rgba(76, 175, 80, 0.2) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(76, 175, 80, 0.2) 1px, transparent 1px);
+            background-size: 40px 20px;
+            transform: perspective(200px) rotateX(70deg);
+            pointer-events: none;
+            opacity: 0.3;
+        }
+
+        #arena::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.9) 100%);
+            pointer-events: none;
+            z-index: 4;
+        }
+
+        #wave-ui {
+            position: absolute;
+            top: 15px; left: 15px;
+            color: var(--loot-gold);
+            font-weight: bold;
+            font-size: 16px;
+            background: rgba(0,0,0,0.8);
+            padding: 6px 12px;
+            border: 1px solid var(--loot-gold);
+            border-radius: 4px;
+            z-index: 5;
+            box-shadow: 0 0 10px rgba(255, 204, 0, 0.2);
+        }
+
+        #horde-info {
+            position: absolute;
+            top: 15px; right: 15px;
+            font-size: 14px;
+            color: var(--zombie-green);
+            background: rgba(0,0,0,0.8);
+            padding: 6px 12px;
+            border: 1px solid var(--zombie-green);
+            border-radius: 4px;
+            text-align: right;
+            z-index: 5;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.2);
+        }
+
+        /* Hitbox System for Hordes */
+        #zombies-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        .zombie-wrapper {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -100%) scale(0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: crosshair;
+            transform-origin: bottom center;
+            transition: transform 0.05s linear;
+            filter: drop-shadow(0px 20px 10px rgba(0,0,0,0.9));
+            pointer-events: auto;
+        }
+
+        .hitbox {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.05s, filter 0.1s;
+        }
+
+        .hitbox:active { transform: scale(0.85) !important; filter: brightness(2); }
+
+        .z-head { font-size: 60px; z-index: 3; text-shadow: 0 0 15px rgba(0,0,0,1); transition: transform 0.1s; }
+        .z-body { font-size: 80px; margin-top: -15px; z-index: 2; }
+        .z-legs { font-size: 70px; margin-top: -20px; z-index: 1; }
+
+        .shake { animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both; }
+        .damage-flash { animation: flashRed 0.2s ease-out; }
+
+        @keyframes shake {
+            0% { transform: translate(0, 0); }
+            25% { transform: translate(-8px, 8px) rotate(-1deg); }
+            50% { transform: translate(8px, -8px) rotate(1deg); }
+            75% { transform: translate(-8px, -8px) rotate(-1deg); }
+            100% { transform: translate(0, 0); }
+        }
+
+        @keyframes flashRed {
+            0% { filter: brightness(1) sepia(0); }
+            50% { filter: brightness(1.5) sepia(1) hue-rotate(-50deg) saturate(5); }
+            100% { filter: brightness(1) sepia(0); }
+        }
+
+        .hit-text {
+            position: absolute;
+            font-size: 24px;
+            font-weight: bold;
+            pointer-events: none;
+            animation: floatUp 0.8s ease-out forwards;
+            text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 0 0 10px currentColor;
+            z-index: 10;
+        }
+
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(0.8); }
+            20% { transform: translateY(-10px) scale(1.2); }
+            100% { opacity: 0; transform: translateY(-50px) scale(1.5); }
+        }
+
+        /* HP Bars */
+        .hp-bar-container {
+            width: 100%; height: 20px; background-color: #1a1a1a;
+            border: 2px solid #000; border-radius: 4px;
+            position: relative; overflow: hidden;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);
+        }
+
+        .hp-bar-fill {
+            height: 100%; background: linear-gradient(90deg, #a00000, var(--blood-red));
+            width: 100%; transition: width 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .player-hp-fill { background: linear-gradient(90deg, #1b5e20, var(--zombie-green)) !important; }
+
+        .hp-text {
+            position: absolute; top: 0; left: 0; width: 100%;
+            text-align: center; line-height: 20px; font-size: 12px;
+            letter-spacing: 1px; font-weight: bold; color: #fff; text-shadow: 1px 1px 3px #000;
+        }
+
+        .zombie-hp-wrapper {
+            position: absolute; bottom: -10px; left: 50%;
+            transform: translateX(-50%); width: 80%; z-index: 5;
+        }
+
+        /* --- Shop --- */
+        #shop {
+            background: #080808; padding: 15px; border-top: 3px solid #222;
+            height: 35vh; overflow-y: auto; position: relative; z-index: 5;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.8);
+        }
+
+        #shop::-webkit-scrollbar { width: 8px; }
+        #shop::-webkit-scrollbar-track { background: #111; }
+        #shop::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+
+        #shop h2 {
+            margin: 0 0 10px 0; font-size: 16px; text-align: center; color: #888;
+            letter-spacing: 2px; text-transform: uppercase;
+        }
+
+        .shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+
+        .upgrade-btn {
+            background: linear-gradient(to bottom, #1e1e1e, #111); color: #ccc;
+            border: 1px solid #333; padding: 8px; border-radius: 4px; cursor: pointer;
+            font-family: inherit; display: flex; flex-direction: column; align-items: center;
+            transition: all 0.2s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+
+        .upgrade-btn:hover:not(:disabled) { 
+            background: linear-gradient(to bottom, #2a2a2a, #1a1a1a); border-color: var(--zombie-green); 
+            color: #fff; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(76, 175, 80, 0.2);
+        }
+        
+        .upgrade-btn:active:not(:disabled) { transform: translateY(0); }
+        .upgrade-btn:disabled { opacity: 0.4; cursor: not-allowed; border-color: #111; filter: grayscale(1); }
+        .skill-btn { border-color: #ff9800; }
+        .skill-btn:hover:not(:disabled) { border-color: #ff9800 !important; box-shadow: 0 5px 15px rgba(255, 152, 0, 0.3) !important; }
+
+        .upg-title { font-weight: bold; font-size: 12px; margin-bottom: 4px; text-transform: uppercase;}
+        .upg-cost { color: var(--loot-gold); font-size: 12px; text-shadow: 0 0 5px rgba(255, 204, 0, 0.3); }
+
+        /* --- Screens --- */
+        .overlay-screen {
+            display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(5, 0, 0, 0.95); flex-direction: column; justify-content: center;
+            align-items: center; z-index: 200;
+        }
+
+        .overlay-screen h2 { 
+            color: var(--blood-red); font-size: 50px; margin-bottom: 10px; 
+            text-shadow: 0 0 20px var(--blood-red); letter-spacing: 5px;
+        }
+
+        .action-btn {
+            padding: 15px 30px; font-size: 18px; background: rgba(255, 0, 0, 0.1);
+            color: var(--blood-red); border: 2px solid var(--blood-red); border-radius: 4px;
+            cursor: pointer; font-family: inherit; font-weight: bold; transition: all 0.2s;
+            text-transform: uppercase; letter-spacing: 2px;
+        }
+        .action-btn:hover { background: var(--blood-red); color: #fff; box-shadow: 0 0 20px var(--blood-red); }
+        
+        #wave-screen h2 { color: var(--loot-gold); text-shadow: 0 0 20px var(--loot-gold); }
+        #wave-screen .action-btn { color: var(--loot-gold); border-color: var(--loot-gold); background: rgba(255, 204, 0, 0.1);}
+        #wave-screen .action-btn:hover { background: var(--loot-gold); color: #000; }
